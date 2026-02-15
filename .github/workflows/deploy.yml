@@ -14,5 +14,9 @@ jobs:
         env:
           DOCKER_BUILDKIT: 0
           COMPOSE_DOCKER_CLI_BUILD: 0
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: |
           docker-compose up -d --build
