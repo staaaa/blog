@@ -1,0 +1,222 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* Quill Editor Styles */
+@import 'quill/dist/quill.snow.css';
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #0a0a15 0%, #14141f 50%, #0f0f1a 100%);
+  background-attachment: fixed;
+  color: #e0e0f0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgba(138, 43, 226, 0.4);
+  color: white;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a15;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #8a2be2 0%, #4b0082 100%);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #9a3bf2 0%, #5b1092 100%);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+}
+
+input, textarea, select {
+  font-family: inherit;
+}
+
+/* Spoiler styles for review content */
+.spoiler-wrapper {
+  position: relative;
+  margin: 1rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.spoiler-wrapper .spoiler-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.spoiler-wrapper .spoiler-overlay span {
+  color: #a0a0a0;
+  font-size: 0.9rem;
+}
+
+.spoiler-wrapper .spoiler-content {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  filter: blur(8px);
+  user-select: none;
+  transition: filter 0.3s ease;
+}
+
+.spoiler-wrapper.revealed .spoiler-overlay {
+  display: none;
+}
+
+.spoiler-wrapper.revealed .spoiler-content {
+  filter: none;
+  user-select: auto;
+}
+
+.spoiler-wrapper.revealed {
+  cursor: default;
+}
+
+/* Quill customizations */
+.ql-snow .ql-picker.ql-header .ql-picker-label::before,
+.ql-snow .ql-picker.ql-header .ql-picker-item::before {
+  color: #a0a0c0;
+}
+
+.ql-snow .ql-picker-options {
+  background: #1e1e2f !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.ql-snow .ql-picker-item {
+  color: #a0a0c0;
+}
+
+.ql-snow .ql-picker-item:hover {
+  color: white;
+}
+
+/* Quill rendered content styles - for displaying saved content */
+.content-body .ql-align-center,
+.content-body [style*="text-align: center"] {
+  text-align: center;
+}
+
+.content-body .ql-align-right,
+.content-body [style*="text-align: right"] {
+  text-align: right;
+}
+
+.content-body .ql-align-justify,
+.content-body [style*="text-align: justify"] {
+  text-align: justify;
+}
+
+.content-body .ql-size-small {
+  font-size: 0.75em;
+}
+
+.content-body .ql-size-large {
+  font-size: 1.5em;
+}
+
+.content-body .ql-size-huge {
+  font-size: 2.5em;
+}
+
+.content-body h1 {
+  font-size: 2em;
+  font-weight: 700;
+  margin: 1.5rem 0 1rem;
+}
+
+.content-body h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  margin: 1.25rem 0 0.75rem;
+}
+
+.content-body h3 {
+  font-size: 1.17em;
+  font-weight: 600;
+  margin: 1rem 0 0.5rem;
+}
+
+.content-body strong, .content-body b {
+  font-weight: 700;
+}
+
+.content-body em, .content-body i {
+  font-style: italic;
+}
+
+.content-body u {
+  text-decoration: underline;
+}
+
+.content-body s {
+  text-decoration: line-through;
+}
+
+.content-body blockquote {
+  border-left: 4px solid #8a2be2;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  color: #a0a0c0;
+  font-style: italic;
+}
+
+.content-body pre.ql-syntax,
+.content-body .ql-code-block {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  border-radius: 8px;
+  font-family: 'Fira Code', 'Consolas', monospace;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.content-body ol, .content-body ul {
+  padding-left: 1.5rem;
+  margin: 1rem 0;
+}
+
+.content-body li {
+  margin: 0.25rem 0;
+}
+
+.content-body a {
+  color: #8a2be2;
+  text-decoration: underline;
+}
+
+.content-body a:hover {
+  color: #b47cff;
+}
+
