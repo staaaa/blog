@@ -136,6 +136,18 @@ const deleteSeries = async (req, res) => {
       return res.status(404).json({ error: 'Seria nie znaleziona' });
     }
 
+    // Check if any reviews use this series
+    const reviews = await Review.findAll({
+      where: { seriesId: series.id },
+      attributes: ['id', 'title', 'gameTitle']
+    });
+    if (reviews.length > 0) {
+      const reviewNames = reviews.map(r => r.gameTitle || r.title).join(', ');
+      return res.status(409).json({
+        error: `Nie można usunąć serii — jest używana przez recenzje: ${reviewNames}`
+      });
+    }
+
     await series.destroy();
     res.json({ message: 'Seria usunięta pomyślnie' });
   } catch (error) {

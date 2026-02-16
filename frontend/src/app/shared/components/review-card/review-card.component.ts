@@ -23,7 +23,7 @@ import { Review } from '../../../core/services/api.service';
           <span *ngFor="let genre of review.genres" class="category-tag genre">{{ genre.name }}</span>
           <span *ngIf="review.studio" class="category-tag studio">{{ review.studio.name }}</span>
         </div>
-        <div class="date">{{ review.createdAt | date:'dd.MM.yyyy' }}</div>
+        <div class="date">{{ review.updatedAt | date:'dd.MM.yyyy' }}</div>
       </div>
     </a>
   `,

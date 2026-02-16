@@ -1,18 +1,29 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ApiService, Review, PaginatedResponse } from '../../core/services/api.service';
 import { ReviewCardComponent } from '../../shared/components/review-card/review-card.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, ReviewCardComponent],
+  imports: [CommonModule, FormsModule, ReviewCardComponent],
   template: `
     <div class="home-container">
       <header class="hero">
         <h1 class="hero-title">Najnowsze <span class="highlight">Recenzje</span></h1>
         <p class="hero-subtitle">Odkryj świat gier przez pryzmat szczegółowych recenzji</p>
       </header>
+
+      <div class="sort-bar">
+        <label for="sortSelect">Sortuj:</label>
+        <select id="sortSelect" [(ngModel)]="currentSort" (ngModelChange)="onSortChange()">
+          <option value="newest">Ostatnio edytowane</option>
+          <option value="releaseDate">Data premiery gry</option>
+          <option value="ratingHigh">Najwyższa ocena</option>
+          <option value="ratingLow">Najniższa ocena</option>
+        </select>
+      </div>
 
       <section class="reviews-grid" *ngIf="reviews.length > 0">
         <app-review-card *ngFor="let review of reviews" [review]="review"></app-review-card>
@@ -57,7 +68,7 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
     .hero {
       text-align: center;
       padding: 3rem 0;
-      margin-bottom: 2rem;
+      margin-bottom: 1rem;
     }
 
     .hero-title {
@@ -78,6 +89,40 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
       font-size: 1.2rem;
       color: #a0a0c0;
       margin: 0;
+    }
+
+    .sort-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+      justify-content: flex-end;
+    }
+
+    .sort-bar label {
+      color: #a0a0c0;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    .sort-bar select {
+      padding: 0.6rem 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #d0d0e0;
+      font-size: 0.9rem;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .sort-bar select:focus {
+      border-color: rgba(138, 43, 226, 0.5);
+    }
+
+    .sort-bar select option {
+      background: #1e1e2f;
     }
 
     .reviews-grid {
@@ -159,15 +204,20 @@ export class HomeComponent implements OnInit {
   
   reviews: Review[] = [];
   loading = true;
-  pagination = { page: 1, totalPages: 1, total: 0, limit: 12 };
+  currentSort = 'newest';
+  pagination = { page: 1, totalPages: 1, total: 0, limit: 9 };
 
   ngOnInit(): void {
     this.loadReviews(1);
   }
 
+  onSortChange(): void {
+    this.loadReviews(1);
+  }
+
   loadReviews(page: number): void {
     this.loading = true;
-    this.api.getReviews(page, 12).subscribe({
+    this.api.getReviews(page, 9, this.currentSort).subscribe({
       next: (response) => {
         this.reviews = response.reviews;
         this.pagination = response.pagination;

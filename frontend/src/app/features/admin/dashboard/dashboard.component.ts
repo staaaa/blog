@@ -33,7 +33,7 @@ import { ApiService, Review } from '../../../core/services/api.service';
             <span class="col-rating">
               <span class="rating-badge">{{ review.averageRating.toFixed(1) }}</span>
             </span>
-            <span class="col-date">{{ review.createdAt | date:'dd.MM.yyyy' }}</span>
+            <span class="col-date">{{ review.updatedAt | date:'dd.MM.yyyy' }}</span>
             <span class="col-actions">
               <a [routerLink]="['/admin/review', review.id]" class="action-btn edit">✏️</a>
               <button (click)="deleteReview(review.id)" class="action-btn delete">🗑️</button>

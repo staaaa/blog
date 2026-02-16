@@ -31,6 +31,25 @@ const getAllReviews = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
+    const sort = req.query.sort || 'newest';
+
+    // Determine sort order
+    let order;
+    switch (sort) {
+      case 'releaseDate':
+        order = [['releaseDate', 'DESC NULLS LAST']];
+        break;
+      case 'ratingHigh':
+        order = [['averageRating', 'DESC']];
+        break;
+      case 'ratingLow':
+        order = [['averageRating', 'ASC']];
+        break;
+      case 'newest':
+      default:
+        order = [['updatedAt', 'DESC']];
+        break;
+    }
 
     const { count, rows } = await Review.findAndCountAll({
       include: [
@@ -39,7 +58,7 @@ const getAllReviews = async (req, res) => {
         { model: Studio, as: 'studio', attributes: ['id', 'name', 'slug'] },
         { model: CustomRating, as: 'customRatings' }
       ],
-      order: [['createdAt', 'DESC']],
+      order,
       limit,
       offset
     });
@@ -101,7 +120,8 @@ const createReview = async (req, res) => {
       seriesId,
       studioId,
       customRatings,
-      coverImage
+      coverImage,
+      releaseDate
     } = req.body;
 
     // Calculate average
@@ -123,7 +143,8 @@ const createReview = async (req, res) => {
       averageRating,
       seriesId: seriesId || null,
       studioId: studioId || null,
-      coverImage
+      coverImage,
+      releaseDate: releaseDate || null
     }, { transaction });
 
     // Add genres
@@ -188,7 +209,8 @@ const updateReview = async (req, res) => {
       seriesId,
       studioId,
       customRatings,
-      coverImage
+      coverImage,
+      releaseDate
     } = req.body;
 
     // Calculate new average
@@ -216,7 +238,8 @@ const updateReview = async (req, res) => {
       averageRating,
       seriesId: seriesId !== undefined ? seriesId : review.seriesId,
       studioId: studioId !== undefined ? studioId : review.studioId,
-      coverImage: coverImage ?? review.coverImage
+      coverImage: coverImage ?? review.coverImage,
+      releaseDate: releaseDate !== undefined ? (releaseDate || null) : review.releaseDate
     }, { transaction });
 
     // Update genres
@@ -298,7 +321,7 @@ const searchReviews = async (req, res) => {
         { model: Studio, as: 'studio', attributes: ['id', 'name', 'slug'] },
         { model: CustomRating, as: 'customRatings' }
       ],
-      order: [['createdAt', 'DESC']],
+      order: [['updatedAt', 'DESC']],
       limit,
       offset
     });

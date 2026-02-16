@@ -31,6 +31,13 @@ import Quill from 'quill';
             </div>
           </div>
 
+          <div class="form-row">
+            <div class="form-group">
+              <label for="releaseDate">📅 Data premiery gry</label>
+              <input type="date" id="releaseDate" [(ngModel)]="review.releaseDate" name="releaseDate">
+            </div>
+          </div>
+
           <div class="form-group">
             <label for="coverImage">Okładka (URL)</label>
             <div class="cover-upload">
@@ -54,10 +61,13 @@ import Quill from 'quill';
               <label>Gatunki</label>
               <div class="tags-select">
                 <span *ngFor="let genre of genres" 
-                      (click)="toggleGenre(genre.id)" 
-                      class="tag" 
-                      [class.selected]="selectedGenreIds.includes(genre.id)">
-                  {{ genre.name }}
+                      class="tag-wrapper">
+                  <span (click)="toggleGenre(genre.id)" 
+                        class="tag" 
+                        [class.selected]="selectedGenreIds.includes(genre.id)">
+                    {{ genre.name }}
+                  </span>
+                  <button type="button" (click)="deleteGenre(genre)" class="tag-delete" title="Usuń gatunek">🗑️</button>
                 </span>
               </div>
               <div class="add-new">
@@ -78,6 +88,12 @@ import Quill from 'quill';
                 <input type="text" [(ngModel)]="newSeries" name="newSeries" placeholder="Nowa seria">
                 <button type="button" (click)="addSeries()">+</button>
               </div>
+              <div class="category-delete-list" *ngIf="series.length > 0">
+                <span *ngFor="let s of series" class="deletable-tag">
+                  {{ s.name }}
+                  <button type="button" (click)="deleteSeries(s)" class="tag-delete" title="Usuń serię">🗑️</button>
+                </span>
+              </div>
             </div>
 
             <div class="form-group">
@@ -89,6 +105,12 @@ import Quill from 'quill';
               <div class="add-new">
                 <input type="text" [(ngModel)]="newStudio" name="newStudio" placeholder="Nowe studio">
                 <button type="button" (click)="addStudio()">+</button>
+              </div>
+              <div class="category-delete-list" *ngIf="studios.length > 0">
+                <span *ngFor="let s of studios" class="deletable-tag">
+                  {{ s.name }}
+                  <button type="button" (click)="deleteStudio(s)" class="tag-delete" title="Usuń studio">🗑️</button>
+                </span>
               </div>
             </div>
           </div>
@@ -195,9 +217,14 @@ import Quill from 'quill';
     .cover-preview img { max-width: 300px; border-radius: 10px; }
 
     .tags-select { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .tag-wrapper { display: inline-flex; align-items: center; gap: 0.25rem; }
     .tag { padding: 0.5rem 1rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; color: #a0a0c0; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; }
     .tag:hover { background: rgba(138, 43, 226, 0.15); }
     .tag.selected { background: rgba(138, 43, 226, 0.25); border-color: rgba(138, 43, 226, 0.5); color: #b47cff; }
+    .tag-delete { background: none; border: none; cursor: pointer; font-size: 0.7rem; padding: 0.2rem; opacity: 0.5; transition: opacity 0.2s; }
+    .tag-delete:hover { opacity: 1; }
+    .category-delete-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+    .deletable-tag { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.3rem 0.6rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; color: #a0a0c0; font-size: 0.8rem; }
 
     .add-new { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
     .add-new input { flex: 1; padding: 0.5rem 0.8rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; color: white; font-size: 0.85rem; }
@@ -263,6 +290,7 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     optimizationRating: 7,
     gameplayRating: 7,
     coverImage: null,
+    releaseDate: null,
     seriesId: null,
     studioId: null
   };
@@ -377,6 +405,52 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  deleteGenre(genre: Category): void {
+    if (confirm(`Czy na pewno chcesz usunąć gatunek "${genre.name}"?`)) {
+      this.api.deleteGenre(genre.id).subscribe({
+        next: () => {
+          this.genres = this.genres.filter(g => g.id !== genre.id);
+          this.selectedGenreIds = this.selectedGenreIds.filter(id => id !== genre.id);
+        },
+        error: (err) => {
+          alert(err.error?.error || 'Błąd podczas usuwania gatunku');
+        }
+      });
+    }
+  }
+
+  deleteSeries(s: Category): void {
+    if (confirm(`Czy na pewno chcesz usunąć serię "${s.name}"?`)) {
+      this.api.deleteSeries(s.id).subscribe({
+        next: () => {
+          this.series = this.series.filter(item => item.id !== s.id);
+          if (this.review.seriesId === s.id) {
+            this.review.seriesId = null;
+          }
+        },
+        error: (err) => {
+          alert(err.error?.error || 'Błąd podczas usuwania serii');
+        }
+      });
+    }
+  }
+
+  deleteStudio(s: Category): void {
+    if (confirm(`Czy na pewno chcesz usunąć studio "${s.name}"?`)) {
+      this.api.deleteStudio(s.id).subscribe({
+        next: () => {
+          this.studios = this.studios.filter(item => item.id !== s.id);
+          if (this.review.studioId === s.id) {
+            this.review.studioId = null;
+          }
+        },
+        error: (err) => {
+          alert(err.error?.error || 'Błąd podczas usuwania studia');
+        }
+      });
+    }
+  }
+
   addCustomRating(): void {
     this.customRatings.push({ scaleName: '', value: 7 });
   }
@@ -468,7 +542,8 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const payload = {
       ...this.review,
       genreIds: this.selectedGenreIds,
-      customRatings: validCustomRatings
+      customRatings: validCustomRatings,
+      releaseDate: this.review.releaseDate || null
     };
 
     this.saving = true;

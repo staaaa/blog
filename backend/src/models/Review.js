@@ -64,6 +64,11 @@ const Review = sequelize.define('Review', {
     type: DataTypes.STRING(500),
     allowNull: true,
     field: 'cover_image'
+  },
+  releaseDate: {
+    type: DataTypes.DATEONLY,
+    allowNull: true,
+    field: 'release_date'
   }
 }, {
   tableName: 'reviews'
