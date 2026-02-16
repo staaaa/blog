@@ -58,6 +58,7 @@ const getAllReviews = async (req, res) => {
         { model: Studio, as: 'studio', attributes: ['id', 'name', 'slug'] },
         { model: CustomRating, as: 'customRatings' }
       ],
+      distinct: true,
       order,
       limit,
       offset
@@ -321,6 +322,7 @@ const searchReviews = async (req, res) => {
         { model: Studio, as: 'studio', attributes: ['id', 'name', 'slug'] },
         { model: CustomRating, as: 'customRatings' }
       ],
+      distinct: true,
       order: [['updatedAt', 'DESC']],
       limit,
       offset
