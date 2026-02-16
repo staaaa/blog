@@ -46,7 +46,8 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
           </div>
 
           <div class="meta">
-            <span class="date">📅 {{ review.createdAt | date: 'dd MMMM yyyy' }}</span>
+            <span class="date">📅 {{ review.updatedAt | date: 'dd MMMM yyyy' }}</span>
+            <span class="date release" *ngIf="review.releaseDate">🎮 Premiera: {{ review.releaseDate | date: 'dd MMMM yyyy' }}</span>
           </div>
         </div>
       </header>
@@ -171,6 +172,12 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
       .meta {
         color: #666680;
         font-size: 0.9rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+      .meta .release {
+        color: #00d9a5;
       }
       .review-ratings {
         margin-bottom: 2rem;

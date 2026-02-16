@@ -137,6 +137,15 @@ const deleteGenre = async (req, res) => {
       return res.status(404).json({ error: 'Gatunek nie znaleziony' });
     }
 
+    // Check if any reviews use this genre
+    const reviews = await genre.getReviews({ attributes: ['id', 'title', 'gameTitle'] });
+    if (reviews.length > 0) {
+      const reviewNames = reviews.map(r => r.gameTitle || r.title).join(', ');
+      return res.status(409).json({
+        error: `Nie można usunąć gatunku — jest używany przez recenzje: ${reviewNames}`
+      });
+    }
+
     await genre.destroy();
     res.json({ message: 'Gatunek usunięty pomyślnie' });
   } catch (error) {

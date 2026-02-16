@@ -15,6 +15,7 @@ export interface Review {
   gameplayRating: number;
   averageRating: number;
   coverImage: string | null;
+  releaseDate: string | null;
   genres: Category[];
   series: Category | null;
   studio: Category | null;
@@ -67,10 +68,11 @@ export class ApiService {
   constructor(private http: HttpClient) {}
 
   // Reviews
-  getReviews(page = 1, limit = 10): Observable<PaginatedResponse<Review>> {
+  getReviews(page = 1, limit = 10, sort = 'newest'): Observable<PaginatedResponse<Review>> {
     const params = new HttpParams()
       .set('page', page.toString())
-      .set('limit', limit.toString());
+      .set('limit', limit.toString())
+      .set('sort', sort);
     return this.http.get<PaginatedResponse<Review>>(`${this.baseUrl}/reviews`, { params });
   }
 

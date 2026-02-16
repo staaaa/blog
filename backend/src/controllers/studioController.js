@@ -136,6 +136,18 @@ const deleteStudio = async (req, res) => {
       return res.status(404).json({ error: 'Studio nie znalezione' });
     }
 
+    // Check if any reviews use this studio
+    const reviews = await Review.findAll({
+      where: { studioId: studio.id },
+      attributes: ['id', 'title', 'gameTitle']
+    });
+    if (reviews.length > 0) {
+      const reviewNames = reviews.map(r => r.gameTitle || r.title).join(', ');
+      return res.status(409).json({
+        error: `Nie można usunąć studia — jest używane przez recenzje: ${reviewNames}`
+      });
+    }
+
     await studio.destroy();
     res.json({ message: 'Studio usunięte pomyślnie' });
   } catch (error) {
