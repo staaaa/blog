@@ -259,9 +259,9 @@ import Quill from 'quill';
 
     .quill-container { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; min-height: 400px; }
     :host ::ng-deep .ql-toolbar {
-      position: sticky;
-      top: 70px;
-      z-index: 100;
+      position: sticky !important;
+      top: 70px !important;
+      z-index: 100 !important;
       background: #1f1f31 !important;
       border: none !important;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
