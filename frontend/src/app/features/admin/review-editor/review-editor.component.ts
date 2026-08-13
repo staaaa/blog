@@ -328,18 +328,23 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       theme: 'snow',
       placeholder: 'Napisz swoją recenzję...',
       modules: {
-        toolbar: [
-          [{ 'header': [1, 2, 3, false] }],
-          [{ 'font': [] }],
-          [{ 'size': ['small', false, 'large', 'huge'] }],
-          ['bold', 'italic', 'underline', 'strike'],
-          [{ 'color': [] }, { 'background': [] }],
-          [{ 'align': [] }],
-          [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-          ['blockquote', 'code-block'],
-          ['link', 'image'],
-          ['clean']
-        ]
+        toolbar: {
+          container: [
+            [{ 'header': [1, 2, 3, false] }],
+            [{ 'font': [] }],
+            [{ 'size': ['small', false, 'large', 'huge'] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ 'color': [] }, { 'background': [] }],
+            [{ 'align': [] }],
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+            ['blockquote', 'code-block'],
+            ['link', 'image'],
+            ['clean']
+          ],
+          handlers: {
+            image: () => this.selectLocalImage()
+          }
+        }
       }
     });
 
@@ -510,14 +515,27 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     console.error('Image failed to load:', (event.target as HTMLImageElement).src);
   }
 
-  uploadContentImage(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (file) {
-      this.api.uploadImage(file).subscribe(res => {
-        const range = this.quill.getSelection(true);
-        this.quill.insertEmbed(range.index, 'image', res.url);
-      });
-    }
+  selectLocalImage(): void {
+    const input = document.createElement('input');
+    input.setAttribute('type', 'file');
+    input.setAttribute('accept', 'image/*');
+    input.click();
+
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (file) {
+        this.api.uploadImage(file).subscribe({
+          next: (res) => {
+            const range = this.quill.getSelection(true);
+            this.quill.insertEmbed(range.index, 'image', res.url);
+          },
+          error: (err) => {
+            console.error('Image upload failed:', err);
+            alert('Błąd przesyłania zdjęcia do recenzji');
+          }
+        });
+      }
+    };
   }
 
   insertSpoiler(): void {
