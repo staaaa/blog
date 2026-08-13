@@ -258,15 +258,6 @@ import Quill from 'quill';
     .toolbar-btn.spoiler-btn { background: rgba(255, 165, 0, 0.15); border-color: rgba(255, 165, 0, 0.3); color: #ffc04d; }
 
     .quill-container { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; min-height: 400px; }
-    :host ::ng-deep .ql-toolbar {
-      position: sticky !important;
-      top: 70px !important;
-      z-index: 100 !important;
-      background: #1f1f31 !important;
-      border: none !important;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-      border-radius: 10px 10px 0 0;
-    }
     :host ::ng-deep .ql-container { border: none !important; font-size: 1rem; }
     :host ::ng-deep .ql-editor { min-height: 350px; color: #d0d0e0; }
     :host ::ng-deep .ql-editor.ql-blank::before { color: #666680; }

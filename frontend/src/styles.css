@@ -17,7 +17,7 @@ html, body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 ::selection {
@@ -104,6 +104,16 @@ input, textarea, select {
 }
 
 /* Quill customizations */
+.ql-toolbar.ql-snow {
+  position: sticky !important;
+  top: 70px !important;
+  z-index: 100 !important;
+  background: #1f1f31 !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 10px 10px 0 0;
+}
+
 .ql-snow .ql-picker.ql-header .ql-picker-label::before,
 .ql-snow .ql-picker.ql-header .ql-picker-item::before {
   color: #a0a0c0;
