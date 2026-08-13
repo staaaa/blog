@@ -106,7 +106,7 @@ input, textarea, select {
 /* Quill customizations */
 .ql-toolbar.ql-snow {
   position: sticky !important;
-  top: 70px !important;
+  top: 80px !important;
   z-index: 100 !important;
   background: #1f1f31 !important;
   border: none !important;
