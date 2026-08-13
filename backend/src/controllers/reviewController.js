@@ -51,7 +51,13 @@ const getAllReviews = async (req, res) => {
         break;
     }
 
+    const whereClause = {};
+    if (!req.user) {
+      whereClause.isDraft = false;
+    }
+
     const { count, rows } = await Review.findAndCountAll({
+      where: whereClause,
       include: [
         { model: Genre, as: 'genres', attributes: ['id', 'name', 'slug'] },
         { model: Series, as: 'series', attributes: ['id', 'name', 'slug'] },
@@ -91,7 +97,7 @@ const getReviewById = async (req, res) => {
       ]
     });
 
-    if (!review) {
+    if (!review || (review.isDraft && !req.user)) {
       return res.status(404).json({ error: 'Recenzja nie znaleziona' });
     }
 
@@ -122,7 +128,8 @@ const createReview = async (req, res) => {
       studioId,
       customRatings,
       coverImage,
-      releaseDate
+      releaseDate,
+      isDraft
     } = req.body;
 
     // Calculate average
@@ -145,7 +152,8 @@ const createReview = async (req, res) => {
       seriesId: seriesId || null,
       studioId: studioId || null,
       coverImage,
-      releaseDate: releaseDate || null
+      releaseDate: releaseDate || null,
+      isDraft: isDraft || false
     }, { transaction });
 
     // Add genres
@@ -211,7 +219,8 @@ const updateReview = async (req, res) => {
       studioId,
       customRatings,
       coverImage,
-      releaseDate
+      releaseDate,
+      isDraft
     } = req.body;
 
     // Calculate new average
@@ -240,7 +249,8 @@ const updateReview = async (req, res) => {
       seriesId: seriesId !== undefined ? seriesId : review.seriesId,
       studioId: studioId !== undefined ? studioId : review.studioId,
       coverImage: coverImage ?? review.coverImage,
-      releaseDate: releaseDate !== undefined ? (releaseDate || null) : review.releaseDate
+      releaseDate: releaseDate !== undefined ? (releaseDate || null) : review.releaseDate,
+      isDraft: isDraft !== undefined ? isDraft : review.isDraft
     }, { transaction });
 
     // Update genres
@@ -308,14 +318,20 @@ const searchReviews = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
 
+    const whereClause = {
+      [Op.or]: [
+        { title: { [Op.iLike]: `%${query}%` } },
+        { gameTitle: { [Op.iLike]: `%${query}%` } },
+        { content: { [Op.iLike]: `%${query}%` } }
+      ]
+    };
+
+    if (!req.user) {
+      whereClause.isDraft = false;
+    }
+
     const { count, rows } = await Review.findAndCountAll({
-      where: {
-        [Op.or]: [
-          { title: { [Op.iLike]: `%${query}%` } },
-          { gameTitle: { [Op.iLike]: `%${query}%` } },
-          { content: { [Op.iLike]: `%${query}%` } }
-        ]
-      },
+      where: whereClause,
       include: [
         { model: Genre, as: 'genres', attributes: ['id', 'name', 'slug'] },
         { model: Series, as: 'series', attributes: ['id', 'name', 'slug'] },

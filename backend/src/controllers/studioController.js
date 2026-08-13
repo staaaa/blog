@@ -54,8 +54,13 @@ const getReviewsByStudio = async (req, res) => {
       return res.status(404).json({ error: 'Studio nie znalezione' });
     }
 
+    const whereOptions = { studioId: studio.id };
+    if (!req.user) {
+      whereOptions.isDraft = false;
+    }
+
     const { count, rows } = await Review.findAndCountAll({
-      where: { studioId: studio.id },
+      where: whereOptions,
       include: [
         { model: Genre, as: 'genres', attributes: ['id', 'name', 'slug'] },
         { model: Series, as: 'series', attributes: ['id', 'name', 'slug'] },

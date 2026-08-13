@@ -54,8 +54,13 @@ const getReviewsBySeries = async (req, res) => {
       return res.status(404).json({ error: 'Seria nie znaleziona' });
     }
 
+    const whereOptions = { seriesId: series.id };
+    if (!req.user) {
+      whereOptions.isDraft = false;
+    }
+
     const { count, rows } = await Review.findAndCountAll({
-      where: { seriesId: series.id },
+      where: whereOptions,
       include: [
         { model: Genre, as: 'genres', attributes: ['id', 'name', 'slug'] },
         { model: Series, as: 'series', attributes: ['id', 'name', 'slug'] },

@@ -9,11 +9,12 @@ const {
   deleteStudio
 } = require('../controllers/studioController');
 const authMiddleware = require('../middleware/auth');
+const authOptionalMiddleware = require('../middleware/authOptional');
 
 // Public routes
 router.get('/', getAllStudios);
 router.get('/:slug', getStudioBySlug);
-router.get('/:slug/reviews', getReviewsByStudio);
+router.get('/:slug/reviews', authOptionalMiddleware, getReviewsByStudio);
 
 // Protected routes (admin only)
 router.post('/', authMiddleware, createStudio);

@@ -54,7 +54,7 @@ const getReviewsByGenre = async (req, res) => {
       return res.status(404).json({ error: 'Gatunek nie znaleziony' });
     }
 
-    const reviews = await genre.getReviews({
+    const queryOptions = {
       include: [
         { model: Genre, as: 'genres', attributes: ['id', 'name', 'slug'] },
         { model: Series, as: 'series', attributes: ['id', 'name', 'slug'] },
@@ -64,9 +64,17 @@ const getReviewsByGenre = async (req, res) => {
       order: [['createdAt', 'DESC']],
       limit,
       offset
-    });
+    };
 
-    const count = await genre.countReviews();
+    const countOptions = {};
+
+    if (!req.user) {
+      queryOptions.where = { isDraft: false };
+      countOptions.where = { isDraft: false };
+    }
+
+    const reviews = await genre.getReviews(queryOptions);
+    const count = await genre.countReviews(countOptions);
 
     res.json({
       genre,

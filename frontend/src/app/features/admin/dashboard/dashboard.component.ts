@@ -27,7 +27,10 @@ import { ApiService, Review } from '../../../core/services/api.service';
           
           <div class="table-row" *ngFor="let review of reviews">
             <span class="col-title">
-              <a [routerLink]="['/review', review.id]">{{ review.gameTitle }}</a>
+              <a [routerLink]="['/review', review.id]">
+                {{ review.gameTitle }}
+                <span *ngIf="review.isDraft" class="draft-badge">ROBOCZA</span>
+              </a>
               <small>{{ review.title }}</small>
             </span>
             <span class="col-rating">
@@ -69,9 +72,24 @@ import { ApiService, Review } from '../../../core/services/api.service';
     .table-row:hover { background: rgba(138, 43, 226, 0.05); }
     
     .col-title { display: flex; flex-direction: column; gap: 0.25rem; }
-    .col-title a { color: white; text-decoration: none; font-weight: 500; }
+    .col-title a { color: white; text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; }
     .col-title a:hover { color: #b47cff; }
     .col-title small { color: #666680; font-size: 0.85rem; }
+    
+    .draft-badge {
+      display: inline-block;
+      margin-left: 0.5rem;
+      padding: 0.15rem 0.4rem;
+      background: rgba(255, 165, 0, 0.15);
+      border: 1px solid rgba(255, 165, 0, 0.3);
+      color: #ffc04d;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      vertical-align: middle;
+    }
     
     .rating-badge { background: linear-gradient(135deg, #8a2be2 0%, #4b0082 100%); color: white; font-weight: 700; padding: 0.3rem 0.6rem; border-radius: 6px; font-size: 0.85rem; }
     

@@ -9,11 +9,12 @@ const {
   deleteSeries
 } = require('../controllers/seriesController');
 const authMiddleware = require('../middleware/auth');
+const authOptionalMiddleware = require('../middleware/authOptional');
 
 // Public routes
 router.get('/', getAllSeries);
 router.get('/:slug', getSeriesBySlug);
-router.get('/:slug/reviews', getReviewsBySeries);
+router.get('/:slug/reviews', authOptionalMiddleware, getReviewsBySeries);
 
 // Protected routes (admin only)
 router.post('/', authMiddleware, createSeries);

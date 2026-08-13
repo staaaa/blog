@@ -16,6 +16,7 @@ export interface Review {
   averageRating: number;
   coverImage: string | null;
   releaseDate: string | null;
+  isDraft: boolean;
   genres: Category[];
   series: Category | null;
   studio: Category | null;

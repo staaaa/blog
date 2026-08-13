@@ -9,11 +9,12 @@ const {
   deleteGenre
 } = require('../controllers/genreController');
 const authMiddleware = require('../middleware/auth');
+const authOptionalMiddleware = require('../middleware/authOptional');
 
 // Public routes
 router.get('/', getAllGenres);
 router.get('/:slug', getGenreBySlug);
-router.get('/:slug/reviews', getReviewsByGenre);
+router.get('/:slug/reviews', authOptionalMiddleware, getReviewsByGenre);
 
 // Protected routes (admin only)
 router.post('/', authMiddleware, createGenre);

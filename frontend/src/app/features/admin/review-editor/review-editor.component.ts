@@ -36,6 +36,12 @@ import Quill from 'quill';
               <label for="releaseDate">📅 Data premiery gry</label>
               <input type="date" id="releaseDate" [(ngModel)]="review.releaseDate" name="releaseDate">
             </div>
+            <div class="form-group" style="justify-content: center; margin-top: 1.25rem;">
+              <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; user-select: none;">
+                <input type="checkbox" [(ngModel)]="review.isDraft" name="isDraft" style="width: 22px; height: 22px; accent-color: #8a2be2; cursor: pointer;">
+                <span style="color: #c0c0d0; font-weight: 500;">💾 Zapisz jako wersję roboczą (widoczną tylko po zalogowaniu)</span>
+              </label>
+            </div>
           </div>
 
           <div class="form-group">
@@ -252,7 +258,15 @@ import Quill from 'quill';
     .toolbar-btn.spoiler-btn { background: rgba(255, 165, 0, 0.15); border-color: rgba(255, 165, 0, 0.3); color: #ffc04d; }
 
     .quill-container { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; min-height: 400px; }
-    :host ::ng-deep .ql-toolbar { border: none !important; border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important; background: rgba(0, 0, 0, 0.2); border-radius: 10px 10px 0 0; }
+    :host ::ng-deep .ql-toolbar {
+      position: sticky;
+      top: 70px;
+      z-index: 100;
+      background: #1f1f31 !important;
+      border: none !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+      border-radius: 10px 10px 0 0;
+    }
     :host ::ng-deep .ql-container { border: none !important; font-size: 1rem; }
     :host ::ng-deep .ql-editor { min-height: 350px; color: #d0d0e0; }
     :host ::ng-deep .ql-editor.ql-blank::before { color: #666680; }
@@ -291,6 +305,7 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     gameplayRating: 7,
     coverImage: null,
     releaseDate: null,
+    isDraft: false,
     seriesId: null,
     studioId: null
   };

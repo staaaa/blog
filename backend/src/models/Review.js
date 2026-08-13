@@ -69,6 +69,12 @@ const Review = sequelize.define('Review', {
     type: DataTypes.DATEONLY,
     allowNull: true,
     field: 'release_date'
+  },
+  isDraft: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    field: 'is_draft'
   }
 }, {
   tableName: 'reviews'

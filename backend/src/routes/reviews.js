@@ -9,11 +9,12 @@ const {
   searchReviews
 } = require('../controllers/reviewController');
 const authMiddleware = require('../middleware/auth');
+const authOptionalMiddleware = require('../middleware/authOptional');
 
-// Public routes
-router.get('/', getAllReviews);
-router.get('/search', searchReviews);
-router.get('/:id', getReviewById);
+// Public routes (with optional auth to detect logged in admin)
+router.get('/', authOptionalMiddleware, getAllReviews);
+router.get('/search', authOptionalMiddleware, searchReviews);
+router.get('/:id', authOptionalMiddleware, getReviewById);
 
 // Protected routes (admin only)
 router.post('/', authMiddleware, createReview);
