@@ -1,7 +1,33 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
-/* Quill Editor Styles */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700&display=swap');
 @import 'quill/dist/quill.snow.css';
+
+:root {
+  --bg-color: #1a1a1d;
+  --text-color: #e1e1e6;
+  --text-muted: #9a9aa0;
+  --accent-color: #ff7a00;
+  --accent-hover: #e06c00;
+  --card-bg: #242427;
+  --border-color: #38383c;
+  --input-bg: #2a2a2d;
+  --header-bg: #1e1e21;
+  --shadow: rgba(0, 0, 0, 0.25);
+  --font-serif: 'Merriweather', Georgia, serif;
+  --font-sans: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+[data-theme="light"] {
+  --bg-color: #f4f4f6;
+  --text-color: #1c1c1e;
+  --text-muted: #68686e;
+  --accent-color: #ff7a00;
+  --accent-hover: #e06c00;
+  --card-bg: #ffffff;
+  --border-color: #e5e5ea;
+  --input-bg: #efeff4;
+  --header-bg: #ffffff;
+  --shadow: rgba(0, 0, 0, 0.05);
+}
 
 * {
   box-sizing: border-box;
@@ -10,129 +36,144 @@
 }
 
 html, body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: linear-gradient(135deg, #0a0a15 0%, #14141f 50%, #0f0f1a 100%);
-  background-attachment: fixed;
-  color: #e0e0f0;
+  font-family: var(--font-serif);
+  background-color: var(--bg-color);
+  color: var(--text-color);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: clip;
+  transition: background-color 0.25s ease, color 0.25s ease;
+  line-height: 1.75;
 }
 
 ::selection {
-  background: rgba(138, 43, 226, 0.4);
-  color: white;
+  background: rgba(255, 122, 0, 0.3);
+  color: var(--text-color);
 }
 
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0a0a15;
+  background: var(--bg-color);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #8a2be2 0%, #4b0082 100%);
-  border-radius: 5px;
+  background: var(--border-color);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #9a3bf2 0%, #5b1092 100%);
+  background: var(--text-muted);
 }
 
 a {
   color: inherit;
   text-decoration: none;
+  transition: color 0.2s ease;
 }
 
-button {
-  font-family: inherit;
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  font-weight: 300;
 }
 
-input, textarea, select {
-  font-family: inherit;
+button, input, textarea, select {
+  font-family: var(--font-sans);
 }
 
-/* Spoiler styles for review content */
-.spoiler-wrapper {
-  position: relative;
-  margin: 1rem 0;
-  border-radius: 8px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.3s ease;
+/* Global Container Rules */
+.main-content {
+  background-color: var(--bg-color);
+  transition: background-color 0.25s ease;
 }
 
-.spoiler-wrapper .spoiler-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
+/* Spinner */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--accent-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
-.spoiler-wrapper .spoiler-overlay span {
-  color: #a0a0a0;
-  font-size: 0.9rem;
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-.spoiler-wrapper .spoiler-content {
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  filter: blur(8px);
-  user-select: none;
-  transition: filter 0.3s ease;
-}
-
-.spoiler-wrapper.revealed .spoiler-overlay {
-  display: none;
-}
-
-.spoiler-wrapper.revealed .spoiler-content {
-  filter: none;
-  user-select: auto;
-}
-
-.spoiler-wrapper.revealed {
-  cursor: default;
-}
-
-/* Quill customizations */
+/* Quill sticky toolbar for editor */
 .ql-toolbar.ql-snow {
   position: sticky !important;
   top: 80px !important;
   z-index: 100 !important;
-  background: #1f1f31 !important;
-  border: none !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
   border-radius: 10px 10px 0 0;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
 }
 
+.ql-container.ql-snow {
+  border: 1px solid var(--border-color) !important;
+  border-top: none !important;
+  border-radius: 0 0 10px 10px;
+  background: var(--input-bg);
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+/* Quill customizations */
 .ql-snow .ql-picker.ql-header .ql-picker-label::before,
 .ql-snow .ql-picker.ql-header .ql-picker-item::before {
-  color: #a0a0c0;
+  color: var(--text-color);
+}
+
+.ql-snow .ql-stroke {
+  stroke: var(--text-color) !important;
+}
+
+.ql-snow .ql-fill {
+  fill: var(--text-color) !important;
+}
+
+.ql-snow .ql-picker {
+  color: var(--text-color) !important;
 }
 
 .ql-snow .ql-picker-options {
-  background: #1e1e2f !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  background: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
 }
 
 .ql-snow .ql-picker-item {
-  color: #a0a0c0;
+  color: var(--text-muted) !important;
 }
 
 .ql-snow .ql-picker-item:hover {
-  color: white;
+  color: var(--text-color) !important;
 }
 
 /* Quill rendered content styles - for displaying saved content */
+.content-body {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  line-height: 1.7;
+  color: var(--text-color);
+}
+
+.content-body p {
+  margin-bottom: 0.4rem;
+  line-height: 1.7;
+}
+
+.content-body p:empty,
+.content-body p:has(br:only-child) {
+  min-height: 1.2em;
+  margin-bottom: 0.4rem;
+}
+
 .content-body .ql-align-center,
 .content-body [style*="text-align: center"] {
   text-align: center;
@@ -149,34 +190,28 @@ input, textarea, select {
 }
 
 .content-body .ql-size-small {
-  font-size: 0.75em;
+  font-size: 0.85em;
 }
 
 .content-body .ql-size-large {
-  font-size: 1.5em;
+  font-size: 1.35em;
 }
 
 .content-body .ql-size-huge {
-  font-size: 2.5em;
+  font-size: 1.8em;
 }
 
-.content-body h1 {
-  font-size: 2em;
-  font-weight: 700;
-  margin: 1.5rem 0 1rem;
+.content-body h1, .content-body h2, .content-body h3 {
+  font-family: var(--font-serif);
+  color: var(--text-color);
+  font-weight: 300;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
 }
 
-.content-body h2 {
-  font-size: 1.5em;
-  font-weight: 600;
-  margin: 1.25rem 0 0.75rem;
-}
-
-.content-body h3 {
-  font-size: 1.17em;
-  font-weight: 600;
-  margin: 1rem 0 0.5rem;
-}
+.content-body h1 { font-size: 1.8rem; }
+.content-body h2 { font-size: 1.5rem; }
+.content-body h3 { font-size: 1.25rem; }
 
 .content-body strong, .content-body b {
   font-weight: 700;
@@ -195,38 +230,40 @@ input, textarea, select {
 }
 
 .content-body blockquote {
-  border-left: 4px solid #8a2be2;
-  padding-left: 1rem;
-  margin: 1rem 0;
-  color: #a0a0c0;
+  border-left: 3px solid var(--accent-color);
+  padding-left: 1.25rem;
+  margin: 1.5rem 0;
+  color: var(--text-muted);
   font-style: italic;
 }
 
 .content-body pre.ql-syntax,
 .content-body .ql-code-block {
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
   padding: 1rem;
   border-radius: 8px;
   font-family: 'Fira Code', 'Consolas', monospace;
+  font-size: 0.95rem;
   overflow-x: auto;
-  margin: 1rem 0;
+  margin: 1.5rem 0;
+  color: var(--text-color);
 }
 
 .content-body ol, .content-body ul {
   padding-left: 1.5rem;
-  margin: 1rem 0;
+  margin: 1.5rem 0;
 }
 
 .content-body li {
-  margin: 0.25rem 0;
+  margin: 0.5rem 0;
 }
 
 .content-body a {
-  color: #8a2be2;
+  color: var(--accent-color);
   text-decoration: underline;
 }
 
 .content-body a:hover {
-  color: #b47cff;
+  color: var(--accent-hover);
 }
-

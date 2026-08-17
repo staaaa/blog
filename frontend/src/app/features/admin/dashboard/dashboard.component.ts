@@ -10,8 +10,8 @@ import { ApiService, Review } from '../../../core/services/api.service';
   template: `
     <div class="dashboard-container">
       <header class="dashboard-header">
-        <h1>📊 Dashboard</h1>
-        <a routerLink="/admin/review/new" class="new-btn">+ Nowa Recenzja</a>
+        <h1>Dashboard</h1>
+        <a routerLink="/admin/review/new" class="new-btn">Nowa Recenzja</a>
       </header>
 
       <section class="reviews-section">
@@ -38,16 +38,15 @@ import { ApiService, Review } from '../../../core/services/api.service';
             </span>
             <span class="col-date">{{ review.updatedAt | date:'dd.MM.yyyy' }}</span>
             <span class="col-actions">
-              <a [routerLink]="['/admin/review', review.id]" class="action-btn edit">✏️</a>
-              <button (click)="deleteReview(review.id)" class="action-btn delete">🗑️</button>
+              <a [routerLink]="['/admin/review', review.id]" class="action-link edit">Edytuj</a>
+              <button (click)="deleteReview(review.id)" class="action-btn-text delete">Usuń</button>
             </span>
           </div>
         </div>
 
         <div class="empty-state" *ngIf="reviews.length === 0 && !loading">
-          <span class="empty-icon">📝</span>
           <p>Brak recenzji. Dodaj swoją pierwszą!</p>
-          <a routerLink="/admin/review/new" class="new-btn">+ Dodaj recenzję</a>
+          <a routerLink="/admin/review/new" class="new-btn">Dodaj recenzję</a>
         </div>
 
         <div class="loading" *ngIf="loading">
@@ -57,55 +56,171 @@ import { ApiService, Review } from '../../../core/services/api.service';
     </div>
   `,
   styles: [`
-    .dashboard-container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
-    .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-    .dashboard-header h1 { font-size: 2rem; color: white; margin: 0; }
-    .new-btn { padding: 0.8rem 1.5rem; background: linear-gradient(135deg, #8a2be2 0%, #6a1bb2 100%); border: none; border-radius: 10px; color: white; font-weight: 600; text-decoration: none; transition: all 0.2s; }
-    .new-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(138, 43, 226, 0.4); }
+    .dashboard-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem;
+    }
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3rem;
+    }
+    .dashboard-header h1 {
+      font-size: 2rem;
+      font-weight: 300;
+      font-family: var(--font-serif);
+      color: var(--text-color);
+      margin: 0;
+    }
+    .new-btn {
+      padding: 0.5rem 1rem;
+      background-color: var(--accent-color);
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: background-color 0.2s ease;
+    }
+    .new-btn:hover {
+      background-color: var(--accent-hover);
+    }
     
-    .reviews-section h2 { font-size: 1.3rem; color: #a0a0c0; margin: 0 0 1.5rem; font-weight: 500; }
+    .reviews-section h2 {
+      font-size: 1.25rem;
+      font-family: var(--font-serif);
+      font-weight: 300;
+      color: var(--text-muted);
+      margin: 0 0 1.5rem;
+    }
     
-    .reviews-table { background: linear-gradient(145deg, #1e1e2f 0%, #252538 100%); border-radius: 16px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.05); }
-    .table-header, .table-row { display: grid; grid-template-columns: 1fr 100px 120px 100px; align-items: center; padding: 1rem 1.5rem; }
-    .table-header { background: rgba(0, 0, 0, 0.2); color: #666680; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-    .table-row { border-top: 1px solid rgba(255, 255, 255, 0.05); }
-    .table-row:hover { background: rgba(138, 43, 226, 0.05); }
+    .reviews-table {
+      background-color: var(--card-bg);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 12px var(--shadow);
+    }
+    .table-header, .table-row {
+      display: grid;
+      grid-template-columns: 1fr 100px 120px 120px;
+      align-items: center;
+      padding: 1rem 1.5rem;
+    }
+    .table-header {
+      background: var(--input-bg);
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .table-row {
+      border-top: 1px solid var(--border-color);
+    }
+    .table-row:first-child {
+      border-top: none;
+    }
+    .table-row:hover {
+      background-color: var(--input-bg);
+    }
     
-    .col-title { display: flex; flex-direction: column; gap: 0.25rem; }
-    .col-title a { color: white; text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; }
-    .col-title a:hover { color: #b47cff; }
-    .col-title small { color: #666680; font-size: 0.85rem; }
+    .col-title {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .col-title a {
+      color: var(--text-color);
+      text-decoration: none;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+    }
+    .col-title a:hover {
+      color: var(--accent-color);
+    }
+    .col-title small {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
     
     .draft-badge {
       display: inline-block;
       margin-left: 0.5rem;
       padding: 0.15rem 0.4rem;
-      background: rgba(255, 165, 0, 0.15);
-      border: 1px solid rgba(255, 165, 0, 0.3);
-      color: #ffc04d;
+      background: rgba(255, 122, 0, 0.15);
+      border: 1px solid rgba(255, 122, 0, 0.3);
+      color: var(--accent-color);
       border-radius: 4px;
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       vertical-align: middle;
     }
     
-    .rating-badge { background: linear-gradient(135deg, #8a2be2 0%, #4b0082 100%); color: white; font-weight: 700; padding: 0.3rem 0.6rem; border-radius: 6px; font-size: 0.85rem; }
+    .rating-badge {
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      color: var(--accent-color);
+      font-weight: 700;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
     
-    .col-date { color: #a0a0c0; font-size: 0.9rem; }
-    .col-actions { display: flex; gap: 0.5rem; }
-    .action-btn { padding: 0.5rem; background: rgba(255, 255, 255, 0.05); border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: all 0.2s; text-decoration: none; }
-    .action-btn:hover { background: rgba(255, 255, 255, 0.1); transform: scale(1.1); }
-    .action-btn.delete:hover { background: rgba(220, 53, 69, 0.2); }
+    .col-date {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    .col-actions {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.85rem;
+    }
+    .action-link {
+      color: var(--accent-color);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .action-link:hover {
+      color: var(--accent-hover);
+      text-decoration: underline;
+    }
+    .action-btn-text {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      color: #ff6b7a;
+      padding: 0;
+    }
+    .action-btn-text:hover {
+      text-decoration: underline;
+    }
     
-    .empty-state { text-align: center; padding: 4rem; background: linear-gradient(145deg, #1e1e2f 0%, #252538 100%); border-radius: 16px; }
-    .empty-icon { font-size: 4rem; display: block; margin-bottom: 1rem; }
-    .empty-state p { color: #666680; margin: 0 0 1.5rem; }
+    .empty-state {
+      text-align: center;
+      padding: 6rem 0;
+      background-color: var(--card-bg);
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+    }
+    .empty-state p {
+      margin-bottom: 1.5rem;
+    }
     
-    .loading { display: flex; justify-content: center; padding: 4rem; }
-    .spinner { width: 50px; height: 50px; border: 4px solid rgba(138, 43, 226, 0.2); border-top-color: #8a2be2; border-radius: 50%; animation: spin 1s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading {
+      display: flex;
+      justify-content: center;
+      padding: 6rem 0;
+    }
   `]
 })
 export class DashboardComponent implements OnInit {

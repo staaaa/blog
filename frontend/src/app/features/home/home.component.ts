@@ -11,15 +11,14 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
   template: `
     <div class="home-container">
       <header class="hero">
-        <h1 class="hero-title">Najnowsze <span class="highlight">Recenzje</span></h1>
-        <p class="hero-subtitle">Odkryj świat gier przez pryzmat szczegółowych recenzji</p>
+        <h1 class="hero-title">Najnowsze recenzje</h1>
       </header>
 
       <div class="sort-bar">
-        <label for="sortSelect">Sortuj:</label>
+        <label for="sortSelect">Sortuj według:</label>
         <select id="sortSelect" [(ngModel)]="currentSort" (ngModelChange)="onSortChange()">
-          <option value="newest">Ostatnio edytowane</option>
-          <option value="releaseDate">Data premiery gry</option>
+          <option value="newest">Ostatnio zaktualizowane</option>
+          <option value="releaseDate">Data premiery</option>
           <option value="ratingHigh">Najwyższa ocena</option>
           <option value="ratingLow">Najniższa ocena</option>
         </select>
@@ -30,178 +29,182 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
       </section>
 
       <div class="empty-state" *ngIf="reviews.length === 0 && !loading">
-        <span class="empty-icon">📭</span>
-        <p>Brak recenzji do wyświetlenia</p>
+        <p>Brak recenzji do wyświetlenia.</p>
       </div>
 
       <div class="loading" *ngIf="loading">
         <div class="spinner"></div>
-        <p>Ładowanie recenzji...</p>
+        <p>Ładowanie artykułów...</p>
       </div>
 
       <div class="pagination" *ngIf="pagination.totalPages > 1">
-        <button 
-          class="page-btn" 
-          [disabled]="pagination.page <= 1" 
+        <button
+          class="page-btn"
+          [disabled]="pagination.page <= 1"
           (click)="loadReviews(pagination.page - 1)"
         >
-          ← Poprzednia
+          Poprzednia
         </button>
-        <span class="page-info">{{ pagination.page }} z {{ pagination.totalPages }}</span>
-        <button 
-          class="page-btn" 
-          [disabled]="pagination.page >= pagination.totalPages" 
+        <span class="page-info">{{ pagination.page }} / {{ pagination.totalPages }}</span>
+        <button
+          class="page-btn"
+          [disabled]="pagination.page >= pagination.totalPages"
           (click)="loadReviews(pagination.page + 1)"
         >
-          Następna →
+          Następna
         </button>
       </div>
     </div>
   `,
-  styles: [`
-    .home-container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 2rem;
-    }
+  styles: [
+    `
+      .home-container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 2.5rem 1.5rem;
+      }
 
-    .hero {
-      text-align: center;
-      padding: 3rem 0;
-      margin-bottom: 1rem;
-    }
+      .hero {
+        text-align: center;
+        padding: 3rem 0;
+        margin-bottom: 2rem;
+      }
 
-    .hero-title {
-      font-size: 3rem;
-      font-weight: 800;
-      color: white;
-      margin: 0 0 1rem;
-    }
+      .hero-title {
+        font-size: 2.5rem;
+        font-weight: 300;
+        letter-spacing: -0.75px;
+        color: var(--text-color);
+        margin: 0 0 0.75rem;
+        font-family: var(--font-serif);
+      }
 
-    .hero-title .highlight {
-      background: linear-gradient(135deg, #8a2be2 0%, #00d4aa 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
+      .hero-title .highlight {
+        color: var(--accent-color);
+      }
 
-    .hero-subtitle {
-      font-size: 1.2rem;
-      color: #a0a0c0;
-      margin: 0;
-    }
+      .hero-subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 600px;
+        margin: 0 auto;
+      }
 
-    .sort-bar {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 2rem;
-      justify-content: flex-end;
-    }
+      .sort-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 2.5rem;
+        justify-content: flex-end;
+      }
 
-    .sort-bar label {
-      color: #a0a0c0;
-      font-weight: 500;
-      font-size: 0.9rem;
-    }
+      .sort-bar label {
+        color: var(--text-muted);
+        font-weight: 500;
+        font-size: 0.85rem;
+      }
 
-    .sort-bar select {
-      padding: 0.6rem 1rem;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      color: #d0d0e0;
-      font-size: 0.9rem;
-      cursor: pointer;
-      outline: none;
-      transition: border-color 0.2s;
-    }
+      .sort-bar select {
+        padding: 0.5rem 0.75rem;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        color: var(--text-color);
+        font-size: 0.85rem;
+        cursor: pointer;
+        outline: none;
+        transition:
+          border-color 0.2s ease,
+          background-color 0.2s ease;
+      }
 
-    .sort-bar select:focus {
-      border-color: rgba(138, 43, 226, 0.5);
-    }
+      .sort-bar select:focus {
+        border-color: var(--accent-color);
+      }
 
-    .sort-bar select option {
-      background: #1e1e2f;
-    }
+      .sort-bar select option {
+        background: var(--card-bg);
+        color: var(--text-color);
+      }
 
-    .reviews-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 2rem;
-    }
+      .reviews-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2.5rem;
+      }
 
-    .empty-state {
-      text-align: center;
-      padding: 4rem;
-      color: #666680;
-    }
+      .empty-state {
+        text-align: center;
+        padding: 6rem 0;
+        color: var(--text-muted);
+      }
 
-    .empty-icon {
-      font-size: 4rem;
-      display: block;
-      margin-bottom: 1rem;
-    }
+      .loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 6rem 0;
+        gap: 1.25rem;
+        color: var(--text-muted);
+      }
 
-    .loading {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 4rem;
-      gap: 1rem;
-      color: #a0a0c0;
-    }
+      .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+        margin-top: 4rem;
+      }
 
-    .spinner {
-      width: 50px;
-      height: 50px;
-      border: 4px solid rgba(138, 43, 226, 0.2);
-      border-top-color: #8a2be2;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
+      .page-btn {
+        padding: 0.6rem 1.2rem;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        color: var(--text-color);
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+      .page-btn:hover:not(:disabled) {
+        border-color: var(--accent-color);
+        color: var(--accent-color);
+      }
 
-    .pagination {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 1.5rem;
-      margin-top: 3rem;
-    }
+      .page-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
 
-    .page-btn {
-      padding: 0.8rem 1.5rem;
-      background: rgba(138, 43, 226, 0.2);
-      border: 1px solid rgba(138, 43, 226, 0.3);
-      border-radius: 10px;
-      color: #b47cff;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
+      .page-info {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
 
-    .page-btn:hover:not(:disabled) {
-      background: rgba(138, 43, 226, 0.3);
-    }
-
-    .page-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .page-info {
-      color: #a0a0c0;
-      font-weight: 500;
-    }
-  `]
+      @media (max-width: 768px) {
+        .home-container {
+          padding: 1.5rem 1rem;
+        }
+        .hero-title {
+          font-size: 2rem;
+        }
+        .hero-subtitle {
+          font-size: 1rem;
+        }
+        .reviews-grid {
+          grid-template-columns: 1fr;
+          gap: 1.75rem;
+        }
+      }
+    `,
+  ],
 })
 export class HomeComponent implements OnInit {
   private api = inject(ApiService);
-  
+
   reviews: Review[] = [];
   loading = true;
   currentSort = 'newest';
@@ -226,7 +229,7 @@ export class HomeComponent implements OnInit {
       error: (err) => {
         console.error('Error loading reviews:', err);
         this.loading = false;
-      }
+      },
     });
   }
 }

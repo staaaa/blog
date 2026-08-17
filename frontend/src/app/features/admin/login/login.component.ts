@@ -12,7 +12,6 @@ import { AuthService } from '../../../core/services/auth.service';
     <div class="login-container">
       <div class="login-card">
         <div class="login-header">
-          <span class="login-icon">🔐</span>
           <h1>Panel Admina</h1>
           <p>Zaloguj się, aby zarządzać recenzjami</p>
         </div>
@@ -55,7 +54,7 @@ import { AuthService } from '../../../core/services/auth.service';
   `,
   styles: [`
     .login-container {
-      min-height: 100vh;
+      min-height: 80vh;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -64,101 +63,96 @@ import { AuthService } from '../../../core/services/auth.service';
 
     .login-card {
       width: 100%;
-      max-width: 420px;
-      background: linear-gradient(145deg, #1e1e2f 0%, #252538 100%);
-      border-radius: 24px;
-      padding: 3rem;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      max-width: 400px;
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      padding: 2.5rem;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 8px 24px var(--shadow);
     }
 
     .login-header {
       text-align: center;
-      margin-bottom: 2.5rem;
-    }
-
-    .login-icon {
-      font-size: 3rem;
-      display: block;
-      margin-bottom: 1rem;
+      margin-bottom: 2rem;
     }
 
     .login-header h1 {
-      font-size: 1.8rem;
-      color: white;
+      font-size: 1.6rem;
+      font-family: var(--font-serif);
+      font-weight: 300;
+      color: var(--text-color);
       margin: 0 0 0.5rem;
     }
 
     .login-header p {
-      color: #a0a0c0;
+      color: var(--text-muted);
       margin: 0;
+      font-size: 0.9rem;
     }
 
     .form-group {
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.25rem;
     }
 
     .form-group label {
       display: block;
-      margin-bottom: 0.5rem;
-      color: #c0c0d0;
+      margin-bottom: 0.4rem;
+      color: var(--text-color);
       font-weight: 500;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
     }
 
     .form-group input {
       width: 100%;
-      padding: 1rem;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      color: white;
-      font-size: 1rem;
+      padding: 0.75rem 1rem;
+      background: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-color);
+      font-size: 0.95rem;
       outline: none;
-      transition: all 0.2s;
+      transition: border-color 0.2s ease;
       box-sizing: border-box;
     }
 
     .form-group input:focus {
-      border-color: rgba(138, 43, 226, 0.5);
-      box-shadow: 0 0 20px rgba(138, 43, 226, 0.15);
+      border-color: var(--accent-color);
     }
 
     .form-group input::placeholder {
-      color: #666680;
+      color: var(--text-muted);
     }
 
     .error-message {
-      background: rgba(220, 53, 69, 0.15);
+      background: rgba(220, 53, 69, 0.1);
       border: 1px solid rgba(220, 53, 69, 0.3);
       color: #ff6b7a;
-      padding: 0.75rem 1rem;
-      border-radius: 10px;
-      margin-bottom: 1.5rem;
-      font-size: 0.9rem;
+      padding: 0.6rem 1rem;
+      border-radius: 6px;
+      margin-bottom: 1.25rem;
+      font-size: 0.85rem;
       text-align: center;
     }
 
     .login-btn {
       width: 100%;
-      padding: 1rem;
-      background: linear-gradient(135deg, #8a2be2 0%, #6a1bb2 100%);
+      padding: 0.75rem;
+      background-color: var(--accent-color);
       border: none;
-      border-radius: 12px;
+      border-radius: 6px;
       color: white;
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: background-color 0.2s ease;
     }
 
     .login-btn:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 30px rgba(138, 43, 226, 0.4);
+      background-color: var(--accent-hover);
     }
 
     .login-btn:disabled {
-      opacity: 0.7;
+      opacity: 0.5;
       cursor: not-allowed;
     }
   `]

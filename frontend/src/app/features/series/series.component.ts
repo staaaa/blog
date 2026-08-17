@@ -11,68 +11,50 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
   template: `
     <div class="page-container">
       <ng-container *ngIf="!selectedSeries">
-        <header class="page-header">
-          <h1>📚 <span class="highlight">Serie</span> Gier</h1>
-          <p>Przeglądaj recenzje według serii</p>
-        </header>
+        <h1 class="page-title">Przegląd po seriach gier</h1>
 
-        <div class="categories-grid">
-          <a *ngFor="let serie of series" 
-             [routerLink]="['/series', serie.slug]" 
-             class="category-card">
-            <span class="category-name">{{ serie.name }}</span>
-            <span class="category-arrow">→</span>
-          </a>
-        </div>
+        <ul class="plain-list">
+          <li *ngFor="let serie of series">
+            <a [routerLink]="['/series', serie.slug]">{{ serie.name }}</a>
+          </li>
+        </ul>
 
-        <div class="empty-state" *ngIf="series.length === 0 && !loading">
-          <span class="empty-icon">📭</span>
-          <p>Brak serii do wyświetlenia</p>
-        </div>
+        <p class="empty" *ngIf="series.length === 0 && !loading">Brak serii.</p>
       </ng-container>
 
       <ng-container *ngIf="selectedSeries">
-        <header class="page-header">
-          <a routerLink="/series" class="back-link">← Wszystkie serie</a>
-          <h1>📚 <span class="highlight">{{ selectedSeries.name }}</span></h1>
-          <p>Recenzje gier z serii {{ selectedSeries.name }}</p>
-        </header>
+        <a routerLink="/series" class="back-link">← Wszystkie serie</a>
+        <h1 class="page-title">{{ selectedSeries.name }}</h1>
 
         <div class="reviews-grid" *ngIf="reviews.length > 0">
           <app-review-card *ngFor="let review of reviews" [review]="review"></app-review-card>
         </div>
 
-        <div class="empty-state" *ngIf="reviews.length === 0 && !loading">
-          <span class="empty-icon">📭</span>
-          <p>Brak recenzji w tej serii</p>
-        </div>
+        <p class="empty" *ngIf="reviews.length === 0 && !loading">Brak recenzji w tej serii.</p>
       </ng-container>
 
-      <div class="loading" *ngIf="loading">
-        <div class="spinner"></div>
-      </div>
+      <div class="loading" *ngIf="loading"><div class="spinner"></div></div>
     </div>
   `,
   styles: [`
-    .page-container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
-    .page-header { text-align: center; margin-bottom: 3rem; }
-    .page-header h1 { font-size: 2.5rem; font-weight: 800; color: white; margin: 0 0 0.5rem; }
-    .page-header .highlight { background: linear-gradient(135deg, #ffa500 0%, #ff6b00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .page-header p { color: #a0a0c0; font-size: 1.1rem; margin: 0; }
-    .back-link { display: inline-block; margin-bottom: 1rem; color: #ffc04d; text-decoration: none; font-weight: 500; }
-    .back-link:hover { color: #ffd580; }
-    .categories-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; }
-    .category-card { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 2rem; background: linear-gradient(145deg, #1e1e2f 0%, #252538 100%); border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.05); text-decoration: none; color: white; transition: all 0.3s ease; }
-    .category-card:hover { transform: translateY(-4px); border-color: rgba(255, 165, 0, 0.3); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); }
-    .category-name { font-size: 1.2rem; font-weight: 600; }
-    .category-arrow { font-size: 1.5rem; color: #ffa500; transition: transform 0.2s; }
-    .category-card:hover .category-arrow { transform: translateX(5px); }
-    .reviews-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2rem; }
-    .empty-state { text-align: center; padding: 4rem; color: #666680; }
-    .empty-icon { font-size: 4rem; display: block; margin-bottom: 1rem; }
-    .loading { display: flex; justify-content: center; padding: 4rem; }
-    .spinner { width: 50px; height: 50px; border: 4px solid rgba(255, 165, 0, 0.2); border-top-color: #ffa500; border-radius: 50%; animation: spin 1s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .page-container { max-width: 1000px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+    .page-title { font-size: 2rem; font-weight: 300; font-family: var(--font-serif); color: var(--text-color); margin: 0 0 2rem; }
+    .back-link { display: inline-block; margin-bottom: 1rem; color: var(--accent-color); text-decoration: underline; font-size: 0.9rem; font-weight: 500; }
+    .back-link:hover { color: var(--accent-hover); }
+
+    .plain-list { list-style: none; padding: 0; margin: 0; }
+    .plain-list li { padding: 0.6rem 0; border-bottom: 1px solid var(--border-color); }
+    .plain-list li:last-child { border-bottom: none; }
+    .plain-list a { color: var(--accent-color); text-decoration: underline; font-size: 1.1rem; transition: color 0.15s ease; }
+    .plain-list a:hover { color: var(--accent-hover); }
+
+    .reviews-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; max-width: 1100px; }
+    .empty { color: var(--text-muted); margin-top: 2rem; }
+    .loading { display: flex; justify-content: center; padding: 4rem 0; }
+
+    @media (max-width: 768px) {
+      .page-container { padding: 1.5rem 1rem; }
+    }
   `]
 })
 export class SeriesComponent implements OnInit {

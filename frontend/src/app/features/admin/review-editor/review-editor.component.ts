@@ -12,7 +12,7 @@ import Quill from 'quill';
   template: `
     <div class="editor-container">
       <header class="editor-header">
-        <h1>{{ isEdit ? '✏️ Edytuj Recenzję' : '📝 Nowa Recenzja' }}</h1>
+        <h1>{{ isEdit ? 'Edytuj Recenzję' : 'Nowa Recenzja' }}</h1>
       </header>
 
       <form (ngSubmit)="save()" class="review-form">
@@ -33,13 +33,13 @@ import Quill from 'quill';
 
           <div class="form-row">
             <div class="form-group">
-              <label for="releaseDate">📅 Data premiery gry</label>
+              <label for="releaseDate">Data premiery gry</label>
               <input type="date" id="releaseDate" [(ngModel)]="review.releaseDate" name="releaseDate">
             </div>
-            <div class="form-group" style="justify-content: center; margin-top: 1.25rem;">
-              <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; user-select: none;">
-                <input type="checkbox" [(ngModel)]="review.isDraft" name="isDraft" style="width: 22px; height: 22px; accent-color: #8a2be2; cursor: pointer;">
-                <span style="color: #c0c0d0; font-weight: 500;">💾 Zapisz jako wersję roboczą (widoczną tylko po zalogowaniu)</span>
+            <div class="form-group checkbox-container">
+              <label class="checkbox-label">
+                <input type="checkbox" [(ngModel)]="review.isDraft" name="isDraft">
+                <span>Zapisz jako wersję roboczą (widoczną tylko po zalogowaniu)</span>
               </label>
             </div>
           </div>
@@ -47,12 +47,12 @@ import Quill from 'quill';
           <div class="form-group">
             <label for="coverImage">Okładka (URL)</label>
             <div class="cover-upload">
-              <input type="text" id="coverImage" [(ngModel)]="review.coverImage" name="coverImage" placeholder="URL obrazka lub prześlij">
+              <input type="text" id="coverImage" [(ngModel)]="review.coverImage" name="coverImage" placeholder="URL obrazka lub prześlij z dysku">
               <input type="file" #fileInput (change)="uploadCover($event)" accept="image/*" style="display: none">
-              <button type="button" (click)="fileInput.click()" class="upload-btn">📁 Prześlij</button>
+              <button type="button" (click)="fileInput.click()" class="upload-btn">Prześlij plik</button>
             </div>
             <div class="cover-preview" *ngIf="review.coverImage">
-              <p style="color: #888; font-size: 0.8rem; margin-bottom: 0.5rem;">URL: {{ review.coverImage }}</p>
+              <p class="preview-url">URL: {{ review.coverImage }}</p>
               <img [src]="getImageUrl(review.coverImage)" alt="Podgląd" (error)="onImageError($event)">
             </div>
           </div>
@@ -66,19 +66,18 @@ import Quill from 'quill';
             <div class="form-group">
               <label>Gatunki</label>
               <div class="tags-select">
-                <span *ngFor="let genre of genres" 
-                      class="tag-wrapper">
+                <span *ngFor="let genre of genres" class="tag-wrapper">
                   <span (click)="toggleGenre(genre.id)" 
                         class="tag" 
                         [class.selected]="selectedGenreIds.includes(genre.id)">
                     {{ genre.name }}
                   </span>
-                  <button type="button" (click)="deleteGenre(genre)" class="tag-delete" title="Usuń gatunek">🗑️</button>
+                  <button type="button" (click)="deleteGenre(genre)" class="tag-delete" title="Usuń gatunek">✕</button>
                 </span>
               </div>
               <div class="add-new">
                 <input type="text" [(ngModel)]="newGenre" name="newGenre" placeholder="Nowy gatunek">
-                <button type="button" (click)="addGenre()">+</button>
+                <button type="button" (click)="addGenre()">Dodaj</button>
               </div>
             </div>
           </div>
@@ -92,12 +91,12 @@ import Quill from 'quill';
               </select>
               <div class="add-new">
                 <input type="text" [(ngModel)]="newSeries" name="newSeries" placeholder="Nowa seria">
-                <button type="button" (click)="addSeries()">+</button>
+                <button type="button" (click)="addSeries()">Dodaj</button>
               </div>
               <div class="category-delete-list" *ngIf="series.length > 0">
                 <span *ngFor="let s of series" class="deletable-tag">
                   {{ s.name }}
-                  <button type="button" (click)="deleteSeries(s)" class="tag-delete" title="Usuń serię">🗑️</button>
+                  <button type="button" (click)="deleteSeries(s)" class="tag-delete" title="Usuń serię">✕</button>
                 </span>
               </div>
             </div>
@@ -110,12 +109,12 @@ import Quill from 'quill';
               </select>
               <div class="add-new">
                 <input type="text" [(ngModel)]="newStudio" name="newStudio" placeholder="Nowe studio">
-                <button type="button" (click)="addStudio()">+</button>
+                <button type="button" (click)="addStudio()">Dodaj</button>
               </div>
               <div class="category-delete-list" *ngIf="studios.length > 0">
                 <span *ngFor="let s of studios" class="deletable-tag">
                   {{ s.name }}
-                  <button type="button" (click)="deleteStudio(s)" class="tag-delete" title="Usuń studio">🗑️</button>
+                  <button type="button" (click)="deleteStudio(s)" class="tag-delete" title="Usuń studio">✕</button>
                 </span>
               </div>
             </div>
@@ -128,23 +127,23 @@ import Quill from 'quill';
           
           <div class="ratings-grid">
             <div class="rating-input">
-              <label>📖 Fabuła</label>
+              <label>Fabuła</label>
               <input type="number" [(ngModel)]="review.storyRating" name="storyRating" min="0" max="10" step="0.5" required>
             </div>
             <div class="rating-input">
-              <label>🎵 Muzyka</label>
+              <label>Muzyka</label>
               <input type="number" [(ngModel)]="review.musicRating" name="musicRating" min="0" max="10" step="0.5" required>
             </div>
             <div class="rating-input">
-              <label>🎨 Grafika</label>
+              <label>Grafika</label>
               <input type="number" [(ngModel)]="review.graphicsRating" name="graphicsRating" min="0" max="10" step="0.5" required>
             </div>
             <div class="rating-input">
-              <label>⚡ Optymalizacja</label>
+              <label>Optymalizacja</label>
               <input type="number" [(ngModel)]="review.optimizationRating" name="optimizationRating" min="0" max="10" step="0.5" required>
             </div>
             <div class="rating-input">
-              <label>🎮 Gameplay</label>
+              <label>Gameplay</label>
               <input type="number" [(ngModel)]="review.gameplayRating" name="gameplayRating" min="0" max="10" step="0.5" required>
             </div>
           </div>
@@ -152,11 +151,11 @@ import Quill from 'quill';
           <div class="custom-ratings">
             <h3>Dodatkowe skale ocen</h3>
             <div class="custom-rating-item" *ngFor="let cr of customRatings; let i = index">
-              <input type="text" [(ngModel)]="cr.scaleName" [name]="'crName' + i" placeholder="Nazwa skali (np. Zagadki)">
+              <input type="text" [(ngModel)]="cr.scaleName" [name]="'crName' + i" placeholder="Nazwa skali (np. Klimat)">
               <input type="number" [(ngModel)]="cr.value" [name]="'crValue' + i" min="0" max="10" step="0.5">
-              <button type="button" (click)="removeCustomRating(i)" class="remove-btn">✕</button>
+              <button type="button" (click)="removeCustomRating(i)" class="remove-btn">Usuń</button>
             </div>
-            <button type="button" (click)="addCustomRating()" class="add-rating-btn">+ Dodaj skalę</button>
+            <button type="button" (click)="addCustomRating()" class="add-rating-btn">+ Dodaj skalę ocen</button>
           </div>
 
           <div class="average-display">
@@ -167,22 +166,22 @@ import Quill from 'quill';
 
         <!-- Hardware Specs -->
         <section class="form-section">
-          <h2>🖥️ Specyfikacja sprzętowa</h2>
+          <h2>Specyfikacja sprzętowa</h2>
           <textarea 
             [(ngModel)]="review.hardwareSpecs" 
             name="hardwareSpecs" 
-            rows="4" 
-            placeholder="np. RTX 3080, Ryzen 9 5900X, 32GB RAM..."
+            rows="3" 
+            placeholder="np. RTX 4070, Ryzen 7 7800X3D, 32GB RAM..."
           ></textarea>
         </section>
 
         <!-- Content Editor -->
         <section class="form-section">
-          <h2>📝 Treść recenzji</h2>
+          <h2>Treść recenzji</h2>
           
           <div class="editor-toolbar">
             <button type="button" (click)="insertSpoiler()" class="toolbar-btn spoiler-btn">
-              🔒 Wstaw spoiler
+              Wstaw spoiler
             </button>
           </div>
           
@@ -193,84 +192,93 @@ import Quill from 'quill';
         <div class="form-actions">
           <button type="button" (click)="cancel()" class="cancel-btn">Anuluj</button>
           <button type="submit" class="save-btn" [disabled]="saving">
-            {{ saving ? 'Zapisywanie...' : (isEdit ? 'Zapisz zmiany' : 'Opublikuj recenzję') }}
+            {{ saving ? 'Zapisywanie...' : (isEdit ? 'Zapisz recenzję' : 'Opublikuj recenzję') }}
           </button>
         </div>
       </form>
     </div>
   `,
   styles: [`
-    .editor-container { max-width: 1000px; margin: 0 auto; padding: 2rem; }
-    .editor-header h1 { font-size: 2rem; color: white; margin: 0 0 2rem; }
+    .editor-container { max-width: 1000px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+    .editor-header h1 { font-size: 2rem; font-family: var(--font-serif); font-weight: 300; color: var(--text-color); margin: 0 0 2rem; letter-spacing: -0.5px; }
 
-    .form-section { background: linear-gradient(145deg, #1e1e2f 0%, #252538 100%); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid rgba(255, 255, 255, 0.05); }
-    .form-section h2 { font-size: 1.2rem; color: #b47cff; margin: 0 0 1.5rem; font-weight: 600; }
-    .form-section h3 { font-size: 1rem; color: #a0a0c0; margin: 1.5rem 0 1rem; font-weight: 500; }
+    .form-section { background-color: var(--card-bg); border-radius: 12px; padding: 1.75rem; margin-bottom: 2rem; border: 1px solid var(--border-color); box-shadow: 0 4px 12px var(--shadow); }
+    .form-section h2 { font-size: 1.25rem; font-family: var(--font-serif); font-weight: 300; color: var(--text-color); margin: 0 0 1.5rem; }
+    .form-section h3 { font-size: 1.05rem; font-family: var(--font-serif); font-weight: 300; color: var(--text-muted); margin: 1.5rem 0 1rem; }
 
     .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
     .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
-    .form-group label { color: #c0c0d0; font-weight: 500; font-size: 0.9rem; }
-    .form-group input, .form-group select, .form-group textarea { padding: 0.8rem 1rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; color: white; font-size: 1rem; outline: none; transition: border-color 0.2s; }
-    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: rgba(138, 43, 226, 0.5); }
+    .form-group label { color: var(--text-color); font-weight: 500; font-size: 0.9rem; }
+    .form-group input, .form-group select, .form-group textarea { padding: 0.65rem 0.85rem; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-color); font-size: 0.95rem; outline: none; transition: border-color 0.2s ease; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent-color); }
     .form-group select { cursor: pointer; }
-    .form-group select option { background: #1e1e2f; }
+    .form-group select option { background: var(--card-bg); }
     .form-group textarea { resize: vertical; min-height: 80px; }
 
-    .cover-upload { display: flex; gap: 0.5rem; }
+    .checkbox-container { justify-content: center; }
+    .checkbox-label { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; user-select: none; }
+    .checkbox-label input { width: 18px; height: 18px; accent-color: var(--accent-color); cursor: pointer; }
+    .checkbox-label span { color: var(--text-color); font-size: 0.9rem; font-weight: 500; }
+
+    .cover-upload { display: flex; gap: 0.75rem; }
     .cover-upload input { flex: 1; }
-    .upload-btn { padding: 0.8rem 1rem; background: rgba(138, 43, 226, 0.2); border: 1px solid rgba(138, 43, 226, 0.3); border-radius: 10px; color: #b47cff; cursor: pointer; white-space: nowrap; }
+    .upload-btn { padding: 0.65rem 1.25rem; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-color); cursor: pointer; white-space: nowrap; font-size: 0.9rem; font-weight: 500; transition: border-color 0.2s ease, color 0.2s ease; }
+    .upload-btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
     .cover-preview { margin-top: 1rem; }
-    .cover-preview img { max-width: 300px; border-radius: 10px; }
+    .cover-preview img { max-width: 280px; border-radius: 6px; border: 1px solid var(--border-color); }
+    .preview-url { color: var(--text-muted); font-size: 0.75rem; margin-bottom: 0.5rem; }
 
     .tags-select { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
     .tag-wrapper { display: inline-flex; align-items: center; gap: 0.25rem; }
-    .tag { padding: 0.5rem 1rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; color: #a0a0c0; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; }
-    .tag:hover { background: rgba(138, 43, 226, 0.15); }
-    .tag.selected { background: rgba(138, 43, 226, 0.25); border-color: rgba(138, 43, 226, 0.5); color: #b47cff; }
-    .tag-delete { background: none; border: none; cursor: pointer; font-size: 0.7rem; padding: 0.2rem; opacity: 0.5; transition: opacity 0.2s; }
-    .tag-delete:hover { opacity: 1; }
-    .category-delete-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
-    .deletable-tag { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.3rem 0.6rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; color: #a0a0c0; font-size: 0.8rem; }
+    .tag { padding: 0.4rem 0.8rem; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-muted); cursor: pointer; transition: all 0.2s ease; font-size: 0.85rem; font-weight: 500; }
+    .tag:hover { border-color: var(--accent-color); color: var(--accent-color); }
+    .tag.selected { background: var(--input-bg); border-color: var(--accent-color); color: var(--accent-color); }
+    .tag-delete { background: none; border: none; cursor: pointer; font-size: 0.85rem; color: #ff6b7a; padding: 0.2rem; transition: opacity 0.2s; }
+    .tag-delete:hover { opacity: 0.8; }
+    .category-delete-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+    .deletable-tag { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.5rem; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-muted); font-size: 0.8rem; }
 
-    .add-new { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
-    .add-new input { flex: 1; padding: 0.5rem 0.8rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; color: white; font-size: 0.85rem; }
-    .add-new button { padding: 0.5rem 0.8rem; background: rgba(0, 200, 150, 0.2); border: 1px solid rgba(0, 200, 150, 0.3); border-radius: 8px; color: #00d9a5; cursor: pointer; font-size: 1rem; }
+    .add-new { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+    .add-new input { flex: 1; padding: 0.4rem 0.75rem; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-color); font-size: 0.85rem; }
+    .add-new button { padding: 0.4rem 1rem; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--accent-color); cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: border-color 0.2s ease; }
+    .add-new button:hover { border-color: var(--accent-color); }
 
-    .ratings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
+    .ratings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; }
     .rating-input { display: flex; flex-direction: column; gap: 0.5rem; }
-    .rating-input label { color: #c0c0d0; font-size: 0.9rem; }
-    .rating-input input { padding: 0.8rem; text-align: center; font-size: 1.2rem; font-weight: 600; }
+    .rating-input label { color: var(--text-muted); font-size: 0.85rem; font-weight: 500; }
+    .rating-input input { padding: 0.65rem; text-align: center; font-size: 1.15rem; font-weight: 700; color: var(--accent-color); }
 
     .custom-ratings { margin-top: 1.5rem; }
     .custom-rating-item { display: flex; gap: 0.75rem; margin-bottom: 0.75rem; align-items: center; }
     .custom-rating-item input:first-child { flex: 1; }
-    .custom-rating-item input:nth-child(2) { width: 80px; text-align: center; }
-    .remove-btn { padding: 0.5rem 0.7rem; background: rgba(220, 53, 69, 0.2); border: 1px solid rgba(220, 53, 69, 0.3); border-radius: 8px; color: #ff6b7a; cursor: pointer; }
-    .add-rating-btn { padding: 0.6rem 1rem; background: rgba(138, 43, 226, 0.15); border: 1px dashed rgba(138, 43, 226, 0.3); border-radius: 8px; color: #b47cff; cursor: pointer; width: 100%; margin-top: 0.5rem; }
+    .custom-rating-item input:nth-child(2) { width: 80px; text-align: center; color: var(--accent-color); font-weight: 700; }
+    .remove-btn { padding: 0.5rem 0.80rem; background: transparent; border: 1px solid rgba(220, 53, 69, 0.4); border-radius: 6px; color: #ff6b7a; cursor: pointer; font-size: 0.85rem; font-weight: 500; }
+    .remove-btn:hover { background: rgba(220, 53, 69, 0.1); }
+    .add-rating-btn { padding: 0.5rem 1rem; background: transparent; border: 1px dashed var(--border-color); border-radius: 6px; color: var(--accent-color); cursor: pointer; width: 100%; margin-top: 0.5rem; font-size: 0.85rem; font-weight: 500; transition: border-color 0.2s ease; }
+    .add-rating-btn:hover { border-color: var(--accent-color); }
 
-    .average-display { display: flex; align-items: center; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.05); }
-    .average-display .label { color: #a0a0c0; font-weight: 500; }
-    .average-display .value { font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #8a2be2 0%, #00d4aa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .average-display { display: flex; align-items: center; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color); }
+    .average-display .label { color: var(--text-muted); font-weight: 500; }
+    .average-display .value { font-size: 1.8rem; font-weight: 800; color: var(--accent-color); }
 
     .editor-toolbar { display: flex; gap: 0.75rem; margin-bottom: 0.75rem; }
-    .toolbar-btn { padding: 0.6rem 1rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: #c0c0d0; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; }
-    .toolbar-btn:hover { background: rgba(255, 255, 255, 0.1); }
-    .toolbar-btn.spoiler-btn { background: rgba(255, 165, 0, 0.15); border-color: rgba(255, 165, 0, 0.3); color: #ffc04d; }
+    .toolbar-btn { padding: 0.5rem 1rem; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-color); cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: border-color 0.2s ease, color 0.2s ease; }
+    .toolbar-btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
+    .toolbar-btn.spoiler-btn { border-color: rgba(255, 122, 0, 0.3); color: var(--accent-color); }
 
-    .quill-container { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; min-height: 400px; }
+    .quill-container { background: var(--input-bg); border-radius: 10px; min-height: 400px; }
     :host ::ng-deep .ql-container { border: none !important; font-size: 1rem; }
-    :host ::ng-deep .ql-editor { min-height: 350px; color: #d0d0e0; }
-    :host ::ng-deep .ql-editor.ql-blank::before { color: #666680; }
-    :host ::ng-deep .ql-snow .ql-stroke { stroke: #a0a0c0; }
-    :host ::ng-deep .ql-snow .ql-fill { fill: #a0a0c0; }
-    :host ::ng-deep .ql-snow .ql-picker { color: #a0a0c0; }
-    :host ::ng-deep .ql-snow .ql-picker-options { background: #1e1e2f; border-color: rgba(255, 255, 255, 0.1); }
+    :host ::ng-deep .ql-editor { min-height: 350px; color: var(--text-color); }
+    :host ::ng-deep .ql-editor p { margin-bottom: 0.4rem; line-height: 1.7; }
+    :host ::ng-deep .ql-editor.ql-blank::before { color: var(--text-muted); }
+    :host ::ng-deep .ql-snow .ql-picker-options { background: var(--card-bg); border-color: var(--border-color); }
 
     .form-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; }
-    .cancel-btn { padding: 0.8rem 1.5rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; color: #a0a0c0; cursor: pointer; font-size: 1rem; }
-    .save-btn { padding: 0.8rem 2rem; background: linear-gradient(135deg, #8a2be2 0%, #6a1bb2 100%); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; font-size: 1rem; transition: all 0.2s; }
-    .save-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(138, 43, 226, 0.4); }
-    .save-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+    .cancel-btn { padding: 0.65rem 1.5rem; background: transparent; border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; font-weight: 500; transition: border-color 0.2s ease, color 0.2s ease; }
+    .cancel-btn:hover { border-color: var(--text-color); color: var(--text-color); }
+    .save-btn { padding: 0.65rem 2rem; background-color: var(--accent-color); border: none; border-radius: 6px; color: white; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: background-color 0.2s ease; }
+    .save-btn:hover:not(:disabled) { background-color: var(--accent-hover); }
+    .save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   `]
 })
 export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {

@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ApiService, Review } from '../../core/services/api.service';
 import { RatingDisplayComponent } from '../../shared/components/rating-display/rating-display.component';
@@ -8,7 +8,7 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
 @Component({
   selector: 'app-review-detail',
   standalone: true,
-  imports: [CommonModule, RatingDisplayComponent],
+  imports: [CommonModule, RouterLink, RatingDisplayComponent],
   template: `
     <div class="review-container" *ngIf="review">
       <header class="review-header">
@@ -24,30 +24,30 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
           <div class="categories">
             <a
               *ngFor="let genre of review.genres"
-              [href]="'/genres/' + genre.slug"
-              class="category-tag genre"
+              [routerLink]="['/genres', genre.slug]"
+              class="category-link"
             >
               {{ genre.name }}
             </a>
             <a
               *ngIf="review.series"
-              [href]="'/series/' + review.series.slug"
-              class="category-tag series"
+              [routerLink]="['/series', review.series.slug]"
+              class="category-link"
             >
-              📚 {{ review.series.name }}
+              Seria: {{ review.series.name }}
             </a>
             <a
               *ngIf="review.studio"
-              [href]="'/studios/' + review.studio.slug"
-              class="category-tag studio"
+              [routerLink]="['/studios', review.studio.slug]"
+              class="category-link"
             >
-              🏢 {{ review.studio.name }}
+              Studio: {{ review.studio.name }}
             </a>
           </div>
 
           <div class="meta">
-            <span class="date">📅 {{ review.updatedAt | date: 'dd MMMM yyyy' }}</span>
-            <span class="date release" *ngIf="review.releaseDate">🎮 Premiera: {{ review.releaseDate | date: 'dd MMMM yyyy' }}</span>
+            <span class="date">Aktualizacja: {{ review.updatedAt | date: 'dd.MM.yyyy' }}</span>
+            <span class="date release" *ngIf="review.releaseDate">Premiera: {{ review.releaseDate | date: 'dd.MM.yyyy' }}</span>
           </div>
         </div>
       </header>
@@ -65,7 +65,7 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
       </section>
 
       <section class="hardware-specs" *ngIf="review.hardwareSpecs">
-        <h3>🖥️ Specyfikacja sprzętowa</h3>
+        <h3>Specyfikacja sprzętowa</h3>
         <div class="specs-content" [innerHTML]="sanitize(review.hardwareSpecs)"></div>
       </section>
 
@@ -80,7 +80,6 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
     </div>
 
     <div class="error" *ngIf="error">
-      <span class="error-icon">❌</span>
       <p>{{ error }}</p>
     </div>
 
@@ -95,14 +94,15 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
       .review-container {
         max-width: 1000px;
         margin: 0 auto;
-        padding: 2rem;
+        padding: 2.5rem 1.5rem;
       }
       .review-header {
         position: relative;
-        margin-bottom: 2rem;
-        border-radius: 20px;
+        margin-bottom: 2.5rem;
+        border-radius: 12px;
         overflow: hidden;
-        background: linear-gradient(145deg, #1e1e2f 0%, #252538 100%);
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
       }
       .cover-image {
         position: relative;
@@ -117,141 +117,147 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
       .cover-overlay {
         position: absolute;
         inset: 0;
-        background: linear-gradient(to top, rgba(20, 20, 35, 1) 0%, transparent 60%);
+        background: linear-gradient(to top, var(--card-bg) 0%, transparent 80%);
       }
       .header-content {
         padding: 2rem;
         position: relative;
-        margin-top: -80px;
+        margin-top: -60px;
+        z-index: 2;
       }
       .game-title {
-        font-size: 2.5rem;
-        font-weight: 800;
-        color: white;
+        font-size: 2.25rem;
+        font-weight: 300;
+        font-family: var(--font-serif);
+        letter-spacing: -0.5px;
+        color: var(--text-color);
         margin: 0 0 0.5rem;
-        text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
       }
       .review-title {
-        font-size: 1.3rem;
-        font-weight: 500;
-        color: #a0a0c0;
+        font-size: 1.2rem;
+        font-weight: 300;
+        font-family: var(--font-serif);
+        color: var(--text-muted);
         margin: 0 0 1.5rem;
       }
       .categories {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.75rem;
-        margin-bottom: 1rem;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
       }
-      .category-tag {
-        padding: 0.4rem 0.9rem;
-        border-radius: 20px;
-        font-size: 0.85rem;
+      .category-link {
+        font-size: 0.95rem;
         font-weight: 500;
-        text-decoration: none;
-        transition: all 0.2s ease;
+        text-decoration: underline;
+        color: var(--accent-color);
+        transition: color 0.2s ease;
       }
-      .category-tag.genre {
-        background: rgba(138, 43, 226, 0.2);
-        color: #b47cff;
-        border: 1px solid rgba(138, 43, 226, 0.3);
-      }
-      .category-tag.series {
-        background: rgba(255, 165, 0, 0.2);
-        color: #ffc04d;
-        border: 1px solid rgba(255, 165, 0, 0.3);
-      }
-      .category-tag.studio {
-        background: rgba(0, 200, 150, 0.2);
-        color: #00d9a5;
-        border: 1px solid rgba(0, 200, 150, 0.3);
-      }
-      .category-tag:hover {
-        transform: translateY(-2px);
+      .category-link:hover {
+        color: var(--accent-hover);
       }
       .meta {
-        color: #666680;
-        font-size: 0.9rem;
+        color: var(--text-muted);
+        font-size: 0.85rem;
         display: flex;
         flex-wrap: wrap;
-        gap: 1rem;
+        gap: 1.5rem;
+        border-top: 1px solid var(--border-color);
+        padding-top: 1rem;
       }
       .meta .release {
-        color: #00d9a5;
+        color: var(--accent-color);
       }
       .review-ratings {
-        margin-bottom: 2rem;
+        margin-bottom: 2.5rem;
       }
       .hardware-specs {
-        background: linear-gradient(145deg, rgba(30, 30, 50, 0.6) 0%, rgba(20, 20, 35, 0.8) 100%);
-        border-radius: 16px;
+        background-color: var(--card-bg);
+        border-radius: 12px;
         padding: 1.5rem;
-        margin-bottom: 2rem;
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        margin-bottom: 2.5rem;
+        border: 1px solid var(--border-color);
       }
       .hardware-specs h3 {
         margin: 0 0 1rem;
-        color: #00d4aa;
-        font-size: 1.1rem;
+        color: var(--text-color);
+        font-size: 1.15rem;
+        font-weight: 300;
+        font-family: var(--font-serif);
       }
       .specs-content {
-        color: #c0c0d0;
+        color: var(--text-color);
         font-size: 0.95rem;
         line-height: 1.6;
       }
       .review-content {
-        background: linear-gradient(145deg, rgba(30, 30, 50, 0.5) 0%, rgba(20, 20, 35, 0.7) 100%);
-        border-radius: 16px;
-        padding: 2rem;
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        margin: 0 auto;
+        padding: 0;
       }
       .content-body {
-        color: #d0d0e0;
-        font-size: 1.05rem;
-        line-height: 1.8;
+        max-width: 100%;
+        margin: 0 auto;
+        color: var(--text-color);
+        font-size: 1.15rem;
+        line-height: 1.7;
       }
       :host ::ng-deep .content-body p {
-        margin-bottom: 1.5rem;
+        margin-bottom: 0.4rem;
+        line-height: 1.7;
+      }
+      :host ::ng-deep .content-body p:empty,
+      :host ::ng-deep .content-body p:has(br:only-child) {
+        min-height: 1.2em;
+        margin-bottom: 0.4rem;
+      }
+      :host ::ng-deep .content-body h1,
+      :host ::ng-deep .content-body h2,
+      :host ::ng-deep .content-body h3 {
+        font-family: var(--font-serif);
+        font-weight: 300;
+        color: var(--text-color);
+        margin: 2rem 0 1rem;
       }
       :host ::ng-deep .content-body img {
         max-width: 100%;
         height: auto;
-        border-radius: 12px;
-        margin: 1.5rem 0;
+        border-radius: 8px;
+        margin: 2rem 0;
         cursor: zoom-in;
-        transition: transform 0.2s;
+        transition: transform 0.2s ease;
       }
       :host ::ng-deep .content-body img:hover {
-        transform: scale(1.02);
+        transform: scale(1.01);
       }
-      :host ::ng-deep .content-body h2,
-      :host ::ng-deep .content-body h3 {
-        color: white;
-        margin: 2rem 0 1rem;
-      }
-
+      
       /* Spoiler styles */
       :host ::ng-deep .spoiler-box {
         position: relative;
-        margin: 1rem 0;
-        padding: 1rem;
-        background: rgba(255, 165, 0, 0.1);
-        border: 1px solid rgba(255, 165, 0, 0.3);
-        border-radius: 10px;
+        margin: 1.5rem 0;
+        padding: 1.25rem;
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-left: 3px solid var(--accent-color);
+        border-radius: 6px;
         cursor: pointer;
       }
       :host ::ng-deep .spoiler-box .spoiler-label {
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        color: #ffc04d;
-        font-weight: 500;
+        color: var(--accent-color);
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
         margin-bottom: 0.5rem;
       }
       :host ::ng-deep .spoiler-box .spoiler-text {
         filter: blur(15px);
         user-select: none;
         transition: filter 0.3s;
+        color: var(--text-color);
       }
       :host ::ng-deep .spoiler-box.revealed .spoiler-text {
         filter: none;
@@ -266,32 +272,16 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 4rem;
-        gap: 1rem;
-        color: #a0a0c0;
+        padding: 6rem 0;
+        gap: 1.25rem;
+        color: var(--text-muted);
       }
-      .spinner {
-        width: 50px;
-        height: 50px;
-        border: 4px solid rgba(138, 43, 226, 0.2);
-        border-top-color: #8a2be2;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-      }
-      .error-icon {
-        font-size: 3rem;
-      }
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-
+      
       /* Lightbox */
       .lightbox {
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.95);
+        background: rgba(18, 18, 20, 0.97);
         z-index: 9999;
         display: flex;
         align-items: center;
@@ -303,27 +293,69 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
         max-width: 95vw;
         max-height: 95vh;
         object-fit: contain;
-        border-radius: 8px;
+        border-radius: 4px;
       }
       .lightbox-close {
         position: absolute;
         top: 20px;
         right: 20px;
-        background: rgba(255, 255, 255, 0.1);
-        border: none;
-        color: white;
-        font-size: 1.5rem;
-        width: 50px;
-        height: 50px;
+        background: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        font-size: 1.25rem;
+        width: 44px;
+        height: 44px;
         border-radius: 50%;
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: border-color 0.2s ease;
+      }
+      .lightbox-close:hover {
+        border-color: var(--accent-color);
+        color: var(--accent-color);
       }
       @keyframes fadeIn {
-        from {
-          opacity: 0;
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      /* Mobile Styles */
+      @media (max-width: 768px) {
+        .review-container {
+          padding: 1rem 0;
         }
-        to {
-          opacity: 1;
+        .review-header {
+          border-radius: 0;
+          border-left: none;
+          border-right: none;
+        }
+        .cover-image {
+          aspect-ratio: 16 / 9;
+        }
+        .header-content {
+          padding: 1.5rem 1rem;
+          margin-top: -40px;
+        }
+        .game-title {
+          font-size: 1.75rem;
+        }
+        .review-ratings {
+          padding: 0 1rem;
+        }
+        .hardware-specs {
+          border-radius: 0;
+          border-left: none;
+          border-right: none;
+          padding: 1.5rem 1rem;
+        }
+        .content-body {
+          padding: 0 1.25rem; /* Paragrafy rozciągają się na całą szerokość z małym paddingiem */
+        }
+        .lightbox-close {
+          top: 10px;
+          right: 10px;
         }
       }
     `,
@@ -381,11 +413,11 @@ export class ReviewDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   processContent(content: string): SafeHtml {
-    // Parse [SPOILER]...[/SPOILER] text markers
+    // Parse [SPOILER]...[/SPOILER] text markers without emojis
     let processed = content.replace(
       /\[SPOILER\]([\s\S]*?)\[\/SPOILER\]/gi,
       `<div class="spoiler-box" data-spoiler="true">
-        <div class="spoiler-label">🔒 <span>Kliknij, aby odsłonić spoiler</span></div>
+        <div class="spoiler-label">[SPOILER] <span>Kliknij, aby odsłonić treść</span></div>
         <div class="spoiler-text">$1</div>
       </div>`,
     );

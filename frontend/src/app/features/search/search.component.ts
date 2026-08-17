@@ -12,8 +12,8 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
   template: `
     <div class="search-container">
       <header class="search-header">
-        <h1>🔍 Wyniki wyszukiwania</h1>
-        <p *ngIf="query">dla: <strong>{{ query }}</strong></p>
+        <h1>Wyniki wyszukiwania</h1>
+        <p *ngIf="query">dla frazy: <strong class="highlight">"{{ query }}"</strong></p>
       </header>
 
       <div class="search-box">
@@ -36,8 +36,7 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
       </div>
 
       <div class="empty-state" *ngIf="reviews.length === 0 && !loading && searched">
-        <span class="empty-icon">🔎</span>
-        <p>Brak wyników dla "{{ query }}"</p>
+        <p>Brak wyników dla frazy "{{ query }}". Spróbuj innych słów kluczowych.</p>
       </div>
 
       <div class="loading" *ngIf="loading">
@@ -46,23 +45,85 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
     </div>
   `,
   styles: [`
-    .search-container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
-    .search-header { text-align: center; margin-bottom: 2rem; }
-    .search-header h1 { font-size: 2rem; color: white; margin: 0 0 0.5rem; }
-    .search-header p { color: #a0a0c0; margin: 0; }
-    .search-header strong { color: #b47cff; }
-    .search-box { display: flex; max-width: 600px; margin: 0 auto 2rem; gap: 1rem; }
-    .search-input { flex: 1; padding: 1rem 1.5rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: white; font-size: 1rem; outline: none; transition: border-color 0.2s; }
-    .search-input:focus { border-color: rgba(138, 43, 226, 0.5); }
-    .search-btn { padding: 1rem 2rem; background: linear-gradient(135deg, #8a2be2 0%, #6a1bb2 100%); border: none; border-radius: 12px; color: white; font-weight: 600; cursor: pointer; transition: transform 0.2s; }
-    .search-btn:hover { transform: translateY(-2px); }
-    .results-count { text-align: center; color: #a0a0c0; margin-bottom: 2rem; }
-    .reviews-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2rem; }
-    .empty-state { text-align: center; padding: 4rem; color: #666680; }
-    .empty-icon { font-size: 4rem; display: block; margin-bottom: 1rem; }
-    .loading { display: flex; justify-content: center; padding: 4rem; }
-    .spinner { width: 50px; height: 50px; border: 4px solid rgba(138, 43, 226, 0.2); border-top-color: #8a2be2; border-radius: 50%; animation: spin 1s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .search-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem;
+    }
+    .search-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .search-header h1 {
+      font-size: 2.25rem;
+      font-weight: 300;
+      font-family: var(--font-serif);
+      letter-spacing: -0.5px;
+      color: var(--text-color);
+      margin: 0 0 0.5rem;
+    }
+    .search-header p {
+      color: var(--text-muted);
+      margin: 0;
+    }
+    .search-header .highlight {
+      color: var(--accent-color);
+    }
+    .search-box {
+      display: flex;
+      max-width: 500px;
+      margin: 0 auto 2.5rem;
+      gap: 0.75rem;
+    }
+    .search-input {
+      flex: 1;
+      padding: 0.6rem 1rem;
+      background: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-color);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+    .search-input:focus {
+      border-color: var(--accent-color);
+    }
+    .search-btn {
+      padding: 0.6rem 1.25rem;
+      background-color: var(--accent-color);
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background-color 0.2s ease;
+    }
+    .search-btn:hover {
+      background-color: var(--accent-hover);
+    }
+    .results-count {
+      text-align: center;
+      color: var(--text-muted);
+      margin-bottom: 2.5rem;
+      font-size: 0.9rem;
+    }
+    .reviews-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 2.5rem;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 6rem 0;
+      color: var(--text-muted);
+    }
+    .loading {
+      display: flex;
+      justify-content: center;
+      padding: 6rem 0;
+    }
   `]
 })
 export class SearchComponent implements OnInit {

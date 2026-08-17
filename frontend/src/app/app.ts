@@ -12,12 +12,14 @@ import { NavbarComponent } from './shared/components/navbar/navbar.component';
       <router-outlet></router-outlet>
     </main>
   `,
-  styles: [`
-    .main-content {
-      min-height: calc(100vh - 70px);
-    }
-  `]
+  styles: [
+    `
+      .main-content {
+        min-height: calc(100vh - 70px);
+      }
+    `,
+  ],
 })
 export class App {
-  title = 'GameReviews';
+  title = 'Recenzje gier';
 }
