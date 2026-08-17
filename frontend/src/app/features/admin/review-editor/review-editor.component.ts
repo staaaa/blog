@@ -2,6 +2,7 @@ import { Component, OnInit, AfterViewInit, OnDestroy, inject, ViewChild, Element
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { ApiService, Category, CustomRating, Review } from '../../../core/services/api.service';
 import Quill from 'quill';
 
@@ -365,6 +366,8 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.review.content) {
       this.quill.root.innerHTML = this.review.content;
     }
+
+    this.setupImageInterceptors();
   }
 
   loadCategories(): void {
@@ -529,6 +532,61 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     console.error('Image failed to load:', (event.target as HTMLImageElement).src);
   }
 
+  private setupImageInterceptors(): void {
+    if (!this.quill) return;
+
+    // 1. Intercept clipboard paste (Ctrl+V / Cmd+V / screenshot)
+    this.quill.root.addEventListener('paste', (e: ClipboardEvent) => {
+      const clipboardData = e.clipboardData;
+      if (!clipboardData) return;
+
+      const items = Array.from(clipboardData.items || []);
+      const imageItems = items.filter(item => item.type.startsWith('image/'));
+
+      if (imageItems.length > 0) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        for (const item of imageItems) {
+          const file = item.getAsFile();
+          if (file) {
+            this.uploadAndInsertImage(file);
+          }
+        }
+      }
+    });
+
+    // 2. Intercept drag & drop of images from desktop/file manager
+    this.quill.root.addEventListener('drop', (e: DragEvent) => {
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        const imageFiles = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+        if (imageFiles.length > 0) {
+          e.preventDefault();
+          e.stopPropagation();
+
+          for (const file of imageFiles) {
+            this.uploadAndInsertImage(file);
+          }
+        }
+      }
+    });
+  }
+
+  uploadAndInsertImage(file: File): void {
+    const range = this.quill.getSelection(true) || { index: this.quill.getLength(), length: 0 };
+    
+    this.api.uploadImage(file).subscribe({
+      next: (res) => {
+        this.quill.insertEmbed(range.index, 'image', res.url);
+        this.quill.setSelection(range.index + 1, 0);
+      },
+      error: (err) => {
+        console.error('Image upload failed:', err);
+        alert('Błąd przesyłania zdjęcia: ' + (err.error?.error || err.message));
+      }
+    });
+  }
+
   selectLocalImage(): void {
     const input = document.createElement('input');
     input.setAttribute('type', 'file');
@@ -538,16 +596,7 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     input.onchange = () => {
       const file = input.files?.[0];
       if (file) {
-        this.api.uploadImage(file).subscribe({
-          next: (res) => {
-            const range = this.quill.getSelection(true);
-            this.quill.insertEmbed(range.index, 'image', res.url);
-          },
-          error: (err) => {
-            console.error('Image upload failed:', err);
-            alert('Błąd przesyłania zdjęcia do recenzji');
-          }
-        });
+        this.uploadAndInsertImage(file);
       }
     };
   }
@@ -566,8 +615,59 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  save(): void {
-    this.review.content = this.quill.root.innerHTML;
+  private async convertBase64Images(content: string): Promise<string> {
+    if (!content.includes('data:image/')) {
+      return content;
+    }
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content, 'text/html');
+    const base64Images = Array.from(doc.querySelectorAll('img[src^="data:image/"]'));
+
+    if (base64Images.length === 0) {
+      return content;
+    }
+
+    for (let i = 0; i < base64Images.length; i++) {
+      const img = base64Images[i];
+      const src = img.getAttribute('src');
+      if (!src || !src.startsWith('data:image/')) continue;
+
+      try {
+        const file = this.base64ToFile(src, `pasted-image-${Date.now()}-${i}.png`);
+        const res = await firstValueFrom(this.api.uploadImage(file));
+        img.setAttribute('src', res.url);
+      } catch (err) {
+        console.error('Failed to convert base64 image:', err);
+      }
+    }
+
+    return doc.body.innerHTML;
+  }
+
+  private base64ToFile(dataUrl: string, filename: string): File {
+    const arr = dataUrl.split(',');
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    const mime = mimeMatch ? mimeMatch[1] : 'image/png';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+  }
+
+  async save(): Promise<void> {
+    this.saving = true;
+    
+    let rawContent = this.quill.root.innerHTML;
+    try {
+      this.review.content = await this.convertBase64Images(rawContent);
+    } catch (err) {
+      console.error('Error converting base64 images before save:', err);
+      this.review.content = rawContent;
+    }
     
     const validCustomRatings = this.customRatings.filter(cr => cr.scaleName && cr.value !== undefined);
 
@@ -577,8 +677,6 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       customRatings: validCustomRatings,
       releaseDate: this.review.releaseDate || null
     };
-
-    this.saving = true;
 
     const request = this.isEdit 
       ? this.api.updateReview(this.review.id!, payload)

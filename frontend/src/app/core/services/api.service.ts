@@ -167,4 +167,8 @@ export class ApiService {
     formData.append('image', file);
     return this.http.post<{ url: string }>(`${this.baseUrl}/upload/image`, formData);
   }
+
+  cleanupUploads(): Observable<{ deletedCount: number; freedBytes: number; freedMb: string; deletedFiles: string[] }> {
+    return this.http.post<{ deletedCount: number; freedBytes: number; freedMb: string; deletedFiles: string[] }>(`${this.baseUrl}/upload/cleanup`, {});
+  }
 }

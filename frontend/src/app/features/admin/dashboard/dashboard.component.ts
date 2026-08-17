@@ -11,7 +11,12 @@ import { ApiService, Review } from '../../../core/services/api.service';
     <div class="dashboard-container">
       <header class="dashboard-header">
         <h1>Dashboard</h1>
-        <a routerLink="/admin/review/new" class="new-btn">Nowa Recenzja</a>
+        <div class="header-buttons">
+          <button (click)="cleanupImages()" class="cleanup-btn" [disabled]="cleaning">
+            {{ cleaning ? 'Czyszczenie...' : 'Wyczyść nieużywane zdjęcia' }}
+          </button>
+          <a routerLink="/admin/review/new" class="new-btn">Nowa Recenzja</a>
+        </div>
       </header>
 
       <section class="reviews-section">
@@ -73,6 +78,30 @@ import { ApiService, Review } from '../../../core/services/api.service';
       font-family: var(--font-serif);
       color: var(--text-color);
       margin: 0;
+    }
+    .header-buttons {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .cleanup-btn {
+      padding: 0.5rem 1rem;
+      background: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-color);
+      font-weight: 500;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .cleanup-btn:hover:not(:disabled) {
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+    }
+    .cleanup-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
     .new-btn {
       padding: 0.5rem 1rem;
@@ -228,6 +257,7 @@ export class DashboardComponent implements OnInit {
   
   reviews: Review[] = [];
   loading = true;
+  cleaning = false;
 
   ngOnInit(): void {
     this.loadReviews();
@@ -241,6 +271,22 @@ export class DashboardComponent implements OnInit {
       },
       error: () => this.loading = false
     });
+  }
+
+  cleanupImages(): void {
+    if (confirm('Czy na pewno chcesz przeskanować bazę danych i usunąć z serwera wszystkie nieużywane pliki graficzne?')) {
+      this.cleaning = true;
+      this.api.cleanupUploads().subscribe({
+        next: (res) => {
+          this.cleaning = false;
+          alert(`Zakończono czyszczenie:\n- Usunięto nieużywanych plików: ${res.deletedCount}\n- Zwolniono miejsca: ${res.freedMb} MB`);
+        },
+        error: (err) => {
+          this.cleaning = false;
+          alert('Błąd podczas czyszczenia: ' + (err.error?.error || err.message));
+        }
+      });
+    }
   }
 
   deleteReview(id: number): void {

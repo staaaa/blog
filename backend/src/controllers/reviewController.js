@@ -1,5 +1,6 @@
 const { Review, Genre, Series, Studio, CustomRating, sequelize } = require('../models');
 const { Op } = require('sequelize');
+const { cleanupOrphanedUploads } = require('../utils/cleanupUploads');
 
 const slugify = (text) => {
   return text.toLowerCase()
@@ -303,6 +304,10 @@ const deleteReview = async (req, res) => {
     }
 
     await review.destroy();
+
+    // Trigger cleanup of orphaned files in background
+    cleanupOrphanedUploads(0).catch(err => console.error('Background cleanup error:', err));
+
     res.json({ message: 'Recenzja usunięta pomyślnie' });
   } catch (error) {
     console.error('Delete review error:', error);
