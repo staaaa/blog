@@ -46,7 +46,9 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
 
           <div class="meta">
             <span class="date">Aktualizacja: {{ review.updatedAt | date: 'dd.MM.yyyy' }}</span>
-            <span class="date release" *ngIf="review.releaseDate">Premiera: {{ review.releaseDate | date: 'dd.MM.yyyy' }}</span>
+            <span class="date release" *ngIf="review.releaseDate"
+              >Premiera: {{ review.releaseDate | date: 'dd.MM.yyyy' }}</span
+            >
           </div>
         </div>
       </header>
@@ -106,7 +108,7 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
       .cover-image {
         position: relative;
         width: 100%;
-        aspect-ratio: 21 / 9;
+        aspect-ratio: 16 / 9;
         overflow: hidden;
         background-color: var(--input-bg);
         border-bottom: 1px solid var(--border-color);
@@ -225,7 +227,7 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
       :host ::ng-deep .content-body img:hover {
         transform: scale(1.01);
       }
-      
+
       /* Spoiler styles */
       :host ::ng-deep .spoiler-box {
         position: relative;
@@ -271,7 +273,7 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
         gap: 1.25rem;
         color: var(--text-muted);
       }
-      
+
       /* Lightbox */
       .lightbox {
         position: fixed;
@@ -312,8 +314,12 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
         color: var(--accent-color);
       }
       @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
       }
 
       /* Mobile Styles */
