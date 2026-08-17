@@ -14,7 +14,6 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
       <header class="review-header">
         <div class="cover-image" *ngIf="review.coverImage">
           <img [src]="getImageUrl(review.coverImage)" [alt]="review.gameTitle" />
-          <div class="cover-overlay"></div>
         </div>
 
         <div class="header-content">
@@ -108,22 +107,19 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
         position: relative;
         width: 100%;
         aspect-ratio: 21 / 9;
+        overflow: hidden;
+        background-color: var(--input-bg);
+        border-bottom: 1px solid var(--border-color);
       }
       .cover-image img {
         width: 100%;
         height: 100%;
         object-fit: cover;
-      }
-      .cover-overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(to top, var(--card-bg) 0%, transparent 80%);
+        display: block;
       }
       .header-content {
         padding: 2rem;
         position: relative;
-        margin-top: -60px;
-        z-index: 2;
       }
       .game-title {
         font-size: 2.25rem;
@@ -132,7 +128,6 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
         letter-spacing: -0.5px;
         color: var(--text-color);
         margin: 0 0 0.5rem;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
       }
       .review-title {
         font-size: 1.2rem;
@@ -336,7 +331,7 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
         }
         .header-content {
           padding: 1.5rem 1rem;
-          margin-top: -40px;
+          margin-top: 0;
         }
         .game-title {
           font-size: 1.75rem;
