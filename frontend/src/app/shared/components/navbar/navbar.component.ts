@@ -4,6 +4,7 @@ import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { TocService } from '../../../core/services/toc.service';
 
 @Component({
   selector: 'app-navbar',
@@ -36,6 +37,33 @@ import { ThemeService } from '../../../core/services/theme.service';
           <a routerLink="/studios" routerLinkActive="active" class="nav-link" (click)="closeMenu()">
             Studia
           </a>
+        </div>
+
+        <!-- Mobile Table of Contents (only when viewing a review with TOC items) -->
+        <div class="navbar-toc" *ngIf="tocService.tocItems().length > 0">
+          <div class="toc-mobile-header">
+            <svg class="toc-mobile-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="8" y1="6" x2="21" y2="6"></line>
+              <line x1="8" y1="12" x2="21" y2="12"></line>
+              <line x1="8" y1="18" x2="21" y2="18"></line>
+              <line x1="3" y1="6" x2="3.01" y2="6"></line>
+              <line x1="3" y1="12" x2="3.01" y2="12"></line>
+              <line x1="3" y1="18" x2="3.01" y2="18"></line>
+            </svg>
+            <span>Struktura recenzji</span>
+          </div>
+          <ul class="toc-mobile-list">
+            <li *ngFor="let item of tocService.tocItems()"
+                class="toc-mobile-item"
+                [class.level-1]="item.level === 1"
+                [class.level-2]="item.level === 2"
+                [class.active]="tocService.activeId() === item.id">
+              <button type="button" (click)="onTocItemClick(item.id)" class="toc-mobile-link">
+                <span class="toc-mobile-dot"></span>
+                <span class="toc-mobile-text">{{ item.text }}</span>
+              </button>
+            </li>
+          </ul>
         </div>
 
         <div class="navbar-search">
@@ -149,6 +177,10 @@ import { ThemeService } from '../../../core/services/theme.service';
       color: var(--accent-color);
     }
 
+    .navbar-toc {
+      display: none;
+    }
+
     .navbar-search {
       flex: 1;
       max-width: 320px;
@@ -256,8 +288,8 @@ import { ThemeService } from '../../../core/services/theme.service';
         position: fixed;
         top: 0;
         right: 0;
-        width: 80%;
-        max-width: 280px;
+        width: 85%;
+        max-width: 320px;
         height: 100vh;
         flex-direction: column;
         justify-content: flex-start;
@@ -268,7 +300,7 @@ import { ThemeService } from '../../../core/services/theme.service';
         transition: transform 0.3s ease;
         transform: translateX(100%);
         z-index: 1001;
-        gap: 2rem;
+        gap: 1.5rem;
         overflow-y: auto;
       }
 
@@ -282,6 +314,102 @@ import { ThemeService } from '../../../core/services/theme.service';
 
       .nav-link {
         font-size: 1.05rem;
+      }
+
+      .navbar-toc {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0.75rem 0;
+        border-top: 1px solid var(--border-color);
+        border-bottom: 1px solid var(--border-color);
+        max-height: 40vh;
+        overflow-y: auto;
+      }
+
+      .toc-mobile-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--accent-color);
+        padding: 0 0.25rem;
+      }
+
+      .toc-mobile-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+      }
+
+      .toc-mobile-link {
+        width: 100%;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.35rem 0.5rem;
+        background: transparent;
+        border: none;
+        border-radius: 6px;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        line-height: 1.35;
+        font-family: inherit;
+      }
+
+      .toc-mobile-item.level-1 .toc-mobile-link {
+        font-weight: 600;
+        color: var(--text-color);
+      }
+
+      .toc-mobile-item.level-2 .toc-mobile-link {
+        padding-left: 1.25rem;
+        font-size: 0.8rem;
+      }
+
+      .toc-mobile-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--border-color);
+        margin-top: 6px;
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+      }
+
+      .toc-mobile-item.level-2 .toc-mobile-dot {
+        width: 4px;
+        height: 4px;
+        margin-top: 7px;
+      }
+
+      .toc-mobile-text {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .toc-mobile-item.active .toc-mobile-link {
+        color: var(--accent-color);
+        background: rgba(255, 122, 0, 0.08);
+        font-weight: 600;
+      }
+
+      .toc-mobile-item.active .toc-mobile-dot {
+        background: var(--accent-color);
+        box-shadow: 0 0 6px var(--accent-color);
+        transform: scale(1.2);
       }
 
       .navbar-search {
@@ -313,6 +441,7 @@ import { ThemeService } from '../../../core/services/theme.service';
 export class NavbarComponent {
   authService = inject(AuthService);
   themeService = inject(ThemeService);
+  tocService = inject(TocService);
   private router = inject(Router);
   searchQuery = '';
   menuOpen = false;
@@ -332,8 +461,14 @@ export class NavbarComponent {
     }
   }
 
+  onTocItemClick(id: string): void {
+    this.tocService.scrollTo(id);
+    this.closeMenu();
+  }
+
   logout(): void {
     this.authService.logout();
     this.closeMenu();
   }
 }
+

@@ -359,6 +359,12 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
           handlers: {
             image: () => this.selectLocalImage()
           }
+        },
+        uploader: {
+          mimetypes: ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml', 'image/avif'],
+          handler: (range: { index: number; length: number }, files: File[]) => {
+            this.uploadAndInsertFiles(files, range);
+          }
         }
       }
     });
@@ -366,8 +372,6 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.review.content) {
       this.quill.root.innerHTML = this.review.content;
     }
-
-    this.setupImageInterceptors();
   }
 
   loadCategories(): void {
@@ -532,59 +536,28 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     console.error('Image failed to load:', (event.target as HTMLImageElement).src);
   }
 
-  private setupImageInterceptors(): void {
-    if (!this.quill) return;
+  async uploadAndInsertFiles(files: File[], range?: { index: number; length: number }): Promise<void> {
+    let insertIndex = range?.index ?? this.quill.getSelection(true)?.index ?? this.quill.getLength();
 
-    // 1. Intercept clipboard paste (Ctrl+V / Cmd+V / screenshot)
-    this.quill.root.addEventListener('paste', (e: ClipboardEvent) => {
-      const clipboardData = e.clipboardData;
-      if (!clipboardData) return;
+    if (range && range.length > 0) {
+      this.quill.deleteText(range.index, range.length);
+    }
 
-      const items = Array.from(clipboardData.items || []);
-      const imageItems = items.filter(item => item.type.startsWith('image/'));
-
-      if (imageItems.length > 0) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        for (const item of imageItems) {
-          const file = item.getAsFile();
-          if (file) {
-            this.uploadAndInsertImage(file);
-          }
-        }
-      }
-    });
-
-    // 2. Intercept drag & drop of images from desktop/file manager
-    this.quill.root.addEventListener('drop', (e: DragEvent) => {
-      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        const imageFiles = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-        if (imageFiles.length > 0) {
-          e.preventDefault();
-          e.stopPropagation();
-
-          for (const file of imageFiles) {
-            this.uploadAndInsertImage(file);
-          }
-        }
-      }
-    });
-  }
-
-  uploadAndInsertImage(file: File): void {
-    const range = this.quill.getSelection(true) || { index: this.quill.getLength(), length: 0 };
-    
-    this.api.uploadImage(file).subscribe({
-      next: (res) => {
-        this.quill.insertEmbed(range.index, 'image', res.url);
-        this.quill.setSelection(range.index + 1, 0);
-      },
-      error: (err) => {
+    for (const file of files) {
+      try {
+        const res = await firstValueFrom(this.api.uploadImage(file));
+        this.quill.insertEmbed(insertIndex, 'image', res.url);
+        insertIndex++;
+        this.quill.setSelection(insertIndex, 0);
+      } catch (err: any) {
         console.error('Image upload failed:', err);
         alert('Błąd przesyłania zdjęcia: ' + (err.error?.error || err.message));
       }
-    });
+    }
+  }
+
+  uploadAndInsertImage(file: File, range?: { index: number; length: number }): void {
+    this.uploadAndInsertFiles([file], range);
   }
 
   selectLocalImage(): void {
@@ -596,7 +569,7 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     input.onchange = () => {
       const file = input.files?.[0];
       if (file) {
-        this.uploadAndInsertImage(file);
+        this.uploadAndInsertFiles([file]);
       }
     };
   }

@@ -35,6 +35,10 @@
   padding: 0;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 html, body {
   font-family: var(--font-serif);
   background-color: var(--bg-color);
@@ -45,6 +49,10 @@ html, body {
   overflow-x: clip;
   transition: background-color 0.25s ease, color 0.25s ease;
   line-height: 1.75;
+}
+
+.review-heading-anchor {
+  scroll-margin-top: 90px;
 }
 
 ::selection {

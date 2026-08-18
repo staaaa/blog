@@ -2,7 +2,9 @@ import { Component, OnInit, inject, AfterViewInit, OnDestroy } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { Subscription } from 'rxjs';
 import { ApiService, Review } from '../../core/services/api.service';
+import { TocService, TocItem } from '../../core/services/toc.service';
 import { RatingDisplayComponent } from '../../shared/components/rating-display/rating-display.component';
 
 @Component({
@@ -10,69 +12,106 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
   standalone: true,
   imports: [CommonModule, RouterLink, RatingDisplayComponent],
   template: `
-    <div class="review-container" *ngIf="review">
-      <header class="review-header">
-        <div class="cover-image" *ngIf="review.coverImage">
-          <img [src]="getImageUrl(review.coverImage)" [alt]="review.gameTitle" />
+    <div class="review-page-layout" *ngIf="review">
+      <!-- Main Content Column -->
+      <div class="review-main-col">
+        <div class="review-container">
+          <header class="review-header">
+            <div class="cover-image" *ngIf="review.coverImage">
+              <img [src]="getImageUrl(review.coverImage)" [alt]="review.gameTitle" />
+            </div>
+
+            <div class="header-content">
+              <h1 class="game-title">{{ review.gameTitle }}</h1>
+              <h2 class="review-title">{{ review.title }}</h2>
+
+              <div class="categories">
+                <a
+                  *ngFor="let genre of review.genres"
+                  [routerLink]="['/genres', genre.slug]"
+                  class="category-link"
+                >
+                  {{ genre.name }}
+                </a>
+                <a
+                  *ngIf="review.series"
+                  [routerLink]="['/series', review.series.slug]"
+                  class="category-link"
+                >
+                  Seria: {{ review.series.name }}
+                </a>
+                <a
+                  *ngIf="review.studio"
+                  [routerLink]="['/studios', review.studio.slug]"
+                  class="category-link"
+                >
+                  Studio: {{ review.studio.name }}
+                </a>
+              </div>
+
+              <div class="meta">
+                <span class="date">Aktualizacja: {{ review.updatedAt | date: 'dd.MM.yyyy' }}</span>
+                <span class="date release" *ngIf="review.releaseDate"
+                  >Premiera: {{ review.releaseDate | date: 'dd.MM.yyyy' }}</span
+                >
+              </div>
+            </div>
+          </header>
+
+          <section class="review-ratings">
+            <app-rating-display
+              [averageRating]="review.averageRating"
+              [storyRating]="review.storyRating"
+              [musicRating]="review.musicRating"
+              [graphicsRating]="review.graphicsRating"
+              [optimizationRating]="review.optimizationRating"
+              [gameplayRating]="review.gameplayRating"
+              [customRatings]="review.customRatings"
+            ></app-rating-display>
+          </section>
+
+          <section class="hardware-specs" *ngIf="review.hardwareSpecs">
+            <h3>Specyfikacja sprzętowa</h3>
+            <div class="specs-content" [innerHTML]="sanitize(review.hardwareSpecs)"></div>
+          </section>
+
+          <section class="review-content">
+            <div class="content-body" [innerHTML]="processedContent"></div>
+          </section>
         </div>
+      </div>
 
-        <div class="header-content">
-          <h1 class="game-title">{{ review.gameTitle }}</h1>
-          <h2 class="review-title">{{ review.title }}</h2>
-
-          <div class="categories">
-            <a
-              *ngFor="let genre of review.genres"
-              [routerLink]="['/genres', genre.slug]"
-              class="category-link"
-            >
-              {{ genre.name }}
-            </a>
-            <a
-              *ngIf="review.series"
-              [routerLink]="['/series', review.series.slug]"
-              class="category-link"
-            >
-              Seria: {{ review.series.name }}
-            </a>
-            <a
-              *ngIf="review.studio"
-              [routerLink]="['/studios', review.studio.slug]"
-              class="category-link"
-            >
-              Studio: {{ review.studio.name }}
-            </a>
+      <!-- Desktop Table of Contents Sidebar -->
+      <aside class="review-toc-sidebar" *ngIf="tocItems.length > 0">
+        <div class="toc-sticky-card">
+          <div class="toc-header">
+            <svg class="toc-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="8" y1="6" x2="21" y2="6"></line>
+              <line x1="8" y1="12" x2="21" y2="12"></line>
+              <line x1="8" y1="18" x2="21" y2="18"></line>
+              <line x1="3" y1="6" x2="3.01" y2="6"></line>
+              <line x1="3" y1="12" x2="3.01" y2="12"></line>
+              <line x1="3" y1="18" x2="3.01" y2="18"></line>
+            </svg>
+            <span class="toc-title">Struktura recenzji</span>
           </div>
 
-          <div class="meta">
-            <span class="date">Aktualizacja: {{ review.updatedAt | date: 'dd.MM.yyyy' }}</span>
-            <span class="date release" *ngIf="review.releaseDate"
-              >Premiera: {{ review.releaseDate | date: 'dd.MM.yyyy' }}</span
-            >
-          </div>
+          <nav class="toc-nav">
+            <ul class="toc-list">
+              <li *ngFor="let item of tocItems"
+                  class="toc-item"
+                  [class.level-1]="item.level === 1"
+                  [class.level-2]="item.level === 2"
+                  [class.active]="activeTocId === item.id">
+                <button type="button" (click)="scrollTo(item.id)" class="toc-link" [title]="item.text">
+                  <span class="toc-indicator"></span>
+                  <span class="toc-text">{{ item.text }}</span>
+                </button>
+              </li>
+            </ul>
+          </nav>
         </div>
-      </header>
-
-      <section class="review-ratings">
-        <app-rating-display
-          [averageRating]="review.averageRating"
-          [storyRating]="review.storyRating"
-          [musicRating]="review.musicRating"
-          [graphicsRating]="review.graphicsRating"
-          [optimizationRating]="review.optimizationRating"
-          [gameplayRating]="review.gameplayRating"
-          [customRatings]="review.customRatings"
-        ></app-rating-display>
-      </section>
-
-      <section class="hardware-specs" *ngIf="review.hardwareSpecs">
-        <h3>Specyfikacja sprzętowa</h3>
-        <div class="specs-content" [innerHTML]="sanitize(review.hardwareSpecs)"></div>
-      </section>
-
-      <section class="review-content">
-        <div class="content-body" [innerHTML]="processedContent"></div>
-      </section>
+      </aside>
     </div>
 
     <div class="loading" *ngIf="loading">
@@ -92,10 +131,25 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
   `,
   styles: [
     `
-      .review-container {
-        max-width: 1000px;
+      .review-page-layout {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        max-width: 1380px;
         margin: 0 auto;
-        padding: 2.5rem 1.5rem;
+        padding: 0 1.5rem;
+        gap: 2.5rem;
+        position: relative;
+      }
+      .review-main-col {
+        flex: 1;
+        max-width: 960px;
+        min-width: 0;
+      }
+      .review-container {
+        width: 100%;
+        margin: 0 auto;
+        padding: 2.5rem 0;
       }
       .review-header {
         position: relative;
@@ -208,14 +262,6 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
         min-height: 1.2em;
         margin-bottom: 0.4rem;
       }
-      :host ::ng-deep .content-body h1,
-      :host ::ng-deep .content-body h2,
-      :host ::ng-deep .content-body h3 {
-        font-family: var(--font-serif);
-        font-weight: 300;
-        color: var(--text-color);
-        margin: 2rem 0 1rem;
-      }
       :host ::ng-deep .content-body img {
         max-width: 100%;
         height: auto;
@@ -226,6 +272,119 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
       }
       :host ::ng-deep .content-body img:hover {
         transform: scale(1.01);
+      }
+
+      /* Desktop Table of Contents Sidebar */
+      .review-toc-sidebar {
+        width: 270px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 95px;
+        margin-top: 2.5rem;
+        max-height: calc(100vh - 120px);
+        overflow-y: auto;
+      }
+      .toc-sticky-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.25rem 1rem;
+        box-shadow: 0 4px 12px var(--shadow);
+      }
+      .toc-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding-bottom: 0.75rem;
+        margin-bottom: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-color);
+      }
+      .toc-icon {
+        color: var(--accent-color);
+        flex-shrink: 0;
+      }
+      .toc-title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .toc-nav {
+        position: relative;
+      }
+      .toc-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        position: relative;
+      }
+      .toc-item {
+        position: relative;
+      }
+      .toc-link {
+        width: 100%;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.6rem;
+        padding: 0.4rem 0.5rem;
+        border: none;
+        background: transparent;
+        text-align: left;
+        cursor: pointer;
+        border-radius: 6px;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        font-family: inherit;
+        line-height: 1.4;
+        transition: all 0.2s ease;
+      }
+      .toc-link:hover {
+        color: var(--text-color);
+        background: var(--input-bg);
+      }
+      .toc-item.level-1 .toc-link {
+        font-weight: 700;
+        color: var(--text-color);
+      }
+      .toc-item.level-2 .toc-link {
+        padding-left: 1.4rem;
+        font-size: 0.82rem;
+        color: var(--text-muted);
+      }
+      .toc-indicator {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--border-color);
+        margin-top: 6px;
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+      }
+      .toc-item.level-2 .toc-indicator {
+        width: 4px;
+        height: 4px;
+        margin-top: 7px;
+      }
+      .toc-text {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .toc-item.active .toc-link {
+        color: var(--accent-color);
+        font-weight: 600;
+        background: rgba(255, 122, 0, 0.08);
+      }
+      .toc-item.active .toc-indicator {
+        background: var(--accent-color);
+        box-shadow: 0 0 6px var(--accent-color);
+        transform: scale(1.2);
       }
 
       /* Spoiler styles */
@@ -322,6 +481,24 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
         }
       }
 
+      /* Responsive Layout */
+      @media (max-width: 1080px) {
+        .review-toc-sidebar {
+          display: none;
+        }
+        .review-page-layout {
+          display: block;
+          padding: 0;
+        }
+        .review-main-col {
+          max-width: 1000px;
+          margin: 0 auto;
+        }
+        .review-container {
+          padding: 2.5rem 1.5rem;
+        }
+      }
+
       /* Mobile Styles */
       @media (max-width: 768px) {
         .review-container {
@@ -352,7 +529,7 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
           padding: 1.5rem 1rem;
         }
         .content-body {
-          padding: 0 1.25rem; /* Paragrafy rozciągają się na całą szerokość z małym paddingiem */
+          padding: 0 1.25rem;
         }
         .lightbox-close {
           top: 10px;
@@ -366,6 +543,7 @@ export class ReviewDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   private api = inject(ApiService);
   private route = inject(ActivatedRoute);
   private sanitizer = inject(DomSanitizer);
+  private tocService = inject(TocService);
 
   review: Review | null = null;
   loading = true;
@@ -373,22 +551,36 @@ export class ReviewDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   processedContent: SafeHtml = '';
   lightboxImage: string | null = null;
 
+  tocItems: TocItem[] = [];
+  activeTocId: string | null = null;
+
+  private routeSub?: Subscription;
   private clickHandler = this.handleContentClick.bind(this);
+  private scrollHandler = this.handleScroll.bind(this);
 
   ngOnInit(): void {
-    const id = this.route.snapshot.params['id'];
-    this.loadReview(+id);
+    this.routeSub = this.route.paramMap.subscribe((params) => {
+      const id = params.get('id');
+      if (id) {
+        this.loadReview(+id);
+      }
+    });
   }
 
   ngAfterViewInit(): void {
     document.addEventListener('click', this.clickHandler);
+    window.addEventListener('scroll', this.scrollHandler, { passive: true });
   }
 
   ngOnDestroy(): void {
+    this.routeSub?.unsubscribe();
     document.removeEventListener('click', this.clickHandler);
+    window.removeEventListener('scroll', this.scrollHandler);
+    this.tocService.clear();
   }
 
   loadReview(id: number): void {
+    this.loading = true;
     this.api.getReview(id).subscribe({
       next: (review) => {
         this.review = review;
@@ -414,7 +606,7 @@ export class ReviewDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   processContent(content: string): SafeHtml {
-    // Parse [SPOILER]...[/SPOILER] text markers without emojis
+    // 1. Parse [SPOILER]...[/SPOILER] text markers
     let processed = content.replace(
       /\[SPOILER\]([\s\S]*?)\[\/SPOILER\]/gi,
       `<div class="spoiler-box" data-spoiler="true">
@@ -423,7 +615,127 @@ export class ReviewDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       </div>`,
     );
 
-    return this.sanitizer.bypassSecurityTrustHtml(processed);
+    // 2. Extract headings & build TOC structure exclusively from .ql-size-huge and .ql-size-large
+    const { processedHtml, items } = this.extractHeadings(processed);
+    this.tocItems = items;
+    this.tocService.setItems(items);
+    if (items.length > 0) {
+      this.activeTocId = items[0].id;
+    }
+
+    return this.sanitizer.bypassSecurityTrustHtml(processedHtml);
+  }
+
+  private extractHeadings(html: string): { processedHtml: string; items: TocItem[] } {
+    if (!html) return { processedHtml: '', items: [] };
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const items: TocItem[] = [];
+    const processedNodes = new Set<Node>();
+
+    // Select only Quill size formatted heading elements (huge = Chapter / Level 1, large = Subchapter / Level 2)
+    const candidates = Array.from(
+      doc.body.querySelectorAll('.ql-size-huge, .ql-size-large')
+    );
+
+    let index = 0;
+    for (const el of candidates) {
+      // If this element or any of its ancestors was already processed, skip
+      let ancestor: HTMLElement | null = el.parentElement;
+      let alreadyCovered = false;
+      while (ancestor && ancestor !== doc.body) {
+        if (processedNodes.has(ancestor)) {
+          alreadyCovered = true;
+          break;
+        }
+        ancestor = ancestor.parentElement;
+      }
+      if (alreadyCovered) continue;
+
+      const rawText = el.textContent?.trim();
+      if (!rawText) continue;
+
+      // Find the closest block container (e.g. <p> or <div>) or el itself
+      const blockParent = el.closest('p, div, li, section, article') || (el as HTMLElement);
+
+      // If the blockParent was already processed for another heading, skip to avoid duplicate headings on same line
+      if (processedNodes.has(blockParent)) continue;
+
+      processedNodes.add(el);
+      processedNodes.add(blockParent);
+      index++;
+
+      // Level 1: huge -> Rozdział
+      // Level 2: large -> Podrozdział
+      const isHuge = el.classList.contains('ql-size-huge');
+      const level: 1 | 2 = isHuge ? 1 : 2;
+
+      // If the entire paragraph is a concise heading, use full paragraph text, otherwise use rawText
+      const fullText = blockParent.textContent?.trim();
+      const headingText = (fullText && fullText.length <= 100) ? fullText : rawText;
+
+      const slug = this.slugify(headingText) || `sekcja-${index}`;
+      const id = `toc-${index}-${slug}`;
+
+      // Set anchor ID on the block parent so scrolling lands at the top of the paragraph
+      blockParent.id = id;
+      blockParent.classList.add('review-heading-anchor');
+
+      items.push({
+        id,
+        text: headingText,
+        level,
+      });
+    }
+
+    return {
+      processedHtml: doc.body.innerHTML,
+      items,
+    };
+  }
+
+  private slugify(text: string): string {
+    const polishMap: Record<string, string> = {
+      'ą': 'a', 'ć': 'c', 'ę': 'e', 'ł': 'l', 'ń': 'n', 'ó': 'o', 'ś': 's', 'ź': 'z', 'ż': 'z',
+      'Ą': 'a', 'Ć': 'c', 'Ę': 'e', 'Ł': 'l', 'Ń': 'n', 'Ó': 'o', 'Ś': 's', 'Ź': 'z', 'Ż': 'z'
+    };
+    return text
+      .split('')
+      .map(char => polishMap[char] || char)
+      .join('')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 40);
+  }
+
+  scrollTo(id: string): void {
+    this.activeTocId = id;
+    this.tocService.scrollTo(id);
+  }
+
+  private handleScroll(): void {
+    if (this.tocItems.length === 0) return;
+    const offset = 140;
+    let currentId: string | null = null;
+
+    for (const item of this.tocItems) {
+      const el = document.getElementById(item.id);
+      if (el) {
+        const top = el.getBoundingClientRect().top;
+        if (top <= offset) {
+          currentId = item.id;
+        } else {
+          break;
+        }
+      }
+    }
+
+    if (currentId && currentId !== this.activeTocId) {
+      this.activeTocId = currentId;
+      this.tocService.setActiveId(currentId);
+    }
   }
 
   handleContentClick(event: Event): void {
