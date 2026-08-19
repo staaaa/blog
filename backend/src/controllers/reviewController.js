@@ -309,10 +309,133 @@ const deleteReview = async (req, res) => {
   }
 };
 
+// POST /api/reviews/:id/like - Toggle like on review
+const toggleLike = async (req, res) => {
+  try {
+    const reviewId = parseInt(req.params.id);
+    const review = await Review.findByPk(reviewId);
+    if (!review) {
+      return res.status(404).json({ error: 'Recenzja nie znaleziona' });
+    }
+
+    const { ReviewLike } = require('../models');
+    const existing = await ReviewLike.findOne({
+      where: { reviewId, userId: req.user.id }
+    });
+
+    let liked = false;
+    if (existing) {
+      await existing.destroy();
+      liked = false;
+    } else {
+      await ReviewLike.create({ reviewId, userId: req.user.id });
+      liked = true;
+    }
+
+    const likeCount = await ReviewLike.count({ where: { reviewId } });
+    res.json({
+      liked,
+      likeCount,
+      message: liked ? 'Polubiono recenzję' : 'Cofnięto polubienie'
+    });
+  } catch (error) {
+    console.error('Toggle like error:', error);
+    res.status(500).json({ error: 'Błąd serwera podczas dodawania polubienia' });
+  }
+};
+
+// GET /api/reviews/:id/comments - Get all comments for a review
+const getComments = async (req, res) => {
+  try {
+    const reviewId = parseInt(req.params.id);
+    const { Comment } = require('../models');
+
+    const comments = await Comment.findAll({
+      where: { reviewId },
+      include: [
+        { model: User, as: 'author', attributes: ['id', 'username', 'displayName', 'avatarUrl', 'role'] }
+      ],
+      order: [['createdAt', 'ASC']]
+    });
+
+    res.json(comments);
+  } catch (error) {
+    console.error('Get comments error:', error);
+    res.status(500).json({ error: 'Błąd serwera podczas pobierania komentarzy' });
+  }
+};
+
+// POST /api/reviews/:id/comments - Add a comment to a review
+const createComment = async (req, res) => {
+  try {
+    const reviewId = parseInt(req.params.id);
+    const { content } = req.body;
+
+    if (!content || !content.trim()) {
+      return res.status(400).json({ error: 'Treść komentarza jest wymagana' });
+    }
+
+    if (content.trim().length > 2000) {
+      return res.status(400).json({ error: 'Komentarz jest zbyt długi (maks. 2000 znaków)' });
+    }
+
+    const review = await Review.findByPk(reviewId);
+    if (!review) {
+      return res.status(404).json({ error: 'Recenzja nie znaleziona' });
+    }
+
+    const { Comment } = require('../models');
+    const comment = await Comment.create({
+      reviewId,
+      userId: req.user.id,
+      content: content.trim()
+    });
+
+    const completeComment = await Comment.findByPk(comment.id, {
+      include: [
+        { model: User, as: 'author', attributes: ['id', 'username', 'displayName', 'avatarUrl', 'role'] }
+      ]
+    });
+
+    res.status(201).json(completeComment);
+  } catch (error) {
+    console.error('Create comment error:', error);
+    res.status(500).json({ error: 'Błąd serwera podczas dodawania komentarza' });
+  }
+};
+
+// DELETE /api/reviews/comments/:commentId - Delete comment
+const deleteComment = async (req, res) => {
+  try {
+    const commentId = parseInt(req.params.commentId);
+    const { Comment } = require('../models');
+
+    const comment = await Comment.findByPk(commentId);
+    if (!comment) {
+      return res.status(404).json({ error: 'Komentarz nie został znaleziony' });
+    }
+
+    // Permission check: author or admin
+    if (req.user.role !== 'admin' && comment.userId !== req.user.id) {
+      return res.status(403).json({ error: 'Brak uprawnień do usunięcia tego komentarza' });
+    }
+
+    await comment.destroy();
+    res.json({ message: 'Komentarz usunięty pomyślnie' });
+  } catch (error) {
+    console.error('Delete comment error:', error);
+    res.status(500).json({ error: 'Błąd serwera podczas usuwania komentarza' });
+  }
+};
+
 module.exports = {
   getReviewById,
   getMyReviews,
   createReview,
   updateReview,
-  deleteReview
+  deleteReview,
+  toggleLike,
+  getComments,
+  createComment,
+  deleteComment
 };

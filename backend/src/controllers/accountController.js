@@ -117,13 +117,21 @@ const toggleFavorite = async (req, res) => {
       where: { userId: req.user.id, gameId }
     });
 
+    let favorited = false;
     if (existing) {
       await existing.destroy();
-      return res.json({ favorited: false, message: 'Usunięto z ulubionych' });
+      favorited = false;
     } else {
       await Favorite.create({ userId: req.user.id, gameId });
-      return res.json({ favorited: true, message: 'Dodano do ulubionych' });
+      favorited = true;
     }
+
+    const favoriteCount = await Favorite.count({ where: { gameId } });
+    return res.json({
+      favorited,
+      favoriteCount,
+      message: favorited ? 'Dodano do ulubionych' : 'Usunięto z ulubionych'
+    });
   } catch (error) {
     console.error('Toggle favorite error:', error);
     res.status(500).json({ error: 'Błąd serwera podczas zmiany ulubionych' });

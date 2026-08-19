@@ -1,8 +1,9 @@
 import { Component, OnInit, inject, AfterViewInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeHtml, SafeResourceUrl } from '@angular/platform-browser';
-import { ApiService, Game, Review, ReviewerSummary, GameAverages } from '../../core/services/api.service';
+import { ApiService, Game, Review, ReviewerSummary, GameAverages, Comment as ReviewComment } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { TocService, TocItem } from '../../core/services/toc.service';
 import { RatingDisplayComponent } from '../../shared/components/rating-display/rating-display.component';
@@ -11,7 +12,7 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
 @Component({
   selector: 'app-game-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, RatingDisplayComponent, ProsConsComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RatingDisplayComponent, ProsConsComponent],
   template: `
     <!-- Reading Progress Bar -->
     <div class="reading-progress-bar" [style.width.%]="readingProgress"></div>
@@ -48,7 +49,7 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
                 </div>
 
                 <div class="header-actions">
-                  <!-- Favorite Button (Reader/Reviewer/Admin) -->
+                  <!-- Favorite Button with Count (Reader/Reviewer/Admin) -->
                   <button
                     *ngIf="authService.isAuthenticated()"
                     type="button"
@@ -58,7 +59,12 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
                     [title]="isFavorite ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'"
                   >
                     <span>{{ isFavorite ? 'W ulubionych' : 'Dodaj do ulubionych' }}</span>
+                    <span class="count-bubble" *ngIf="favoriteCount > 0">({{ favoriteCount }})</span>
                   </button>
+
+                  <span *ngIf="!authService.isAuthenticated() && favoriteCount > 0" class="static-favorite-badge" title="Liczba graczy z tą grą w ulubionych">
+                    Ulubione: {{ favoriteCount }}
+                  </span>
 
                   <!-- Zen Mode Button -->
                   <button 
@@ -189,6 +195,29 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
                   <span>{{ selectedReview.playtimeHours }}h w grze</span>
                 </div>
 
+                <!-- Review Like Button -->
+                <button
+                  *ngIf="authService.isAuthenticated()"
+                  type="button"
+                  class="like-btn"
+                  [class.liked]="selectedReview.isLiked"
+                  (click)="toggleReviewLike()"
+                  [title]="selectedReview.isLiked ? 'Cofnij polubienie' : 'Polub tę recenzję'"
+                >
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                  </svg>
+                  <span>{{ selectedReview.isLiked ? 'Polubiono' : 'Polub recenzję' }}</span>
+                  <span class="like-count">({{ selectedReview.likeCount || 0 }})</span>
+                </button>
+
+                <span *ngIf="!authService.isAuthenticated()" class="static-like-badge" title="Liczba polubień recenzji">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                  </svg>
+                  <span>Polubienia: {{ selectedReview.likeCount || 0 }}</span>
+                </span>
+
                 <!-- Read Status Mark (Reader/Reviewer/Admin) -->
                 <button
                   *ngIf="authService.isAuthenticated()"
@@ -258,6 +287,94 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
                 </p>
               </div>
             </footer>
+
+            <!-- Comments Section (with id="komentarze" for Table of Contents) -->
+            <section id="komentarze" class="comments-section">
+              <div class="comments-header">
+                <h3 class="comments-title">Komentarze ({{ comments.length }})</h3>
+              </div>
+
+              <!-- Add comment box for logged-in user -->
+              <div class="add-comment-card" *ngIf="authService.isAuthenticated()">
+                <div class="comment-author-bar">
+                  <div class="comment-avatar-mini">
+                    <img *ngIf="authService.avatarUrl()" [src]="getImageUrl(authService.avatarUrl())" [alt]="authService.displayName()">
+                    <span *ngIf="!authService.avatarUrl()">{{ (authService.displayName() || 'U')[0].toUpperCase() }}</span>
+                  </div>
+                  <span class="comment-author-label">Dodaj komentarz jako <strong>{{ authService.displayName() }}</strong>:</span>
+                </div>
+
+                <textarea
+                  [(ngModel)]="newCommentText"
+                  name="newComment"
+                  rows="3"
+                  class="comment-textarea"
+                  placeholder="Podziel się swoją opinią o grze lub recenzji..."
+                  maxlength="2000"
+                ></textarea>
+
+                <div class="comment-form-actions">
+                  <span class="comment-char-count">{{ 2000 - newCommentText.length }} znaków</span>
+                  <button
+                    type="button"
+                    (click)="submitComment()"
+                    [disabled]="submittingComment || !newCommentText.trim()"
+                    class="btn-submit-comment"
+                  >
+                    {{ submittingComment ? 'Dodawanie...' : 'Dodaj komentarz' }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Notice for guests -->
+              <div class="guest-comment-box" *ngIf="!authService.isAuthenticated()">
+                <p>
+                  <a routerLink="/admin/login">Zaloguj się</a> lub <a routerLink="/register">zarejestruj konto</a>, aby dodać komentarz.
+                </p>
+              </div>
+
+              <!-- Comments List -->
+              <div class="comments-list" *ngIf="comments.length > 0">
+                <div class="comment-item" *ngFor="let c of comments">
+                  <div class="comment-meta-row">
+                    <div class="comment-author-info">
+                      <div class="comment-avatar">
+                        <img *ngIf="c.author?.avatarUrl" [src]="getImageUrl(c.author?.avatarUrl)" [alt]="c.author?.displayName || c.author?.username">
+                        <span *ngIf="!c.author?.avatarUrl">{{ (c.author?.displayName || c.author?.username || 'U')[0].toUpperCase() }}</span>
+                      </div>
+                      <div class="comment-author-text">
+                        <div class="comment-name-row">
+                          <span class="comment-name">{{ c.author?.displayName || c.author?.username || 'Użytkownik' }}</span>
+                          <span class="comment-role-pill" *ngIf="c.author?.role !== 'reader'" [class.admin-pill]="c.author?.role === 'admin'">
+                            {{ c.author?.role === 'admin' ? 'Administrator' : 'Recenzent' }}
+                          </span>
+                        </div>
+                        <span class="comment-timestamp">{{ c.createdAt | date:'dd.MM.yyyy, HH:mm' }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Delete button for author or admin -->
+                    <button
+                      *ngIf="canDeleteComment(c)"
+                      type="button"
+                      (click)="deleteComment(c.id)"
+                      class="btn-delete-comment"
+                      title="Usuń komentarz"
+                    >
+                      Usuń
+                    </button>
+                  </div>
+
+                  <div class="comment-content-text">
+                    {{ c.content }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="empty-comments-state" *ngIf="comments.length === 0">
+                <p>Brak komentarzy pod tą recenzją. Bądź pierwszym komentującym!</p>
+              </div>
+            </section>
           </main>
 
           <!-- No reviews notice -->
@@ -564,6 +681,24 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       color: var(--text-secondary);
     }
 
+    .count-bubble {
+      font-size: 0.78rem;
+      font-weight: 700;
+      opacity: 0.9;
+    }
+
+    .static-favorite-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.45rem 0.8rem;
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
     .action-icon-btn:hover, .zen-btn:hover {
       border-color: var(--accent-color);
       color: var(--accent-color);
@@ -839,6 +974,51 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       color: var(--text-secondary);
     }
 
+    /* Like Button & Badges */
+    .like-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.35rem 0.8rem;
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .like-btn:hover {
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+      transform: translateY(-1px);
+    }
+
+    .like-btn.liked {
+      background: rgba(255, 107, 44, 0.12);
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+    }
+
+    .like-count {
+      font-weight: 700;
+    }
+
+    .static-like-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.75rem;
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
     .read-mark-btn {
       display: inline-flex;
       align-items: center;
@@ -932,6 +1112,7 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       border: 1px solid var(--border-color);
       border-radius: 12px;
       margin-top: 3rem;
+      margin-bottom: 3rem;
     }
 
     .signature-avatar {
@@ -991,6 +1172,262 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       margin: 0;
       font-size: 0.85rem;
       color: var(--text-secondary);
+    }
+
+    /* Comments Section */
+    .comments-section {
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: 2rem;
+    }
+
+    .comments-header {
+      margin-bottom: 1.5rem;
+    }
+
+    .comments-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .add-comment-card {
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .comment-author-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .comment-avatar-mini {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: var(--accent-color);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.75rem;
+    }
+
+    .comment-avatar-mini img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .comment-author-label {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+    }
+
+    .comment-author-label strong {
+      color: var(--text-primary);
+    }
+
+    .comment-textarea {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 85px;
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color 0.2s ease;
+    }
+
+    .comment-textarea:focus {
+      border-color: var(--accent-color);
+    }
+
+    .comment-form-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 0.75rem;
+    }
+
+    .comment-char-count {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .btn-submit-comment {
+      padding: 0.55rem 1.25rem;
+      background: var(--accent-color);
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-submit-comment:hover:not(:disabled) {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .btn-submit-comment:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .guest-comment-box {
+      background: var(--bg-color);
+      border: 1px dashed var(--border-color);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .guest-comment-box p {
+      margin: 0;
+      font-size: 0.92rem;
+      color: var(--text-muted);
+    }
+
+    .guest-comment-box a {
+      color: var(--accent-color);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .guest-comment-box a:hover {
+      text-decoration: underline;
+    }
+
+    .comments-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .comment-item {
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+
+    .comment-meta-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .comment-author-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .comment-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: var(--accent-color);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .comment-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .comment-author-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .comment-name-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .comment-name {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .comment-role-pill {
+      font-size: 0.68rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      background: rgba(255, 107, 44, 0.15);
+      color: var(--accent-color);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .comment-role-pill.admin-pill {
+      background: rgba(139, 92, 246, 0.15);
+      color: #8b5cf6;
+    }
+
+    .comment-timestamp {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .btn-delete-comment {
+      background: transparent;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-delete-comment:hover {
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .comment-content-text {
+      color: var(--text-primary);
+      font-size: 0.92rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .empty-comments-state {
+      text-align: center;
+      padding: 2.5rem 1.5rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
     }
 
     /* Empty state */
@@ -1457,8 +1894,14 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   averages: GameAverages | null = null;
   reviewers: ReviewerSummary[] = [];
   selectedReview: Review | null = null;
+  favoriteCount = 0;
   isFavorite = false;
   isRead = false;
+
+  // Comments
+  comments: ReviewComment[] = [];
+  newCommentText = '';
+  submittingComment = false;
 
   loading = true;
   error: string | null = null;
@@ -1533,6 +1976,7 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
         this.averages = res.averages;
         this.reviewers = res.reviewers || [];
         this.selectedReview = res.selectedReview;
+        this.favoriteCount = res.favoriteCount || res.game.favoriteCount || 0;
         this.isFavorite = !!res.isFavorite;
         this.isRead = !!res.isRead;
 
@@ -1543,8 +1987,10 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
         }
 
         if (this.selectedReview) {
+          this.comments = this.selectedReview.comments || [];
           this.processReviewContent(this.selectedReview.content);
         } else {
+          this.comments = [];
           this.processedContent = '';
           this.tocItems = [];
           this.tocService.clear();
@@ -1580,9 +2026,67 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     this.api.toggleFavorite(this.game.id).subscribe({
       next: (res) => {
         this.isFavorite = res.favorited;
+        this.favoriteCount = res.favoriteCount;
       },
       error: (err) => console.error('Error toggling favorite:', err)
     });
+  }
+
+  toggleReviewLike(): void {
+    if (!this.selectedReview) return;
+    this.api.toggleReviewLike(this.selectedReview.id).subscribe({
+      next: (res) => {
+        if (this.selectedReview) {
+          this.selectedReview.isLiked = res.liked;
+          this.selectedReview.likeCount = res.likeCount;
+        }
+      },
+      error: (err) => console.error('Error toggling review like:', err)
+    });
+  }
+
+  submitComment(): void {
+    if (!this.selectedReview || !this.newCommentText.trim()) return;
+
+    this.submittingComment = true;
+    this.api.addComment(this.selectedReview.id, this.newCommentText.trim()).subscribe({
+      next: (newComment) => {
+        this.comments.push(newComment);
+        this.newCommentText = '';
+        this.submittingComment = false;
+        this.updateTocCommentsItem();
+      },
+      error: (err) => {
+        this.submittingComment = false;
+        alert('Błąd dodawania komentarza: ' + (err.error?.error || err.message));
+      }
+    });
+  }
+
+  deleteComment(commentId: number): void {
+    if (confirm('Czy na pewno chcesz usunąć ten komentarz?')) {
+      this.api.deleteComment(commentId).subscribe({
+        next: () => {
+          this.comments = this.comments.filter(c => c.id !== commentId);
+          this.updateTocCommentsItem();
+        },
+        error: (err) => alert('Błąd usuwania komentarza: ' + (err.error?.error || err.message))
+      });
+    }
+  }
+
+  canDeleteComment(comment: ReviewComment): boolean {
+    const user = this.authService.user();
+    if (!user) return false;
+    return user.role === 'admin' || user.id === comment.userId;
+  }
+
+  private updateTocCommentsItem(): void {
+    const existing = this.tocItems.find(item => item.id === 'komentarze');
+    if (existing) {
+      existing.text = `Komentarze (${this.comments.length})`;
+      this.tocService.setItems([...this.tocItems]);
+    }
   }
 
   toggleReadMark(): void {
@@ -1695,6 +2199,14 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // 3. Extract TOC headings
     const { htmlWithIds, items } = this.extractHeadings(processed);
+    
+    // Always append Comments section to TOC
+    items.push({
+      id: 'komentarze',
+      text: `Komentarze (${this.comments.length})`,
+      level: 1
+    });
+
     this.processedContent = this.sanitizer.bypassSecurityTrustHtml(htmlWithIds);
     this.tocItems = items;
     this.tocService.setItems(items);

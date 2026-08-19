@@ -1,4 +1,4 @@
-const { Game, Review, Genre, Series, Studio, CustomRating, User, Favorite, ReadMark, sequelize } = require('../models');
+const { Game, Review, Genre, Series, Studio, CustomRating, User, Favorite, ReadMark, Comment, ReviewLike, sequelize } = require('../models');
 const { Op } = require('sequelize');
 const { slugify } = require('../utils/slugify');
 const { normalizeForSearch, getTokens, calculateGameFuzzyScore } = require('../utils/searchHelpers');
@@ -249,6 +249,38 @@ const getGameBySlug = async (req, res) => {
       }
     }
 
+    // Favorite count for game
+    const favoriteCount = await Favorite.count({ where: { gameId: game.id } });
+
+    // Detailed stats for selectedReview (likes and comments)
+    let selectedReviewData = null;
+    if (selectedReview) {
+      const likeCount = await ReviewLike.count({ where: { reviewId: selectedReview.id } });
+      let isLiked = false;
+      if (req.user) {
+        const userLike = await ReviewLike.findOne({
+          where: { reviewId: selectedReview.id, userId: req.user.id }
+        });
+        isLiked = !!userLike;
+      }
+
+      const comments = await Comment.findAll({
+        where: { reviewId: selectedReview.id },
+        include: [
+          { model: User, as: 'author', attributes: ['id', 'username', 'displayName', 'avatarUrl', 'role'] }
+        ],
+        order: [['createdAt', 'ASC']]
+      });
+
+      selectedReviewData = {
+        ...selectedReview,
+        likeCount,
+        isLiked,
+        comments,
+        commentsCount: comments.length
+      };
+    }
+
     res.json({
       game: {
         id: plain.id,
@@ -262,12 +294,14 @@ const getGameBySlug = async (req, res) => {
         series: plain.series || null,
         studio: plain.studio || null,
         createdBy: plain.createdBy,
+        favoriteCount,
         createdAt: plain.createdAt,
         updatedAt: plain.updatedAt
       },
       averages,
       reviewers,
-      selectedReview,
+      selectedReview: selectedReviewData,
+      favoriteCount,
       isFavorite,
       isRead
     });

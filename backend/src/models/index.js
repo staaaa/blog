@@ -8,6 +8,8 @@ const User = require('./User');
 const Game = require('./Game');
 const Favorite = require('./Favorite');
 const ReadMark = require('./ReadMark');
+const Comment = require('./Comment');
+const ReviewLike = require('./ReviewLike');
 
 // ========================
 // Game associations
@@ -45,6 +47,22 @@ User.hasMany(Review, { foreignKey: 'userId', as: 'reviews' });
 Review.hasMany(CustomRating, { foreignKey: 'reviewId', as: 'customRatings', onDelete: 'CASCADE' });
 CustomRating.belongsTo(Review, { foreignKey: 'reviewId', as: 'review' });
 
+// Review has many Comments
+Review.hasMany(Comment, { foreignKey: 'reviewId', as: 'comments', onDelete: 'CASCADE' });
+Comment.belongsTo(Review, { foreignKey: 'reviewId', as: 'review' });
+
+// Comment belongs to User
+Comment.belongsTo(User, { foreignKey: 'userId', as: 'author' });
+User.hasMany(Comment, { foreignKey: 'userId', as: 'comments' });
+
+// Review has many ReviewLikes
+Review.hasMany(ReviewLike, { foreignKey: 'reviewId', as: 'likes', onDelete: 'CASCADE' });
+ReviewLike.belongsTo(Review, { foreignKey: 'reviewId', as: 'review' });
+
+// User has many ReviewLikes
+User.hasMany(ReviewLike, { foreignKey: 'userId', as: 'reviewLikes', onDelete: 'CASCADE' });
+ReviewLike.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 // ========================
 // Legacy Review associations (kept for migration compatibility)
 // These allow the migration script to read old FK data from reviews
@@ -80,5 +98,7 @@ module.exports = {
   User,
   Game,
   Favorite,
-  ReadMark
+  ReadMark,
+  Comment,
+  ReviewLike
 };

@@ -43,6 +43,22 @@ export interface ReviewerSummary {
   updatedAt?: string;
 }
 
+export interface Comment {
+  id: number;
+  reviewId: number;
+  userId: number;
+  content: string;
+  createdAt: string;
+  updatedAt?: string;
+  author?: {
+    id: number;
+    username: string;
+    displayName?: string;
+    avatarUrl?: string | null;
+    role: UserRole;
+  };
+}
+
 export interface Game {
   id: number;
   gameTitle: string;
@@ -62,6 +78,7 @@ export interface Game {
   gameplayRating?: number;
   averageRating: number;
   reviewCount: number;
+  favoriteCount?: number;
   reviewers?: ReviewerSummary[];
   reviews?: Review[];
   createdAt: string;
@@ -89,6 +106,10 @@ export interface Review {
   customRatings: CustomRating[];
   author?: UserProfile;
   game?: Game;
+  likeCount?: number;
+  isLiked?: boolean;
+  comments?: Comment[];
+  commentsCount?: number;
   // Legacy fields fallback
   gameTitle?: string;
   coverImage?: string | null;
@@ -117,6 +138,7 @@ export interface GameDetailResponse {
   averages: GameAverages;
   reviewers: ReviewerSummary[];
   selectedReview: Review | null;
+  favoriteCount?: number;
   isFavorite?: boolean;
   isRead?: boolean;
 }
@@ -232,6 +254,26 @@ export class ApiService {
   }
 
   // ========================
+  // Review Likes & Comments
+  // ========================
+
+  toggleReviewLike(reviewId: number): Observable<{ liked: boolean; likeCount: number; message: string }> {
+    return this.http.post<{ liked: boolean; likeCount: number; message: string }>(`${this.baseUrl}/reviews/${reviewId}/like`, {});
+  }
+
+  getComments(reviewId: number): Observable<Comment[]> {
+    return this.http.get<Comment[]>(`${this.baseUrl}/reviews/${reviewId}/comments`);
+  }
+
+  addComment(reviewId: number, content: string): Observable<Comment> {
+    return this.http.post<Comment>(`${this.baseUrl}/reviews/${reviewId}/comments`, { content });
+  }
+
+  deleteComment(commentId: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.baseUrl}/reviews/comments/${commentId}`);
+  }
+
+  // ========================
   // Account (Reader & Reviewer & Admin)
   // ========================
 
@@ -247,8 +289,8 @@ export class ApiService {
     return this.http.get<Game[]>(`${this.baseUrl}/account/favorites`);
   }
 
-  toggleFavorite(gameId: number): Observable<{ favorited: boolean; message: string }> {
-    return this.http.post<{ favorited: boolean; message: string }>(`${this.baseUrl}/account/favorites/${gameId}`, {});
+  toggleFavorite(gameId: number): Observable<{ favorited: boolean; favoriteCount: number; message: string }> {
+    return this.http.post<{ favorited: boolean; favoriteCount: number; message: string }>(`${this.baseUrl}/account/favorites/${gameId}`, {});
   }
 
   getReadMarks(): Observable<Review[]> {
