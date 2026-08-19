@@ -3,13 +3,20 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { ApiService, Category, CustomRating, Review } from '../../../core/services/api.service';
+import { ApiService, Category, CustomRating, GameStatus, PlatformLink, Review } from '../../../core/services/api.service';
+import { ImageComparisonComponent } from '../../../shared/components/image-comparison/image-comparison.component';
 import Quill from 'quill';
+
+interface PlatformOption {
+  name: string;
+  selected: boolean;
+  url: string;
+}
 
 @Component({
   selector: 'app-review-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ImageComparisonComponent],
   template: `
     <div class="editor-container">
       <header class="editor-header">
@@ -29,6 +36,48 @@ import Quill from 'quill';
             <div class="form-group">
               <label for="title">Tytuł recenzji *</label>
               <input type="text" id="title" [(ngModel)]="review.title" name="title" required placeholder="np. Arcydzieło horroru psychologicznego">
+            </div>
+          </div>
+
+          <!-- Status & Playtime -->
+          <div class="form-row status-playtime-row">
+            <div class="form-group flex-2">
+              <label>Status gry *</label>
+              <div class="status-options">
+                <label 
+                  *ngFor="let s of statusList" 
+                  class="status-option-label" 
+                  [class.active]="review.gameStatus === s.value"
+                  [ngClass]="'status-' + s.value"
+                >
+                  <input 
+                    type="radio" 
+                    name="gameStatus" 
+                    [value]="s.value" 
+                    [(ngModel)]="review.gameStatus" 
+                    required
+                  />
+                  <span class="status-icon">{{ s.icon }}</span>
+                  <span class="status-name">{{ s.label }}</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group flex-1">
+              <label for="playtimeHours">Czas w grze (godziny) *</label>
+              <div class="input-with-suffix">
+                <input 
+                  type="number" 
+                  id="playtimeHours" 
+                  [(ngModel)]="review.playtimeHours" 
+                  name="playtimeHours" 
+                  min="0" 
+                  step="0.5" 
+                  required 
+                  placeholder="np. 35"
+                />
+                <span class="suffix">godzin</span>
+              </div>
             </div>
           </div>
 
@@ -56,6 +105,46 @@ import Quill from 'quill';
               <p class="preview-url">URL: {{ review.coverImage }}</p>
               <img [src]="getImageUrl(review.coverImage)" alt="Podgląd" (error)="onImageError($event)">
             </div>
+          </div>
+
+          <div class="form-group">
+            <label for="soundtrackUrl">🎵 Ścieżka dźwiękowa / OST (link do YouTube)</label>
+            <input 
+              type="url" 
+              id="soundtrackUrl" 
+              [(ngModel)]="review.soundtrackUrl" 
+              name="soundtrackUrl" 
+              placeholder="np. https://www.youtube.com/watch?v=... lub https://youtu.be/..."
+            />
+            <span class="field-hint">Odtwarzacz pojawi się w prawym panelu pod spisem treści, aby czytelnik mógł słuchać muzyki podczas czytania.</span>
+          </div>
+        </section>
+
+        <!-- Platforms Section -->
+        <section class="form-section">
+          <h2>Platformy i linki do sklepów</h2>
+          <p class="section-desc">Zaznacz platformy, na których gra jest dostępna. Po zaznaczeniu możesz wkleić bezpośredni link do sklepu (np. Steam, PS Store).</p>
+
+          <div class="platforms-grid">
+            <div *ngFor="let p of platformsOptions; let i = index" class="platform-item" [class.selected]="p.selected">
+              <label class="platform-checkbox-label">
+                <input type="checkbox" [(ngModel)]="p.selected" [name]="'plat_sel_' + i">
+                <span class="platform-title">{{ p.name }}</span>
+              </label>
+              <div class="platform-url-input" *ngIf="p.selected">
+                <input 
+                  type="url" 
+                  [(ngModel)]="p.url" 
+                  [name]="'plat_url_' + i" 
+                  placeholder="https://... (link do sklepu / karty gry)"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="add-custom-platform">
+            <input type="text" [(ngModel)]="newPlatformName" name="newPlatformName" placeholder="Dodaj inną platformę (np. GOG, Epic Games)">
+            <button type="button" (click)="addCustomPlatform()">+ Dodaj platformę</button>
           </div>
         </section>
 
@@ -165,6 +254,53 @@ import Quill from 'quill';
           </div>
         </section>
 
+        <!-- Pros & Cons Section -->
+        <section class="form-section">
+          <h2>Plusy i Minusy</h2>
+          
+          <div class="pros-cons-grid">
+            <!-- Pros Editor -->
+            <div class="pros-editor-card">
+              <div class="card-title-bar pros-title">
+                <span class="icon">+</span>
+                <h3>Zalety (Plusy)</h3>
+              </div>
+              <div class="items-list">
+                <div *ngFor="let item of prosList; let i = index; trackBy: trackByIndex" class="dynamic-item-row">
+                  <input 
+                    type="text" 
+                    [(ngModel)]="prosList[i]" 
+                    [name]="'pro_' + i" 
+                    placeholder="np. Gęsty klimat i udźwiękowienie"
+                  />
+                  <button type="button" (click)="removePro(i)" class="item-delete-btn" title="Usuń pozycję">✕</button>
+                </div>
+              </div>
+              <button type="button" (click)="addPro()" class="add-item-btn pros-add-btn">+ Dodaj zaletę</button>
+            </div>
+
+            <!-- Cons Editor -->
+            <div class="cons-editor-card">
+              <div class="card-title-bar cons-title">
+                <span class="icon">−</span>
+                <h3>Wady (Minusy)</h3>
+              </div>
+              <div class="items-list">
+                <div *ngFor="let item of consList; let i = index; trackBy: trackByIndex" class="dynamic-item-row">
+                  <input 
+                    type="text" 
+                    [(ngModel)]="consList[i]" 
+                    [name]="'con_' + i" 
+                    placeholder="np. Sporadyczne spadki klatek"
+                  />
+                  <button type="button" (click)="removeCon(i)" class="item-delete-btn" title="Usuń pozycję">✕</button>
+                </div>
+              </div>
+              <button type="button" (click)="addCon()" class="add-item-btn cons-add-btn">+ Dodaj wadę</button>
+            </div>
+          </div>
+        </section>
+
         <!-- Hardware Specs -->
         <section class="form-section">
           <h2>Specyfikacja sprzętowa</h2>
@@ -182,7 +318,10 @@ import Quill from 'quill';
           
           <div class="editor-toolbar">
             <button type="button" (click)="insertSpoiler()" class="toolbar-btn spoiler-btn">
-              Wstaw spoiler
+              🔒 Wstaw spoiler
+            </button>
+            <button type="button" (click)="openComparisonModal()" class="toolbar-btn compare-btn">
+              🖼️ Wstaw porównywarkę zdjęć
             </button>
           </div>
           
@@ -197,6 +336,77 @@ import Quill from 'quill';
           </button>
         </div>
       </form>
+
+      <!-- Image Comparison Inserter Modal -->
+      <div class="modal-backdrop" *ngIf="showComparisonModal" (click)="closeComparisonModal()">
+        <div class="modal-dialog" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h2>Wstaw Porównywarkę Zdjęć (Przed / Po)</h2>
+            <button type="button" class="close-modal-btn" (click)="closeComparisonModal()">✕</button>
+          </div>
+
+          <div class="modal-body">
+            <div class="modal-form-grid">
+              <!-- Before Image -->
+              <div class="modal-image-col">
+                <h3>Zdjęcie 1 (Lewa strona / Przed)</h3>
+                <div class="form-group">
+                  <label>Etykieta</label>
+                  <input type="text" [(ngModel)]="comparisonLabelBefore" placeholder="np. Przed, RTX OFF, Oryginał">
+                </div>
+                <div class="form-group">
+                  <label>URL zdjęcia lub prześlij</label>
+                  <div class="cover-upload">
+                    <input type="text" [(ngModel)]="comparisonBeforeUrl" placeholder="URL zdjęcia...">
+                    <input type="file" #compareBeforeInput (change)="uploadComparisonFile($event, 'before')" accept="image/*" style="display: none">
+                    <button type="button" (click)="compareBeforeInput.click()" class="upload-btn">Prześlij</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- After Image -->
+              <div class="modal-image-col">
+                <h3>Zdjęcie 2 (Prawa strona / Po)</h3>
+                <div class="form-group">
+                  <label>Etykieta</label>
+                  <input type="text" [(ngModel)]="comparisonLabelAfter" placeholder="np. Po, RTX ON, Remake">
+                </div>
+                <div class="form-group">
+                  <label>URL zdjęcia lub prześlij</label>
+                  <div class="cover-upload">
+                    <input type="text" [(ngModel)]="comparisonAfterUrl" placeholder="URL zdjęcia...">
+                    <input type="file" #compareAfterInput (change)="uploadComparisonFile($event, 'after')" accept="image/*" style="display: none">
+                    <button type="button" (click)="compareAfterInput.click()" class="upload-btn">Prześlij</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Live Preview -->
+            <div class="modal-preview-section" *ngIf="comparisonBeforeUrl && comparisonAfterUrl">
+              <h3>Podgląd na żywo:</h3>
+              <app-image-comparison
+                [beforeImage]="comparisonBeforeUrl"
+                [afterImage]="comparisonAfterUrl"
+                [labelBefore]="comparisonLabelBefore || 'Przed'"
+                [labelAfter]="comparisonLabelAfter || 'Po'"
+              ></app-image-comparison>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" (click)="closeComparisonModal()" class="cancel-btn">Anuluj</button>
+            <button 
+              type="button" 
+              (click)="insertComparisonToQuill()" 
+              class="save-btn"
+              [disabled]="!comparisonBeforeUrl || !comparisonAfterUrl"
+            >
+              Wstaw do recenzji
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   `,
   styles: [`
@@ -206,6 +416,8 @@ import Quill from 'quill';
     .form-section { background-color: var(--card-bg); border-radius: 12px; padding: 1.75rem; margin-bottom: 2rem; border: 1px solid var(--border-color); box-shadow: 0 4px 12px var(--shadow); }
     .form-section h2 { font-size: 1.25rem; font-family: var(--font-serif); font-weight: 300; color: var(--text-color); margin: 0 0 1.5rem; }
     .form-section h3 { font-size: 1.05rem; font-family: var(--font-serif); font-weight: 300; color: var(--text-muted); margin: 1.5rem 0 1rem; }
+    .section-desc { font-size: 0.85rem; color: var(--text-muted); margin: -1rem 0 1.25rem; line-height: 1.5; font-family: var(--font-sans); }
+    .field-hint { font-size: 0.78rem; color: var(--text-muted); line-height: 1.4; font-family: var(--font-sans); }
 
     .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
     .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
@@ -215,6 +427,74 @@ import Quill from 'quill';
     .form-group select { cursor: pointer; }
     .form-group select option { background: var(--card-bg); }
     .form-group textarea { resize: vertical; min-height: 80px; }
+
+    .flex-1 { flex: 1; }
+    .flex-2 { flex: 2; }
+    .status-playtime-row { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+
+    /* Game Status Options */
+    .status-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.6rem; }
+    .status-option-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--input-bg);
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .status-option-label input { display: none; }
+    .status-option-label:hover { border-color: var(--text-muted); color: var(--text-color); }
+    .status-option-label.active.status-platyna { background: rgba(234, 179, 8, 0.15); color: #facc15; border-color: rgba(234, 179, 8, 0.6); }
+    .status-option-label.active.status-main_story { background: rgba(16, 185, 129, 0.15); color: #10b981; border-color: rgba(16, 185, 129, 0.6); }
+    .status-option-label.active.status-in_progress { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.6); }
+    .status-option-label.active.status-abandoned { background: rgba(239, 68, 68, 0.15); color: #f87171; border-color: rgba(239, 68, 68, 0.6); }
+
+    /* Input with suffix */
+    .input-with-suffix { position: relative; display: flex; align-items: center; }
+    .input-with-suffix input { width: 100%; padding-right: 70px; }
+    .input-with-suffix .suffix { position: absolute; right: 12px; font-size: 0.85rem; color: var(--text-muted); pointer-events: none; }
+
+    /* Platforms grid */
+    .platforms-grid { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem; }
+    .platform-item { padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--input-bg); transition: border-color 0.2s ease; }
+    .platform-item.selected { border-color: rgba(255, 122, 0, 0.5); }
+    .platform-checkbox-label { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; user-select: none; font-size: 0.92rem; font-weight: 600; color: var(--text-color); }
+    .platform-checkbox-label input { width: 18px; height: 18px; accent-color: var(--accent-color); cursor: pointer; }
+    .platform-url-input { margin-top: 0.65rem; padding-left: 2rem; }
+    .platform-url-input input { width: 100%; padding: 0.5rem 0.75rem; font-size: 0.85rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-color); }
+    .platform-url-input input:focus { border-color: var(--accent-color); outline: none; }
+    .add-custom-platform { display: flex; gap: 0.5rem; max-width: 450px; }
+    .add-custom-platform input { flex: 1; padding: 0.45rem 0.75rem; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-color); font-size: 0.85rem; }
+    .add-custom-platform button { padding: 0.45rem 1rem; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--accent-color); cursor: pointer; font-size: 0.85rem; font-weight: 600; }
+    .add-custom-platform button:hover { border-color: var(--accent-color); }
+
+    /* Pros & Cons Editor */
+    .pros-cons-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+    .pros-editor-card, .cons-editor-card { background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.25rem; display: flex; flex-direction: column; }
+    .pros-editor-card { border-top: 3px solid #10b981; }
+    .cons-editor-card { border-top: 3px solid #ef4444; }
+    .card-title-bar { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
+    .card-title-bar .icon { font-weight: 800; font-size: 1.1rem; }
+    .card-title-bar h3 { font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin: 0; font-family: var(--font-sans); }
+    .pros-title { color: #10b981; }
+    .cons-title { color: #ef4444; }
+    .dynamic-item-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+    .dynamic-item-row input { flex: 1; padding: 0.5rem 0.75rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-color); font-size: 0.9rem; }
+    .dynamic-item-row input:focus { border-color: var(--accent-color); outline: none; }
+    .item-delete-btn { background: transparent; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px; color: #f87171; cursor: pointer; padding: 0.5rem 0.65rem; font-size: 0.85rem; }
+    .item-delete-btn:hover { background: rgba(239, 68, 68, 0.15); }
+    .add-item-btn { margin-top: 0.5rem; padding: 0.5rem; background: transparent; border: 1px dashed var(--border-color); border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; width: 100%; transition: all 0.2s ease; }
+    .pros-add-btn { color: #10b981; border-color: rgba(16, 185, 129, 0.3); }
+    .pros-add-btn:hover { background: rgba(16, 185, 129, 0.1); border-color: #10b981; }
+    .cons-add-btn { color: #ef4444; border-color: rgba(239, 68, 68, 0.3); }
+    .cons-add-btn:hover { background: rgba(239, 68, 68, 0.1); border-color: #ef4444; }
 
     .checkbox-container { justify-content: center; }
     .checkbox-label { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; user-select: none; }
@@ -262,10 +542,12 @@ import Quill from 'quill';
     .average-display .label { color: var(--text-muted); font-weight: 500; }
     .average-display .value { font-size: 1.8rem; font-weight: 800; color: var(--accent-color); }
 
-    .editor-toolbar { display: flex; gap: 0.75rem; margin-bottom: 0.75rem; }
-    .toolbar-btn { padding: 0.5rem 1rem; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-color); cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: border-color 0.2s ease, color 0.2s ease; }
+    .editor-toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .toolbar-btn { padding: 0.5rem 1rem; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-color); cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: all 0.2s ease; }
     .toolbar-btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
     .toolbar-btn.spoiler-btn { border-color: rgba(255, 122, 0, 0.3); color: var(--accent-color); }
+    .toolbar-btn.compare-btn { border-color: rgba(96, 165, 250, 0.4); color: #60a5fa; }
+    .toolbar-btn.compare-btn:hover { border-color: #60a5fa; }
 
     .quill-container { background: var(--input-bg); border-radius: 10px; min-height: 400px; }
     :host ::ng-deep .ql-container { border: none !important; font-size: 1rem; }
@@ -280,6 +562,63 @@ import Quill from 'quill';
     .save-btn { padding: 0.65rem 2rem; background-color: var(--accent-color); border: none; border-radius: 6px; color: white; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: background-color 0.2s ease; }
     .save-btn:hover:not(:disabled) { background-color: var(--accent-hover); }
     .save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Modal styles */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 10, 12, 0.8);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .modal-dialog {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      max-width: 800px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 12px 36px var(--shadow);
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .modal-header h2 {
+      font-size: 1.2rem;
+      font-family: var(--font-serif);
+      margin: 0;
+      color: var(--text-color);
+    }
+    .close-modal-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.25rem;
+      cursor: pointer;
+    }
+    .close-modal-btn:hover { color: var(--text-color); }
+    .modal-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
+    .modal-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .modal-image-col { background: var(--input-bg); padding: 1.25rem; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 1rem; }
+    .modal-image-col h3 { font-size: 0.95rem; font-family: var(--font-sans); font-weight: 600; color: var(--text-color); margin: 0; }
+    .modal-preview-section { margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem; }
+    .modal-preview-section h3 { font-size: 0.95rem; font-family: var(--font-sans); margin-bottom: 0.75rem; color: var(--text-muted); }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; padding: 1.25rem 1.5rem; border-top: 1px solid var(--border-color); background: var(--input-bg); border-radius: 0 0 12px 12px; }
+
+    @media (max-width: 768px) {
+      .modal-form-grid { grid-template-columns: 1fr; }
+    }
   `]
 })
 export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -292,6 +631,27 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   private quill!: Quill;
   isEdit = false;
   saving = false;
+
+  readonly statusList: { value: GameStatus; label: string; icon: string }[] = [
+    { value: 'platyna', label: 'Platyna (100%)', icon: '🏆' },
+    { value: 'main_story', label: 'Główny wątek', icon: '🎯' },
+    { value: 'in_progress', label: 'W trakcie', icon: '⏳' },
+    { value: 'abandoned', label: 'Porzucona', icon: '🛑' }
+  ];
+
+  platformsOptions: PlatformOption[] = [
+    { name: 'PC (Steam)', selected: false, url: '' },
+    { name: 'PlayStation 5', selected: false, url: '' },
+    { name: 'PlayStation 4', selected: false, url: '' },
+    { name: 'Xbox Series X/S', selected: false, url: '' },
+    { name: 'Xbox One', selected: false, url: '' },
+    { name: 'Nintendo Switch', selected: false, url: '' },
+    { name: 'Steam Deck', selected: false, url: '' }
+  ];
+  newPlatformName = '';
+
+  prosList: string[] = [''];
+  consList: string[] = [''];
 
   review: Partial<Review> & { seriesId?: number | null; studioId?: number | null } = {
     title: '',
@@ -306,6 +666,9 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     coverImage: null,
     releaseDate: null,
     isDraft: false,
+    gameStatus: 'main_story',
+    playtimeHours: 0,
+    soundtrackUrl: null,
     seriesId: null,
     studioId: null
   };
@@ -319,6 +682,13 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   newGenre = '';
   newSeries = '';
   newStudio = '';
+
+  // Image comparison modal state
+  showComparisonModal = false;
+  comparisonBeforeUrl = '';
+  comparisonAfterUrl = '';
+  comparisonLabelBefore = 'Przed';
+  comparisonLabelAfter = 'Po';
 
   ngOnInit(): void {
     this.loadCategories();
@@ -384,12 +754,118 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.api.getReview(id).subscribe(review => {
       this.review = { ...review };
       this.selectedGenreIds = review.genres.map(g => g.id);
-      this.customRatings = [...review.customRatings];
+      this.customRatings = [...(review.customRatings || [])];
+
+      // Load pros & cons
+      this.prosList = review.pros && review.pros.length > 0 ? [...review.pros] : [''];
+      this.consList = review.cons && review.cons.length > 0 ? [...review.cons] : [''];
+
+      // Load platforms
+      if (review.platforms && Array.isArray(review.platforms)) {
+        for (const p of review.platforms) {
+          const existing = this.platformsOptions.find(opt => opt.name.toLowerCase() === p.name.toLowerCase());
+          if (existing) {
+            existing.selected = true;
+            existing.url = p.url || '';
+          } else {
+            this.platformsOptions.push({
+              name: p.name,
+              selected: true,
+              url: p.url || ''
+            });
+          }
+        }
+      }
       
       if (this.quill) {
         this.quill.root.innerHTML = review.content;
       }
     });
+  }
+
+  trackByIndex(index: number): number {
+    return index;
+  }
+
+  addPro(): void {
+    this.prosList.push('');
+  }
+
+  removePro(index: number): void {
+    this.prosList.splice(index, 1);
+    if (this.prosList.length === 0) {
+      this.prosList.push('');
+    }
+  }
+
+  addCon(): void {
+    this.consList.push('');
+  }
+
+  removeCon(index: number): void {
+    this.consList.splice(index, 1);
+    if (this.consList.length === 0) {
+      this.consList.push('');
+    }
+  }
+
+  addCustomPlatform(): void {
+    const trimmed = this.newPlatformName.trim();
+    if (trimmed) {
+      const exists = this.platformsOptions.find(p => p.name.toLowerCase() === trimmed.toLowerCase());
+      if (exists) {
+        exists.selected = true;
+      } else {
+        this.platformsOptions.push({
+          name: trimmed,
+          selected: true,
+          url: ''
+        });
+      }
+      this.newPlatformName = '';
+    }
+  }
+
+  openComparisonModal(): void {
+    this.showComparisonModal = true;
+  }
+
+  closeComparisonModal(): void {
+    this.showComparisonModal = false;
+  }
+
+  uploadComparisonFile(event: Event, which: 'before' | 'after'): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (file) {
+      this.api.uploadImage(file).subscribe({
+        next: (res) => {
+          if (which === 'before') {
+            this.comparisonBeforeUrl = res.url;
+          } else {
+            this.comparisonAfterUrl = res.url;
+          }
+        },
+        error: (err) => {
+          alert('Błąd przesyłania zdjęcia: ' + (err.error?.error || err.message));
+        }
+      });
+    }
+  }
+
+  insertComparisonToQuill(): void {
+    if (!this.comparisonBeforeUrl || !this.comparisonAfterUrl) return;
+
+    const shortcode = `[COMPARE before="${this.comparisonBeforeUrl}" after="${this.comparisonAfterUrl}" labelBefore="${this.comparisonLabelBefore || 'Przed'}" labelAfter="${this.comparisonLabelAfter || 'Po'}"]`;
+
+    const range = this.quill.getSelection(true);
+    const index = range ? range.index : this.quill.getLength();
+
+    this.quill.insertText(index, `\n${shortcode}\n`);
+    this.closeComparisonModal();
+    this.comparisonBeforeUrl = '';
+    this.comparisonAfterUrl = '';
+    this.comparisonLabelBefore = 'Przed';
+    this.comparisonLabelAfter = 'Po';
   }
 
   toggleGenre(id: number): void {
@@ -504,7 +980,6 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   getImageUrl(url: string | null): string {
     if (!url) return '';
-    // For Docker: images are served from /uploads/ via nginx proxy
     if (url.startsWith('/uploads/')) {
       return url;
     }
@@ -517,15 +992,11 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   uploadCover(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (file) {
-      console.log('Uploading cover:', file.name);
       this.api.uploadImage(file).subscribe({
         next: (res) => {
-          console.log('Cover upload response:', res);
           this.review.coverImage = res.url;
-          console.log('Cover image set to:', this.review.coverImage);
         },
         error: (err) => {
-          console.error('Cover upload error:', err);
           alert('Błąd uploadu: ' + (err.error?.error || err.message));
         }
       });
@@ -556,10 +1027,6 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  uploadAndInsertImage(file: File, range?: { index: number; length: number }): void {
-    this.uploadAndInsertFiles([file], range);
-  }
-
   selectLocalImage(): void {
     const input = document.createElement('input');
     input.setAttribute('type', 'file');
@@ -579,11 +1046,9 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const selectedText = this.quill.getText(range.index, range.length);
     
     if (selectedText && selectedText.trim()) {
-      // Wrap selected text with spoiler markers
       this.quill.deleteText(range.index, range.length);
       this.quill.insertText(range.index, `[SPOILER]${selectedText.trim()}[/SPOILER]`);
     } else {
-      // Insert placeholder
       this.quill.insertText(range.index, '[SPOILER]tutaj wpisz tekst spoilera[/SPOILER]');
     }
   }
@@ -632,6 +1097,16 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async save(): Promise<void> {
+    if (!this.review.gameTitle || !this.review.title) {
+      alert('Wypełnij tytuł gry i tytuł recenzji!');
+      return;
+    }
+
+    if (!this.review.gameStatus) {
+      alert('Wybierz status gry (np. Główny wątek, Platyna, W trakcie, Porzucona)!');
+      return;
+    }
+
     this.saving = true;
     
     let rawContent = this.quill.root.innerHTML;
@@ -644,10 +1119,26 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     
     const validCustomRatings = this.customRatings.filter(cr => cr.scaleName && cr.value !== undefined);
 
+    const validPros = this.prosList.map(p => p.trim()).filter(p => p.length > 0);
+    const validCons = this.consList.map(c => c.trim()).filter(c => c.length > 0);
+
+    const selectedPlatforms: PlatformLink[] = this.platformsOptions
+      .filter(p => p.selected && p.name.trim().length > 0)
+      .map(p => ({
+        name: p.name.trim(),
+        url: p.url ? p.url.trim() : undefined
+      }));
+
     const payload = {
       ...this.review,
       genreIds: this.selectedGenreIds,
       customRatings: validCustomRatings,
+      pros: validPros,
+      cons: validCons,
+      gameStatus: this.review.gameStatus || 'main_story',
+      playtimeHours: typeof this.review.playtimeHours === 'number' ? this.review.playtimeHours : (parseFloat(String(this.review.playtimeHours)) || 0),
+      platforms: selectedPlatforms,
+      soundtrackUrl: this.review.soundtrackUrl ? this.review.soundtrackUrl.trim() : null,
       releaseDate: this.review.releaseDate || null
     };
 

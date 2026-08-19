@@ -1,18 +1,34 @@
-import { Component, OnInit, inject, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, inject, AfterViewInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { DomSanitizer, SafeHtml, SafeResourceUrl } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 import { ApiService, Review } from '../../core/services/api.service';
 import { TocService, TocItem } from '../../core/services/toc.service';
 import { RatingDisplayComponent } from '../../shared/components/rating-display/rating-display.component';
+import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.component';
 
 @Component({
   selector: 'app-review-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, RatingDisplayComponent],
+  imports: [CommonModule, RouterLink, RatingDisplayComponent, ProsConsComponent],
   template: `
-    <div class="review-page-layout" *ngIf="review">
+    <!-- Reading Progress Bar -->
+    <div class="reading-progress-bar" [style.width.%]="readingProgress"></div>
+
+    <!-- Zen Mode Floating Status & Exit Bar -->
+    <div class="zen-floating-bar" *ngIf="isZenMode">
+      <div class="zen-info">
+        <span class="zen-dot"></span>
+        <span class="zen-title">Tryb skupienia (Zen)</span>
+      </div>
+      <button type="button" class="zen-exit-btn" (click)="toggleZenMode()" title="Wyjdź z trybu Zen (Esc)">
+        <span>Wyjdź z trybu Zen (Esc)</span>
+        <span class="zen-exit-icon">✕</span>
+      </button>
+    </div>
+
+    <div class="review-page-layout" *ngIf="review" [class.zen-active]="isZenMode">
       <!-- Main Content Column -->
       <div class="review-main-col">
         <div class="review-container">
@@ -22,6 +38,36 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
             </div>
 
             <div class="header-content">
+              <div class="header-top-row">
+                <div class="status-badge" [ngClass]="'status-' + (review.gameStatus || 'main_story')">
+                  <span class="status-icon">{{ getStatusIcon(review.gameStatus) }}</span>
+                  <span class="status-text">{{ getStatusLabel(review.gameStatus) }}</span>
+                </div>
+                
+                <div class="playtime-badge" *ngIf="review.playtimeHours > 0">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <span>{{ review.playtimeHours }}h w grze</span>
+                </div>
+
+                <!-- Zen Mode Button in Header -->
+                <button 
+                  type="button" 
+                  class="zen-btn" 
+                  (click)="toggleZenMode()" 
+                  [class.active]="isZenMode"
+                  title="Przełącz tryb skupienia (Zen)"
+                >
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                  <span>{{ isZenMode ? 'Wyłącz Zen' : 'Tryb Zen' }}</span>
+                </button>
+              </div>
+
               <h1 class="game-title">{{ review.gameTitle }}</h1>
               <h2 class="review-title">{{ review.title }}</h2>
 
@@ -49,6 +95,26 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
                 </a>
               </div>
 
+              <!-- Platforms -->
+              <div class="platforms-row" *ngIf="review.platforms && review.platforms.length > 0">
+                <span class="platforms-label">Dostępne na:</span>
+                <div class="platform-chips">
+                  <ng-container *ngFor="let p of review.platforms">
+                    <a *ngIf="p.url" [href]="p.url" target="_blank" rel="noopener noreferrer" class="platform-chip link-chip" [title]="'Kup / Zobacz na ' + p.name">
+                      <span>{{ p.name }}</span>
+                      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                        <polyline points="15 3 21 3 21 9"></polyline>
+                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                      </svg>
+                    </a>
+                    <span *ngIf="!p.url" class="platform-chip static-chip">
+                      {{ p.name }}
+                    </span>
+                  </ng-container>
+                </div>
+              </div>
+
               <div class="meta">
                 <span class="date">Aktualizacja: {{ review.updatedAt | date: 'dd.MM.yyyy' }}</span>
                 <span class="date release" *ngIf="review.releaseDate"
@@ -70,6 +136,11 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
             ></app-rating-display>
           </section>
 
+          <!-- Pros & Cons Section -->
+          <section class="pros-cons-section" *ngIf="(review.pros && review.pros.length > 0) || (review.cons && review.cons.length > 0)">
+            <app-pros-cons [pros]="review.pros" [cons]="review.cons"></app-pros-cons>
+          </section>
+
           <section class="hardware-specs" *ngIf="review.hardwareSpecs">
             <h3>Specyfikacja sprzętowa</h3>
             <div class="specs-content" [innerHTML]="sanitize(review.hardwareSpecs)"></div>
@@ -81,19 +152,30 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
         </div>
       </div>
 
-      <!-- Desktop Table of Contents Sidebar -->
-      <aside class="review-toc-sidebar" *ngIf="tocItems.length > 0">
-        <div class="toc-sticky-card">
+      <!-- Desktop Sidebar (TOC + Soundtrack Player) -->
+      <aside class="review-toc-sidebar" *ngIf="(tocItems.length > 0 || soundtrackEmbedUrl) && !isZenMode">
+        <!-- Table of Contents Card -->
+        <div class="toc-sticky-card" *ngIf="tocItems.length > 0">
           <div class="toc-header">
-            <svg class="toc-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="8" y1="6" x2="21" y2="6"></line>
-              <line x1="8" y1="12" x2="21" y2="12"></line>
-              <line x1="8" y1="18" x2="21" y2="18"></line>
-              <line x1="3" y1="6" x2="3.01" y2="6"></line>
-              <line x1="3" y1="12" x2="3.01" y2="12"></line>
-              <line x1="3" y1="18" x2="3.01" y2="18"></line>
-            </svg>
-            <span class="toc-title">Struktura recenzji</span>
+            <div class="toc-header-left">
+              <svg class="toc-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="8" y1="6" x2="21" y2="6"></line>
+                <line x1="8" y1="12" x2="21" y2="12"></line>
+                <line x1="8" y1="18" x2="21" y2="18"></line>
+                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+              </svg>
+              <span class="toc-title">Struktura</span>
+            </div>
+            
+            <button type="button" class="sidebar-zen-btn" (click)="toggleZenMode()" title="Włącz tryb skupienia (Zen)">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="9"></circle>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <span>Zen</span>
+            </button>
           </div>
 
           <nav class="toc-nav">
@@ -110,6 +192,33 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
               </li>
             </ul>
           </nav>
+        </div>
+
+        <!-- Soundtrack / OST Player Card (Under the Menu) -->
+        <div class="soundtrack-card" *ngIf="soundtrackEmbedUrl">
+          <div class="soundtrack-header">
+            <div class="soundtrack-title-row">
+              <div class="soundtrack-pulse-icon">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 18V5l12-2v13"></path>
+                  <circle cx="6" cy="18" r="3"></circle>
+                  <circle cx="18" cy="16" r="3"></circle>
+                </svg>
+              </div>
+              <span class="soundtrack-title">Ścieżka dźwiękowa</span>
+            </div>
+            <span class="soundtrack-subtitle">Włącz w tle do czytania</span>
+          </div>
+
+          <div class="soundtrack-player-frame">
+            <iframe
+              [src]="soundtrackEmbedUrl"
+              title="Ścieżka dźwiękowa gry"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+            ></iframe>
+          </div>
         </div>
       </aside>
     </div>
@@ -131,6 +240,89 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
   `,
   styles: [
     `
+      /* Reading Progress Bar */
+      .reading-progress-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 3.5px;
+        background: var(--accent-color);
+        box-shadow: 0 0 10px var(--accent-color);
+        z-index: 99999;
+        pointer-events: none;
+        transition: width 0.05s linear;
+      }
+
+      /* Zen Floating Status Bar */
+      .zen-floating-bar {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10000;
+        background: rgba(20, 20, 24, 0.92);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--border-color);
+        border-radius: 30px;
+        padding: 0.4rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        box-shadow: 0 8px 24px var(--shadow);
+        animation: slideDown 0.3s ease;
+      }
+      .zen-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .zen-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent-color);
+        box-shadow: 0 0 8px var(--accent-color);
+        animation: pulseDot 2s infinite ease-in-out;
+      }
+      .zen-title {
+        font-size: 0.85rem;
+        font-family: var(--font-sans);
+        color: var(--text-color);
+        font-weight: 600;
+      }
+      .zen-exit-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.25rem 0.65rem;
+        background: var(--input-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        color: var(--text-muted);
+        font-size: 0.78rem;
+        font-family: var(--font-sans);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .zen-exit-btn:hover {
+        color: var(--text-color);
+        border-color: var(--accent-color);
+      }
+      .zen-exit-icon {
+        font-size: 0.85rem;
+      }
+
+      @keyframes slideDown {
+        from { transform: translate(-50%, -20px); opacity: 0; }
+        to { transform: translate(-50%, 0); opacity: 1; }
+      }
+      @keyframes pulseDot {
+        0%, 100% { opacity: 0.6; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.3); }
+      }
+
       .review-page-layout {
         display: flex;
         justify-content: center;
@@ -140,17 +332,36 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
         padding: 0 1.5rem;
         gap: 2.5rem;
         position: relative;
+        transition: all 0.3s ease;
       }
       .review-main-col {
         flex: 1;
         max-width: 960px;
         min-width: 0;
+        transition: max-width 0.3s ease;
       }
       .review-container {
         width: 100%;
         margin: 0 auto;
         padding: 2.5rem 0;
       }
+
+      /* Zen Mode Activated Layout */
+      .review-page-layout.zen-active {
+        max-width: 900px;
+      }
+      .review-page-layout.zen-active .review-main-col {
+        max-width: 840px;
+        margin: 0 auto;
+      }
+      .review-page-layout.zen-active .content-body {
+        font-size: 1.25rem;
+        line-height: 1.85;
+      }
+      .review-page-layout.zen-active .content-body p {
+        margin-bottom: 0.75rem;
+      }
+
       .review-header {
         position: relative;
         margin-bottom: 2.5rem;
@@ -176,6 +387,134 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
       .header-content {
         padding: 2rem;
         position: relative;
+      }
+      .header-top-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+      }
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 6px;
+        font-family: var(--font-sans);
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        border: 1px solid transparent;
+      }
+      .status-platyna {
+        background: rgba(234, 179, 8, 0.15);
+        color: #facc15;
+        border-color: rgba(234, 179, 8, 0.4);
+        box-shadow: 0 0 10px rgba(234, 179, 8, 0.1);
+      }
+      .status-main_story {
+        background: rgba(16, 185, 129, 0.15);
+        color: #10b981;
+        border-color: rgba(16, 185, 129, 0.4);
+      }
+      .status-in_progress {
+        background: rgba(59, 130, 246, 0.15);
+        color: #60a5fa;
+        border-color: rgba(59, 130, 246, 0.4);
+      }
+      .status-abandoned {
+        background: rgba(239, 68, 68, 0.15);
+        color: #f87171;
+        border-color: rgba(239, 68, 68, 0.4);
+      }
+      .playtime-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 6px;
+        background: var(--input-bg);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        font-family: var(--font-sans);
+        font-size: 0.82rem;
+        font-weight: 600;
+      }
+      .playtime-badge svg {
+        color: var(--accent-color);
+      }
+
+      .zen-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 6px;
+        background: var(--input-bg);
+        border: 1px solid var(--border-color);
+        color: var(--text-muted);
+        font-family: var(--font-sans);
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-left: auto;
+      }
+      .zen-btn:hover {
+        color: var(--text-color);
+        border-color: var(--accent-color);
+      }
+      .zen-btn.active {
+        background: rgba(255, 122, 0, 0.12);
+        color: var(--accent-color);
+        border-color: var(--accent-color);
+      }
+
+      .platforms-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+        flex-wrap: wrap;
+      }
+      .platforms-label {
+        font-size: 0.82rem;
+        font-family: var(--font-sans);
+        color: var(--text-muted);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+      }
+      .platform-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .platform-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.25rem 0.65rem;
+        background: var(--input-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-family: var(--font-sans);
+        color: var(--text-color);
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+      .platform-chip.link-chip {
+        color: var(--accent-color);
+        border-color: rgba(255, 122, 0, 0.35);
+        cursor: pointer;
+      }
+      .platform-chip.link-chip:hover {
+        background: rgba(255, 122, 0, 0.1);
+        border-color: var(--accent-color);
+        transform: translateY(-1px);
       }
       .game-title {
         font-size: 2.25rem;
@@ -221,6 +560,9 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
         color: var(--accent-color);
       }
       .review-ratings {
+        margin-bottom: 2.5rem;
+      }
+      .pros-cons-section {
         margin-bottom: 2.5rem;
       }
       .hardware-specs {
@@ -274,15 +616,125 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
         transform: scale(1.01);
       }
 
-      /* Desktop Table of Contents Sidebar */
+      /* Image Comparison Slider inside content */
+      :host ::ng-deep .image-comparison-block {
+        position: relative;
+        width: 100%;
+        margin: 2.5rem 0;
+        border-radius: 12px;
+        overflow: hidden;
+        user-select: none;
+        -webkit-user-select: none;
+        cursor: ew-resize;
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 6px 20px var(--shadow);
+      }
+      :host ::ng-deep .image-comparison-block .comparison-base {
+        width: 100%;
+        position: relative;
+        display: block;
+      }
+      :host ::ng-deep .image-comparison-block .comparison-base img {
+        width: 100%;
+        height: auto;
+        display: block;
+        margin: 0 !important;
+        cursor: ew-resize !important;
+        pointer-events: none;
+        border-radius: 0 !important;
+        transform: none !important;
+      }
+      :host ::ng-deep .image-comparison-block .comparison-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        pointer-events: none;
+      }
+      :host ::ng-deep .image-comparison-block .comparison-overlay img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        margin: 0 !important;
+        cursor: ew-resize !important;
+        pointer-events: none;
+        border-radius: 0 !important;
+        transform: none !important;
+      }
+      :host ::ng-deep .image-comparison-block .comparison-badge {
+        position: absolute;
+        bottom: 16px;
+        padding: 0.35rem 0.75rem;
+        background: rgba(18, 18, 22, 0.85);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        color: #ffffff;
+        font-size: 0.78rem;
+        font-weight: 700;
+        font-family: var(--font-sans);
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        pointer-events: none;
+        z-index: 5;
+      }
+      :host ::ng-deep .image-comparison-block .badge-before {
+        left: 16px;
+      }
+      :host ::ng-deep .image-comparison-block .badge-after {
+        right: 16px;
+      }
+      :host ::ng-deep .image-comparison-block .comparison-handle {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 40px;
+        margin-left: -20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        z-index: 10;
+      }
+      :host ::ng-deep .image-comparison-block .handle-line {
+        width: 2px;
+        flex: 1;
+        background: #ffffff;
+        box-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
+      }
+      :host ::ng-deep .image-comparison-block .handle-grip {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--accent-color);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 12px rgba(0, 0, 0, 0.6), 0 0 0 2px #ffffff;
+        cursor: ew-resize;
+        transition: transform 0.15s ease;
+      }
+      :host ::ng-deep .image-comparison-block:hover .handle-grip {
+        transform: scale(1.1);
+      }
+
+      /* Desktop Sidebar */
       .review-toc-sidebar {
-        width: 270px;
+        width: 280px;
         flex-shrink: 0;
         position: sticky;
         top: 95px;
         margin-top: 2.5rem;
         max-height: calc(100vh - 120px);
         overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
       }
       .toc-sticky-card {
         background-color: var(--card-bg);
@@ -294,10 +746,16 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
       .toc-header {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: 0.5rem;
         padding-bottom: 0.75rem;
         margin-bottom: 0.75rem;
         border-bottom: 1px solid var(--border-color);
+      }
+      .toc-header-left {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
         color: var(--text-color);
       }
       .toc-icon {
@@ -309,6 +767,25 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+      }
+      .sidebar-zen-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.2rem 0.5rem;
+        background: var(--input-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        font-family: var(--font-sans);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .sidebar-zen-btn:hover {
+        color: var(--accent-color);
+        border-color: var(--accent-color);
       }
       .toc-nav {
         position: relative;
@@ -385,6 +862,59 @@ import { RatingDisplayComponent } from '../../shared/components/rating-display/r
         background: var(--accent-color);
         box-shadow: 0 0 6px var(--accent-color);
         transform: scale(1.2);
+      }
+
+      /* Soundtrack / OST Card */
+      .soundtrack-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.25rem 1rem;
+        box-shadow: 0 4px 12px var(--shadow);
+      }
+      .soundtrack-header {
+        margin-bottom: 0.85rem;
+      }
+      .soundtrack-title-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-color);
+        margin-bottom: 0.2rem;
+      }
+      .soundtrack-pulse-icon {
+        color: var(--accent-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .soundtrack-title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-family: var(--font-sans);
+      }
+      .soundtrack-subtitle {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        font-family: var(--font-sans);
+        display: block;
+      }
+      .soundtrack-player-frame {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        border-radius: 8px;
+        overflow: hidden;
+        background-color: var(--input-bg);
+        border: 1px solid var(--border-color);
+      }
+      .soundtrack-player-frame iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
       }
 
       /* Spoiler styles */
@@ -554,9 +1084,31 @@ export class ReviewDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   tocItems: TocItem[] = [];
   activeTocId: string | null = null;
 
+  // Reading progress & Zen mode & OST
+  readingProgress = 0;
+  isZenMode = false;
+  soundtrackEmbedUrl: SafeResourceUrl | null = null;
+
+  private activeComparisonBlock: HTMLElement | null = null;
+
   private routeSub?: Subscription;
   private clickHandler = this.handleContentClick.bind(this);
   private scrollHandler = this.handleScroll.bind(this);
+  private pointerDownHandler = this.handlePointerDown.bind(this);
+  private pointerMoveHandler = this.handlePointerMove.bind(this);
+  private pointerUpHandler = this.handlePointerUp.bind(this);
+
+  @HostListener('window:keydown', ['$event'])
+  handleKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      if (this.isZenMode) {
+        this.isZenMode = false;
+      }
+      if (this.lightboxImage) {
+        this.closeLightbox();
+      }
+    }
+  }
 
   ngOnInit(): void {
     this.routeSub = this.route.paramMap.subscribe((params) => {
@@ -570,12 +1122,29 @@ export class ReviewDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     document.addEventListener('click', this.clickHandler);
     window.addEventListener('scroll', this.scrollHandler, { passive: true });
+
+    document.addEventListener('mousedown', this.pointerDownHandler as EventListener);
+    document.addEventListener('mousemove', this.pointerMoveHandler as EventListener);
+    document.addEventListener('mouseup', this.pointerUpHandler as EventListener);
+
+    document.addEventListener('touchstart', this.pointerDownHandler as EventListener, { passive: false });
+    document.addEventListener('touchmove', this.pointerMoveHandler as EventListener, { passive: false });
+    document.addEventListener('touchend', this.pointerUpHandler as EventListener);
   }
 
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
     document.removeEventListener('click', this.clickHandler);
     window.removeEventListener('scroll', this.scrollHandler);
+
+    document.removeEventListener('mousedown', this.pointerDownHandler as EventListener);
+    document.removeEventListener('mousemove', this.pointerMoveHandler as EventListener);
+    document.removeEventListener('mouseup', this.pointerUpHandler as EventListener);
+
+    document.removeEventListener('touchstart', this.pointerDownHandler as EventListener);
+    document.removeEventListener('touchmove', this.pointerMoveHandler as EventListener);
+    document.removeEventListener('touchend', this.pointerUpHandler as EventListener);
+
     this.tocService.clear();
   }
 
@@ -585,6 +1154,7 @@ export class ReviewDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       next: (review) => {
         this.review = review;
         this.processedContent = this.processContent(review.content);
+        this.processSoundtrackUrl(review.soundtrackUrl);
         this.loading = false;
       },
       error: (err) => {
@@ -594,6 +1164,31 @@ export class ReviewDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
+  toggleZenMode(): void {
+    this.isZenMode = !this.isZenMode;
+  }
+
+  private processSoundtrackUrl(url: string | null | undefined): void {
+    if (!url) {
+      this.soundtrackEmbedUrl = null;
+      return;
+    }
+
+    const videoId = this.extractYouTubeId(url);
+    if (videoId) {
+      const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1&rel=0`;
+      this.soundtrackEmbedUrl = this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
+    } else {
+      this.soundtrackEmbedUrl = null;
+    }
+  }
+
+  private extractYouTubeId(url: string): string | null {
+    const regExp = /(?:https?:\/\/)?(?:www\.|music\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const match = url.match(regExp);
+    return match && match[1] ? match[1] : null;
+  }
+
   getImageUrl(url: string | null): string {
     if (!url) return '';
     if (url.startsWith('http')) return url;
@@ -601,11 +1196,43 @@ export class ReviewDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     return '/uploads/' + url;
   }
 
+  getStatusLabel(status?: string): string {
+    switch (status) {
+      case 'platyna':
+        return 'Platyna (100%)';
+      case 'main_story':
+        return 'Główny wątek';
+      case 'in_progress':
+        return 'W trakcie';
+      case 'abandoned':
+        return 'Porzucona';
+      default:
+        return 'Główny wątek';
+    }
+  }
+
+  getStatusIcon(status?: string): string {
+    switch (status) {
+      case 'platyna':
+        return '🏆';
+      case 'main_story':
+        return '🎯';
+      case 'in_progress':
+        return '⏳';
+      case 'abandoned':
+        return '🛑';
+      default:
+        return '🎮';
+    }
+  }
+
   sanitize(content: string): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(content);
   }
 
   processContent(content: string): SafeHtml {
+    if (!content) return '';
+
     // 1. Parse [SPOILER]...[/SPOILER] text markers
     let processed = content.replace(
       /\[SPOILER\]([\s\S]*?)\[\/SPOILER\]/gi,
@@ -615,7 +1242,37 @@ export class ReviewDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       </div>`,
     );
 
-    // 2. Extract headings & build TOC structure exclusively from .ql-size-huge and .ql-size-large
+    // 2. Parse [COMPARE before="..." after="..." labelBefore="..." labelAfter="..."]
+    processed = processed.replace(
+      /\[COMPARE\s+before=["']([^"']+)["']\s+after=["']([^"']+)["'](?:\s+labelBefore=["']([^"']*)["'])?(?:\s+labelAfter=["']([^"']*)["'])?\s*\]/gi,
+      (_match, before, after, labelBefore, labelAfter) => {
+        const lblB = labelBefore || 'Przed';
+        const lblA = labelAfter || 'Po';
+        const urlB = this.getImageUrl(before);
+        const urlA = this.getImageUrl(after);
+        return `
+          <div class="image-comparison-block" data-comparison="true">
+            <div class="comparison-base">
+              <img src="${urlB}" alt="${lblB}" draggable="false" />
+              <span class="comparison-badge badge-before">${lblB}</span>
+            </div>
+            <div class="comparison-overlay" style="clip-path: inset(0 50% 0 0);">
+              <img src="${urlA}" alt="${lblA}" draggable="false" />
+              <span class="comparison-badge badge-after">${lblA}</span>
+            </div>
+            <div class="comparison-handle" style="left: 50%;">
+              <div class="handle-line"></div>
+              <div class="handle-grip">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </div>
+              <div class="handle-line"></div>
+            </div>
+          </div>
+        `;
+      }
+    );
+
+    // 3. Extract headings & build TOC structure exclusively from .ql-size-huge and .ql-size-large
     const { processedHtml, items } = this.extractHeadings(processed);
     this.tocItems = items;
     this.tocService.setItems(items);
@@ -716,6 +1373,15 @@ export class ReviewDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private handleScroll(): void {
+    // 1. Calculate reading progress
+    const scrollTotal = document.documentElement.scrollHeight - window.innerHeight;
+    if (scrollTotal > 0) {
+      this.readingProgress = Math.min(100, Math.max(0, (window.scrollY / scrollTotal) * 100));
+    } else {
+      this.readingProgress = 0;
+    }
+
+    // 2. Active TOC heading detection
     if (this.tocItems.length === 0) return;
     const offset = 140;
     let currentId: string | null = null;
@@ -738,6 +1404,47 @@ export class ReviewDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  private handlePointerDown(event: MouseEvent | TouchEvent): void {
+    const target = event.target as HTMLElement;
+    const block = target.closest('.image-comparison-block') as HTMLElement;
+    if (block) {
+      this.activeComparisonBlock = block;
+      this.updateComparisonPosition(block, event);
+      if (event.cancelable) {
+        event.preventDefault();
+      }
+    }
+  }
+
+  private handlePointerMove(event: MouseEvent | TouchEvent): void {
+    if (!this.activeComparisonBlock) return;
+    this.updateComparisonPosition(this.activeComparisonBlock, event);
+    if (event.cancelable) {
+      event.preventDefault();
+    }
+  }
+
+  private handlePointerUp(): void {
+    this.activeComparisonBlock = null;
+  }
+
+  private updateComparisonPosition(block: HTMLElement, event: MouseEvent | TouchEvent): void {
+    const rect = block.getBoundingClientRect();
+    const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX;
+    const offsetX = clientX - rect.left;
+    const percentage = Math.max(0, Math.min(100, (offsetX / rect.width) * 100));
+
+    const overlay = block.querySelector('.comparison-overlay') as HTMLElement;
+    const handle = block.querySelector('.comparison-handle') as HTMLElement;
+
+    if (overlay) {
+      overlay.style.clipPath = `inset(0 ${(100 - percentage).toFixed(2)}% 0 0)`;
+    }
+    if (handle) {
+      handle.style.left = `${percentage.toFixed(2)}%`;
+    }
+  }
+
   handleContentClick(event: Event): void {
     const target = event.target as HTMLElement;
 
@@ -745,6 +1452,11 @@ export class ReviewDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     const spoilerBox = target.closest('.spoiler-box');
     if (spoilerBox) {
       spoilerBox.classList.toggle('revealed');
+      return;
+    }
+
+    // Ignore image clicks inside image comparisons
+    if (target.closest('.image-comparison-block')) {
       return;
     }
 

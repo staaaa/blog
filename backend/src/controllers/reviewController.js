@@ -130,7 +130,13 @@ const createReview = async (req, res) => {
       customRatings,
       coverImage,
       releaseDate,
-      isDraft
+      isDraft,
+      pros,
+      cons,
+      gameStatus,
+      playtimeHours,
+      platforms,
+      soundtrackUrl
     } = req.body;
 
     // Calculate average
@@ -154,7 +160,13 @@ const createReview = async (req, res) => {
       studioId: studioId || null,
       coverImage,
       releaseDate: releaseDate || null,
-      isDraft: isDraft || false
+      isDraft: isDraft || false,
+      pros: Array.isArray(pros) ? pros : [],
+      cons: Array.isArray(cons) ? cons : [],
+      gameStatus: gameStatus || 'main_story',
+      playtimeHours: typeof playtimeHours === 'number' ? playtimeHours : (parseFloat(playtimeHours) || 0),
+      platforms: Array.isArray(platforms) ? platforms : [],
+      soundtrackUrl: soundtrackUrl || null
     }, { transaction });
 
     // Add genres
@@ -221,7 +233,13 @@ const updateReview = async (req, res) => {
       customRatings,
       coverImage,
       releaseDate,
-      isDraft
+      isDraft,
+      pros,
+      cons,
+      gameStatus,
+      playtimeHours,
+      platforms,
+      soundtrackUrl
     } = req.body;
 
     // Calculate new average
@@ -251,7 +269,13 @@ const updateReview = async (req, res) => {
       studioId: studioId !== undefined ? studioId : review.studioId,
       coverImage: coverImage ?? review.coverImage,
       releaseDate: releaseDate !== undefined ? (releaseDate || null) : review.releaseDate,
-      isDraft: isDraft !== undefined ? isDraft : review.isDraft
+      isDraft: isDraft !== undefined ? isDraft : review.isDraft,
+      pros: pros !== undefined ? (Array.isArray(pros) ? pros : []) : review.pros,
+      cons: cons !== undefined ? (Array.isArray(cons) ? cons : []) : review.cons,
+      gameStatus: gameStatus !== undefined ? gameStatus : review.gameStatus,
+      playtimeHours: playtimeHours !== undefined ? (typeof playtimeHours === 'number' ? playtimeHours : (parseFloat(playtimeHours) || 0)) : review.playtimeHours,
+      platforms: platforms !== undefined ? (Array.isArray(platforms) ? platforms : []) : review.platforms,
+      soundtrackUrl: soundtrackUrl !== undefined ? (soundtrackUrl || null) : review.soundtrackUrl
     }, { transaction });
 
     // Update genres

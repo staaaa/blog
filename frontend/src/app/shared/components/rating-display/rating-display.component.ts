@@ -1,23 +1,56 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CustomRating } from '../../../core/services/api.service';
+import { RadarChartComponent } from '../radar-chart/radar-chart.component';
 
 @Component({
   selector: 'app-rating-display',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RadarChartComponent],
   template: `
     <div class="rating-display">
-      <div class="main-rating">
-        <div class="rating-circle" [style.background]="getCircleGradient(averageRating)">
-          <div class="rating-inner">
-            <span class="rating-value">{{ averageRating.toFixed(1) }}</span>
+      <div class="rating-header-bar">
+        <div class="main-rating">
+          <div class="rating-circle" [style.background]="getCircleGradient(averageRating)">
+            <div class="rating-inner">
+              <span class="rating-value">{{ averageRating.toFixed(1) }}</span>
+            </div>
           </div>
+          <span class="rating-label">Średnia ocena</span>
         </div>
-        <span class="rating-label">Średnia ocena</span>
+
+        <div class="view-toggles">
+          <button 
+            type="button" 
+            class="toggle-btn" 
+            [class.active]="viewMode === 'bars'" 
+            (click)="viewMode = 'bars'"
+            title="Widok pasków"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="4" y1="6" x2="20" y2="6"></line>
+              <line x1="4" y1="12" x2="16" y2="12"></line>
+              <line x1="4" y1="18" x2="18" y2="18"></line>
+            </svg>
+            <span>Paski</span>
+          </button>
+          <button 
+            type="button" 
+            class="toggle-btn" 
+            [class.active]="viewMode === 'radar'" 
+            (click)="viewMode = 'radar'"
+            title="Wykres radarowy"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"></polygon>
+            </svg>
+            <span>Radar</span>
+          </button>
+        </div>
       </div>
 
-      <div class="rating-bars">
+      <!-- Bars View -->
+      <div class="rating-bars" *ngIf="viewMode === 'bars'">
         <div class="rating-item">
           <span class="rating-name">Fabuła</span>
           <div class="rating-bar-container">
@@ -68,40 +101,97 @@ import { CustomRating } from '../../../core/services/api.service';
           </div>
         </ng-container>
       </div>
+
+      <!-- Radar View -->
+      <div class="rating-radar-view" *ngIf="viewMode === 'radar'">
+        <app-radar-chart
+          [storyRating]="storyRating"
+          [musicRating]="musicRating"
+          [graphicsRating]="graphicsRating"
+          [optimizationRating]="optimizationRating"
+          [gameplayRating]="gameplayRating"
+          [customRatings]="customRatings"
+        ></app-radar-chart>
+      </div>
     </div>
   `,
   styles: [`
     .rating-display {
       display: flex;
-      gap: 2.5rem;
+      flex-direction: column;
+      gap: 1.5rem;
       padding: 1.5rem;
       background-color: var(--card-bg);
       border-radius: 12px;
       border: 1px solid var(--border-color);
+      box-shadow: 0 4px 12px var(--shadow);
+    }
+
+    .rating-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border-color);
     }
 
     .main-rating {
       display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 0.5rem;
-      flex-shrink: 0;
-      justify-content: center;
+      gap: 1.25rem;
+    }
+
+    .view-toggles {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: var(--input-bg);
+      padding: 0.25rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .toggle-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.85rem;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .toggle-btn:hover {
+      color: var(--text-color);
+    }
+
+    .toggle-btn.active {
+      background: var(--card-bg);
+      color: var(--accent-color);
+      box-shadow: 0 2px 6px var(--shadow);
     }
 
     .rating-circle {
-      width: 90px;
-      height: 90px;
+      width: 68px;
+      height: 68px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
+      flex-shrink: 0;
     }
 
     .rating-inner {
-      width: 74px;
-      height: 74px;
+      width: 54px;
+      height: 54px;
       border-radius: 50%;
       background-color: var(--card-bg);
       display: flex;
@@ -110,27 +200,36 @@ import { CustomRating } from '../../../core/services/api.service';
     }
 
     .rating-value {
-      font-size: 1.6rem;
+      font-size: 1.35rem;
       font-weight: 800;
       color: var(--text-color);
       letter-spacing: -0.5px;
     }
 
     .rating-label {
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       color: var(--text-muted);
-      font-weight: 500;
+      font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
 
     .rating-bars {
-      flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 0.6rem;
-      min-width: 0;
-      justify-content: center;
+      gap: 0.75rem;
+      width: 100%;
+    }
+
+    .rating-radar-view {
+      width: 100%;
+      padding: 0.5rem 0;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .rating-item {
@@ -174,9 +273,6 @@ import { CustomRating } from '../../../core/services/api.service';
 
     @media (max-width: 768px) {
       .rating-display {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 1.5rem;
         border-radius: 0;
         border-left: none;
         border-right: none;
@@ -184,7 +280,7 @@ import { CustomRating } from '../../../core/services/api.service';
       }
 
       .rating-item {
-        grid-template-columns: 100px 1fr 35px;
+        grid-template-columns: 110px 1fr 35px;
         gap: 0.75rem;
       }
 
@@ -203,10 +299,11 @@ export class RatingDisplayComponent {
   @Input() gameplayRating: number = 0;
   @Input() customRatings: CustomRating[] = [];
 
+  viewMode: 'bars' | 'radar' = 'bars';
+
   getCircleGradient(rating: number): string {
     const percent = (rating / 10) * 100;
     const degrees = (percent / 100) * 360;
-    // Conic gradient using CSS variable theme colors
     return `conic-gradient(var(--accent-color) 0deg, var(--accent-color) ${degrees}deg, var(--border-color) ${degrees}deg, var(--border-color) 360deg)`;
   }
 }

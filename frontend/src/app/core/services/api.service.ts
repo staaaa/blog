@@ -2,6 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+export type GameStatus = 'platyna' | 'main_story' | 'in_progress' | 'abandoned';
+
+export interface PlatformLink {
+  name: string;
+  url?: string;
+}
+
 export interface Review {
   id: number;
   title: string;
@@ -21,6 +28,12 @@ export interface Review {
   series: Category | null;
   studio: Category | null;
   customRatings: CustomRating[];
+  pros: string[];
+  cons: string[];
+  gameStatus: GameStatus;
+  playtimeHours: number;
+  platforms: PlatformLink[];
+  soundtrackUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }

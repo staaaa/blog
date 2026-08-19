@@ -75,6 +75,38 @@ const Review = sequelize.define('Review', {
     allowNull: false,
     defaultValue: false,
     field: 'is_draft'
+  },
+  pros: {
+    type: DataTypes.JSON,
+    allowNull: false,
+    defaultValue: []
+  },
+  cons: {
+    type: DataTypes.JSON,
+    allowNull: false,
+    defaultValue: []
+  },
+  gameStatus: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    defaultValue: 'main_story',
+    field: 'game_status'
+  },
+  playtimeHours: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+    defaultValue: 0,
+    field: 'playtime_hours'
+  },
+  platforms: {
+    type: DataTypes.JSON,
+    allowNull: false,
+    defaultValue: []
+  },
+  soundtrackUrl: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+    field: 'soundtrack_url'
   }
 }, {
   tableName: 'reviews'
