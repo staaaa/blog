@@ -21,10 +21,14 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
     <div class="zen-floating-bar" *ngIf="isZenMode">
       <div class="zen-info">
         <span class="zen-dot"></span>
-        <span class="zen-title">Tryb skupienia (Zen)</span>
+        <span class="zen-title">
+          <span class="zen-desktop-text">Tryb skupienia (Zen)</span>
+          <span class="zen-mobile-text">Tryb Zen</span>
+        </span>
       </div>
       <button type="button" class="zen-exit-btn" (click)="toggleZenMode()" title="Wyjdź z trybu Zen (Esc)">
-        <span>Wyjdź z trybu Zen (Esc)</span>
+        <span class="zen-desktop-text">Wyjdź (Esc)</span>
+        <span class="zen-mobile-text">Wyjdź</span>
         <span class="zen-exit-icon">✕</span>
       </button>
     </div>
@@ -487,18 +491,22 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       top: 20px;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 9999;
+      z-index: 99999;
       display: flex;
       align-items: center;
-      gap: 1.5rem;
-      background: rgba(18, 18, 22, 0.92);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      justify-content: space-between;
+      gap: 1.25rem;
+      background: rgba(18, 18, 22, 0.94);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border: 1px solid var(--accent-color);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 16px rgba(255, 107, 44, 0.2);
-      padding: 0.6rem 1.25rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 16px rgba(255, 107, 44, 0.25);
+      padding: 0.5rem 1.15rem;
       border-radius: 9999px;
       animation: zenSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      white-space: nowrap;
+      flex-wrap: nowrap;
+      user-select: none;
     }
 
     @keyframes zenSlideDown {
@@ -510,6 +518,7 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      flex-shrink: 0;
     }
 
     .zen-dot {
@@ -530,28 +539,39 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       font-size: 0.85rem;
       font-weight: 600;
       color: #ffffff;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+
+    .zen-mobile-text {
+      display: none;
+    }
+
+    .zen-desktop-text {
+      display: inline;
     }
 
     .zen-exit-btn {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      gap: 0.45rem;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.22);
       color: #ffffff;
       padding: 0.35rem 0.85rem;
       border-radius: 9999px;
       font-size: 0.8rem;
       font-weight: 600;
       cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
       transition: all 0.2s ease;
     }
 
     .zen-exit-btn:hover {
       background: var(--accent-color);
       border-color: var(--accent-color);
-      transform: scale(1.04);
+      transform: scale(1.03);
     }
 
     /* Layout */
@@ -579,9 +599,12 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       box-shadow: 0 4px 20px var(--shadow);
     }
 
+    /* ========================================================
+       Zen Active Mode (Subdued, Grayscale UI, Compact Non-Content, Hidden Likes)
+       ======================================================== */
     .game-page-layout.zen-active {
-      max-width: 860px;
-      padding-top: 5rem;
+      max-width: 820px;
+      padding-top: 4.5rem;
     }
 
     .game-page-layout.zen-active .game-toc-sidebar {
@@ -595,9 +618,190 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       padding: 0;
     }
 
+    /* Hide Likes Counter & Button in Zen Mode */
+    .game-page-layout.zen-active .like-btn,
+    .game-page-layout.zen-active .static-like-badge {
+      display: none !important;
+    }
+
+    /* Subdued & Compact Header */
+    .game-page-layout.zen-active .game-header {
+      margin-bottom: 1.5rem;
+    }
+
+    .game-page-layout.zen-active .cover-image {
+      max-height: 220px;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      filter: grayscale(0.7) brightness(0.9);
+      opacity: 0.85;
+      transition: all 0.3s ease;
+    }
+
+    .game-page-layout.zen-active .game-title {
+      font-size: 1.65rem;
+      margin-bottom: 0.4rem;
+      opacity: 0.9;
+    }
+
+    .game-page-layout.zen-active .overall-score-badge {
+      padding: 0.25rem 0.65rem;
+      font-size: 0.75rem;
+      filter: grayscale(1);
+      opacity: 0.7;
+      border-color: var(--border-color);
+      background: var(--bg-color);
+    }
+
+    .game-page-layout.zen-active .overall-score-badge .score-val {
+      font-size: 0.95rem;
+    }
+
+    .game-page-layout.zen-active .categories {
+      gap: 0.35rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .game-page-layout.zen-active .category-link {
+      padding: 0.2rem 0.5rem;
+      font-size: 0.75rem;
+      filter: grayscale(1);
+      opacity: 0.75;
+    }
+
+    .game-page-layout.zen-active .platforms-row {
+      margin-bottom: 0.75rem;
+      gap: 0.4rem;
+    }
+
+    .game-page-layout.zen-active .platform-chip {
+      padding: 0.15rem 0.5rem;
+      font-size: 0.72rem;
+      filter: grayscale(1);
+      opacity: 0.75;
+    }
+
+    .game-page-layout.zen-active .meta {
+      font-size: 0.75rem;
+      opacity: 0.7;
+    }
+
+    .game-page-layout.zen-active .header-actions .action-icon-btn,
+    .game-page-layout.zen-active .static-favorite-badge {
+      padding: 0.3rem 0.65rem;
+      font-size: 0.75rem;
+      filter: grayscale(1);
+      opacity: 0.75;
+    }
+
+    /* Subdued Reviewers Bar */
+    .game-page-layout.zen-active .reviewers-section {
+      padding: 0.75rem 1rem;
+      margin-bottom: 1.5rem;
+      border-radius: 8px;
+      filter: grayscale(1);
+      opacity: 0.75;
+    }
+
+    .game-page-layout.zen-active .reviewers-section-title {
+      font-size: 0.8rem;
+    }
+
+    .game-page-layout.zen-active .reviewer-tab-btn {
+      padding: 0.3rem 0.6rem;
+      gap: 0.45rem;
+      font-size: 0.75rem;
+    }
+
+    .game-page-layout.zen-active .reviewer-avatar {
+      width: 22px;
+      height: 22px;
+      font-size: 0.65rem;
+    }
+
+    .game-page-layout.zen-active .review-title-box {
+      padding-bottom: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .game-page-layout.zen-active .review-title {
+      font-size: 1.4rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .game-page-layout.zen-active .review-byline {
+      font-size: 0.78rem;
+      opacity: 0.75;
+    }
+
+    .game-page-layout.zen-active .status-badge,
+    .game-page-layout.zen-active .playtime-badge,
+    .game-page-layout.zen-active .read-mark-btn {
+      font-size: 0.72rem;
+      padding: 0.2rem 0.5rem;
+      filter: grayscale(1);
+      opacity: 0.75;
+    }
+
+    /* Subdued & Scaled Down Ratings & Pros/Cons */
+    .game-page-layout.zen-active .review-ratings {
+      margin-bottom: 1.25rem;
+      filter: grayscale(1);
+      opacity: 0.75;
+      transform: scale(0.92);
+      transform-origin: top left;
+    }
+
+    .game-page-layout.zen-active .pros-cons-section {
+      margin-bottom: 1.5rem;
+      filter: grayscale(1);
+      opacity: 0.75;
+      transform: scale(0.92);
+      transform-origin: top left;
+    }
+
+    .game-page-layout.zen-active .hardware-specs {
+      padding: 0.85rem 1rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.82rem;
+      filter: grayscale(1);
+      opacity: 0.75;
+    }
+
+    .game-page-layout.zen-active .author-signature-card {
+      padding: 1rem 1.2rem;
+      gap: 1rem;
+      margin-top: 2rem;
+      margin-bottom: 2rem;
+      filter: grayscale(1);
+      opacity: 0.75;
+    }
+
+    .game-page-layout.zen-active .author-signature-card .signature-avatar {
+      width: 42px;
+      height: 42px;
+      font-size: 1rem;
+    }
+
+    .game-page-layout.zen-active .comments-section {
+      padding-top: 1.5rem;
+      margin-top: 1.5rem;
+      filter: grayscale(1);
+      opacity: 0.8;
+      font-size: 0.88rem;
+    }
+
+    /* High Focus, Highly Legible Reading Body */
     .game-page-layout.zen-active .content-body {
-      font-size: 1.25rem;
-      line-height: 1.85;
+      font-size: 1.22rem;
+      line-height: 1.9;
+      color: var(--text-primary);
+      filter: none !important;
+      opacity: 1 !important;
+    }
+
+    .game-page-layout.zen-active .content-body p {
+      margin-bottom: 1.4rem;
     }
 
     /* Game Header */
@@ -1878,6 +2082,202 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       }
       .game-title {
         font-size: 1.75rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .game-container {
+        padding: 1.25rem 1rem;
+        border-radius: 12px;
+      }
+
+      .game-title {
+        font-size: 1.35rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .overall-score-badge {
+        padding: 0.2rem 0.55rem;
+      }
+
+      .overall-score-badge .score-val {
+        font-size: 0.95rem;
+      }
+
+      .overall-score-badge .score-max,
+      .overall-score-badge .score-count {
+        font-size: 0.68rem;
+      }
+
+      .action-icon-btn, .zen-btn, .read-mark-btn, .like-btn, .static-favorite-badge, .static-like-badge {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+        gap: 0.35rem;
+      }
+
+      .status-badge, .playtime-badge {
+        font-size: 0.68rem;
+        padding: 0.18rem 0.45rem;
+      }
+
+      .category-link, .platform-chip {
+        font-size: 0.68rem;
+        padding: 0.15rem 0.45rem;
+      }
+
+      .platforms-label, .meta {
+        font-size: 0.68rem;
+      }
+
+      .reviewers-section {
+        padding: 0.75rem;
+      }
+
+      .reviewers-section-title {
+        font-size: 0.78rem;
+      }
+
+      .reviewer-tab-btn {
+        padding: 0.25rem 0.5rem;
+        gap: 0.4rem;
+        border-radius: 8px;
+      }
+
+      .reviewer-avatar {
+        width: 20px;
+        height: 20px;
+        font-size: 0.65rem;
+      }
+
+      .reviewer-tab-name {
+        font-size: 0.72rem;
+      }
+
+      .reviewer-tab-score {
+        font-size: 0.65rem;
+      }
+
+      .review-title {
+        font-size: 1.15rem;
+      }
+
+      .review-byline {
+        font-size: 0.72rem;
+      }
+
+      /* Compact mobile review text */
+      .content-body {
+        font-size: 0.8rem;
+        line-height: 1.65;
+      }
+
+      .content-body p {
+        margin-bottom: 0.8rem;
+      }
+
+      :host ::ng-deep .content-body .ql-size-huge {
+        font-size: 1.15rem;
+      }
+
+      :host ::ng-deep .content-body .ql-size-large {
+        font-size: 0.98rem;
+      }
+
+      .hardware-specs {
+        padding: 0.75rem;
+        font-size: 0.75rem;
+      }
+
+      .hardware-specs h3 {
+        font-size: 0.85rem;
+      }
+
+      .author-signature-card {
+        padding: 0.75rem;
+        gap: 0.75rem;
+        margin-top: 1.75rem;
+        margin-bottom: 1.75rem;
+      }
+
+      .signature-avatar {
+        width: 38px;
+        height: 38px;
+        font-size: 0.9rem;
+      }
+
+      .signature-name {
+        font-size: 0.85rem;
+      }
+
+      .signature-desc {
+        font-size: 0.72rem;
+      }
+
+      .comments-title {
+        font-size: 1.05rem;
+      }
+
+      .add-comment-card {
+        padding: 0.85rem;
+      }
+
+      .comment-textarea {
+        font-size: 0.78rem;
+        padding: 0.5rem 0.75rem;
+      }
+
+      .comment-item {
+        padding: 0.85rem;
+      }
+
+      .comment-content-text {
+        font-size: 0.76rem;
+      }
+
+      .comment-name {
+        font-size: 0.78rem;
+      }
+
+      .comment-timestamp {
+        font-size: 0.68rem;
+      }
+
+      .zen-floating-bar {
+        top: auto;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 0.38rem 0.8rem;
+        gap: 0.65rem;
+        max-width: calc(100vw - 32px);
+        box-sizing: border-box;
+      }
+
+      .zen-desktop-text {
+        display: none !important;
+      }
+
+      .zen-mobile-text {
+        display: inline !important;
+      }
+
+      .zen-title {
+        font-size: 0.78rem;
+      }
+
+      .zen-exit-btn {
+        padding: 0.22rem 0.6rem;
+        font-size: 0.72rem;
+      }
+
+      .game-page-layout.zen-active {
+        padding-top: 1.5rem;
+        padding-bottom: 5rem;
+      }
+
+      .game-page-layout.zen-active .content-body {
+        font-size: 0.88rem;
+        line-height: 1.7;
       }
     }
   `]
