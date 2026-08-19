@@ -48,19 +48,23 @@ import { CommonModule } from '@angular/common';
   styles: [`
     .pros-cons-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+      width: 100%;
+      margin: 0 auto 2rem auto;
+      box-sizing: border-box;
     }
 
     .card {
       background-color: var(--card-bg);
       border-radius: 12px;
-      padding: 1.5rem;
+      padding: 1.25rem;
       border: 1px solid var(--border-color);
       box-shadow: 0 4px 12px var(--shadow);
       display: flex;
       flex-direction: column;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .pros-card {
@@ -162,11 +166,20 @@ import { CommonModule } from '@angular/common';
       .pros-cons-container {
         grid-template-columns: 1fr;
         gap: 1rem;
+        width: 100%;
+        margin: 0 auto 1.5rem auto;
       }
       .card {
-        border-radius: 0;
-        border-left: none;
-        border-right: none;
+        border-radius: 10px;
+        border: 1px solid var(--border-color);
+        padding: 1rem;
+      }
+      .item {
+        font-size: 0.78rem;
+        gap: 0.5rem;
+      }
+      .card-title {
+        font-size: 0.88rem;
       }
     }
   `]

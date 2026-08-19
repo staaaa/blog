@@ -125,6 +125,9 @@ import { RadarChartComponent } from '../radar-chart/radar-chart.component';
       border-radius: 12px;
       border: 1px solid var(--border-color);
       box-shadow: 0 4px 12px var(--shadow);
+      width: 100%;
+      margin: 0 auto;
+      box-sizing: border-box;
     }
 
     .rating-header-bar {
@@ -218,18 +221,6 @@ import { RadarChartComponent } from '../radar-chart/radar-chart.component';
       display: flex;
       flex-direction: column;
       gap: 0.75rem;
-      width: 100%;
-    }
-
-    .rating-radar-view {
-      width: 100%;
-      padding: 0.5rem 0;
-      animation: fadeIn 0.3s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
     }
 
     .rating-item {
@@ -240,52 +231,85 @@ import { RadarChartComponent } from '../radar-chart/radar-chart.component';
     }
 
     .rating-name {
-      font-size: 0.85rem;
+      font-size: 0.9rem;
+      font-weight: 600;
       color: var(--text-color);
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-family: var(--font-sans);
     }
 
     .rating-bar-container {
-      height: 6px;
+      height: 8px;
       background-color: var(--input-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 3px;
+      border-radius: 4px;
       overflow: hidden;
-      min-width: 60px;
     }
 
     .rating-bar {
       height: 100%;
-      background-color: var(--accent-color);
-      border-radius: 3px;
-      transition: width 0.5s ease;
+      background: linear-gradient(90deg, var(--accent-color), #ff9933);
+      border-radius: 4px;
+      transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .rating-score {
-      text-align: right;
-      font-weight: 600;
+      font-size: 0.9rem;
+      font-weight: 700;
       color: var(--text-color);
-      font-size: 0.85rem;
+      text-align: right;
+      font-family: var(--font-sans);
+    }
+
+    .rating-radar-view {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem 0;
+      width: 100%;
     }
 
     @media (max-width: 768px) {
       .rating-display {
-        border-radius: 0;
-        border-left: none;
-        border-right: none;
-        padding: 1.5rem 1rem;
+        border-radius: 10px;
+        border: 1px solid var(--border-color);
+        padding: 1.25rem 1rem;
+        width: 100%;
+        margin: 0 auto;
+      }
+
+      .rating-header-bar {
+        gap: 1rem;
+        padding-bottom: 1rem;
+      }
+
+      .rating-circle {
+        width: 54px;
+        height: 54px;
+      }
+
+      .rating-inner {
+        width: 42px;
+        height: 42px;
+      }
+
+      .rating-value {
+        font-size: 1.1rem;
+      }
+
+      .rating-label {
+        font-size: 0.75rem;
       }
 
       .rating-item {
-        grid-template-columns: 110px 1fr 35px;
-        gap: 0.75rem;
+        grid-template-columns: 90px 1fr 30px;
+        gap: 0.5rem;
       }
 
       .rating-name {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
+      }
+
+      .rating-score {
+        font-size: 0.75rem;
       }
     }
   `]

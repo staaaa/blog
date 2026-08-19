@@ -743,21 +743,23 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       opacity: 0.75;
     }
 
-    /* Subdued & Scaled Down Ratings & Pros/Cons */
+    /* Subdued Ratings & Pros/Cons */
     .game-page-layout.zen-active .review-ratings {
       margin-bottom: 1.25rem;
       filter: grayscale(1);
       opacity: 0.75;
-      transform: scale(0.92);
-      transform-origin: top left;
+      width: 100%;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .game-page-layout.zen-active .pros-cons-section {
       margin-bottom: 1.5rem;
       filter: grayscale(1);
       opacity: 0.75;
-      transform: scale(0.92);
-      transform-origin: top left;
+      width: 100%;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .game-page-layout.zen-active .hardware-specs {
