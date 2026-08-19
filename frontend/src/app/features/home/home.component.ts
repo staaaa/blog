@@ -12,7 +12,7 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
     <div class="home-container">
       <header class="hero">
         <h1 class="hero-title">Recenzje Gier</h1>
-        <p class="hero-subtitle">Niezależne, rzetelne i szczegółowe recenzje od wielu graczy i pasjonatów.</p>
+        <p class="hero-subtitle">Rzetelne recenzje od dwójki kuzynów.</p>
       </header>
 
       <div class="sort-bar">
@@ -147,7 +147,14 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
         animation: spin 1s linear infinite;
       }
 
-      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
 
       .pagination {
         display: flex;

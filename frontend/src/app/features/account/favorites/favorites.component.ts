@@ -10,100 +10,107 @@ import { ReviewCardComponent } from '../../../shared/components/review-card/revi
   imports: [CommonModule, RouterLink, ReviewCardComponent],
   template: `
     <div class="favorites-container">
-      <header class="page-header">
-        <h1>Twoje ulubione gry</h1>
-        <p class="subtitle">Zapisane gry, do których chcesz wrócić lub śledzić nowe recenzje.</p>
+      <header class="hero">
+        <h1 class="hero-title">Ulubione Gry</h1>
+        <p class="hero-subtitle">Lista gier dodanych do Twojej prywatnej kolekcji ulubionych tytułów.</p>
       </header>
 
-      <div *ngIf="loading" class="loading">
-        <div class="spinner"></div>
-        <p>Ładowanie ulubionych...</p>
+      <div class="results-count" *ngIf="!loading && games.length > 0">
+        Zapisano {{ games.length }} {{ games.length === 1 ? 'grę' : 'gier' }}
       </div>
 
-      <div *ngIf="!loading && games.length === 0" class="empty-state">
-        <h2>Brak ulubionych gier</h2>
-        <p>Nie dodałeś jeszcze żadnej gry do ulubionych. Przeglądaj recenzje i dodaj grę do ulubionych!</p>
-        <a routerLink="/" class="btn-home">Przeglądaj recenzje</a>
-      </div>
-
-      <div class="games-grid" *ngIf="!loading && games.length > 0">
+      <section class="games-grid" *ngIf="games.length > 0">
         <app-review-card *ngFor="let game of games" [game]="game"></app-review-card>
+      </section>
+
+      <div class="empty-state" *ngIf="games.length === 0 && !loading">
+        <p>Nie masz jeszcze żadnych gier dodanych do ulubionych.</p>
+        <a routerLink="/" class="btn-browse">Przeglądaj recenzje gier</a>
+      </div>
+
+      <div class="loading" *ngIf="loading">
+        <div class="spinner"></div>
+        <p>Ładowanie ulubionych gier...</p>
       </div>
     </div>
   `,
   styles: [`
     .favorites-container {
-      max-width: 1200px;
-      margin: 2rem auto;
-      padding: 0 1.5rem;
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem;
     }
 
-    .page-header h1 {
-      font-size: 2.2rem;
+    .hero {
+      text-align: center;
+      padding: 3rem 0 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-title {
+      font-size: 2.6rem;
       font-weight: 800;
-      color: var(--text-primary);
-      margin: 0 0 0.35rem;
+      letter-spacing: -0.5px;
+      color: var(--text-color);
+      margin: 0 0 0.75rem;
     }
 
-    .subtitle {
+    .hero-subtitle {
+      font-size: 1.05rem;
       color: var(--text-muted);
-      margin: 0 0 2rem;
-      font-size: 0.95rem;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    .results-count {
+      text-align: right;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      font-size: 0.85rem;
+      font-weight: 600;
     }
 
     .games-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 1.75rem;
+      gap: 2rem;
     }
 
     .empty-state {
       text-align: center;
-      padding: 5rem 2rem;
-      background: var(--card-bg);
-      border-radius: 16px;
-      border: 1px dashed var(--border-color);
-      max-width: 600px;
-      margin: 0 auto;
-    }
-
-    .empty-icon {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-    }
-
-    .empty-state h2 {
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin: 0 0 0.5rem;
+      padding: 6rem 0;
+      color: var(--text-muted);
     }
 
     .empty-state p {
-      color: var(--text-muted);
-      font-size: 0.95rem;
+      font-size: 1.1rem;
       margin: 0 0 1.5rem;
     }
 
-    .btn-home {
+    .btn-browse {
       display: inline-block;
-      padding: 0.75rem 1.5rem;
+      padding: 0.65rem 1.5rem;
       background: var(--accent-color);
       color: #ffffff;
       text-decoration: none;
       border-radius: 8px;
       font-weight: 700;
+      font-size: 0.95rem;
       transition: all 0.2s ease;
     }
 
-    .btn-home:hover {
+    .btn-browse:hover {
       opacity: 0.9;
       transform: translateY(-2px);
     }
 
     .loading {
-      text-align: center;
-      padding: 4rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 6rem 0;
+      gap: 1.25rem;
       color: var(--text-muted);
     }
 
@@ -114,10 +121,25 @@ import { ReviewCardComponent } from '../../../shared/components/review-card/revi
       width: 36px;
       height: 36px;
       animation: spin 1s linear infinite;
-      margin: 0 auto 1rem;
     }
 
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+      .favorites-container {
+        padding: 1.5rem 1rem;
+      }
+      .hero-title {
+        font-size: 2rem;
+      }
+      .games-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+    }
   `]
 })
 export class FavoritesComponent implements OnInit {
