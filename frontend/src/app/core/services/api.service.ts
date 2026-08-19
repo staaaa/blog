@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+export type UserRole = 'admin' | 'reviewer' | 'reader';
 export type GameStatus = 'platyna' | 'main_story' | 'in_progress' | 'abandoned';
 
 export interface PlatformLink {
@@ -9,33 +10,14 @@ export interface PlatformLink {
   url?: string;
 }
 
-export interface Review {
+export interface UserProfile {
   id: number;
-  title: string;
-  gameTitle: string;
-  content: string;
-  hardwareSpecs: string;
-  storyRating: number;
-  musicRating: number;
-  graphicsRating: number;
-  optimizationRating: number;
-  gameplayRating: number;
-  averageRating: number;
-  coverImage: string | null;
-  releaseDate: string | null;
-  isDraft: boolean;
-  genres: Category[];
-  series: Category | null;
-  studio: Category | null;
-  customRatings: CustomRating[];
-  pros: string[];
-  cons: string[];
-  gameStatus: GameStatus;
-  playtimeHours: number;
-  platforms: PlatformLink[];
-  soundtrackUrl: string | null;
-  createdAt: string;
-  updatedAt: string;
+  username: string;
+  role: UserRole;
+  displayName?: string | null;
+  avatarUrl?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Category {
@@ -50,8 +32,98 @@ export interface CustomRating {
   value: number;
 }
 
+export interface ReviewerSummary {
+  reviewId: number;
+  userId: number;
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+  averageRating: number;
+  isDraft?: boolean;
+  updatedAt?: string;
+}
+
+export interface Game {
+  id: number;
+  gameTitle: string;
+  slug: string;
+  coverImage: string | null;
+  releaseDate: string | null;
+  soundtrackUrl: string | null;
+  platforms: PlatformLink[];
+  genres: Category[];
+  series: Category | null;
+  studio: Category | null;
+  createdBy?: UserProfile;
+  storyRating?: number;
+  musicRating?: number;
+  graphicsRating?: number;
+  optimizationRating?: number;
+  gameplayRating?: number;
+  averageRating: number;
+  reviewCount: number;
+  reviewers?: ReviewerSummary[];
+  reviews?: Review[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Review {
+  id: number;
+  gameId: number;
+  userId: number;
+  title: string;
+  content: string;
+  hardwareSpecs: string | null;
+  storyRating: number;
+  musicRating: number;
+  graphicsRating: number;
+  optimizationRating: number;
+  gameplayRating: number;
+  averageRating: number;
+  isDraft: boolean;
+  pros: string[];
+  cons: string[];
+  gameStatus: GameStatus;
+  playtimeHours: number;
+  customRatings: CustomRating[];
+  author?: UserProfile;
+  game?: Game;
+  // Legacy fields fallback
+  gameTitle?: string;
+  coverImage?: string | null;
+  releaseDate?: string | null;
+  soundtrackUrl?: string | null;
+  platforms?: PlatformLink[];
+  genres?: Category[];
+  series?: Category | null;
+  studio?: Category | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GameAverages {
+  storyRating: number;
+  musicRating: number;
+  graphicsRating: number;
+  optimizationRating: number;
+  gameplayRating: number;
+  averageRating: number;
+  reviewCount: number;
+}
+
+export interface GameDetailResponse {
+  game: Game;
+  averages: GameAverages;
+  reviewers: ReviewerSummary[];
+  selectedReview: Review | null;
+  isFavorite?: boolean;
+  isRead?: boolean;
+}
+
 export interface PaginatedResponse<T> {
-  reviews: T[];
+  games?: T[];
+  reviews?: T[];
   pagination: {
     total: number;
     page: number;
@@ -64,7 +136,8 @@ export interface CategoryWithReviews {
   genre?: Category;
   series?: Category;
   studio?: Category;
-  reviews: Review[];
+  games?: Game[];
+  reviews?: Game[] | Review[];
   pagination: {
     total: number;
     page: number;
@@ -81,32 +154,72 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
-  // Reviews
-  getReviews(page = 1, limit = 10, sort = 'newest'): Observable<PaginatedResponse<Review>> {
-    const params = new HttpParams()
+  // ========================
+  // Games
+  // ========================
+
+  getGames(page = 1, limit = 10, sort = 'newest', includeEmpty = false, onlyWithReviews = false): Observable<PaginatedResponse<Game>> {
+    let params = new HttpParams()
       .set('page', page.toString())
       .set('limit', limit.toString())
       .set('sort', sort);
-    return this.http.get<PaginatedResponse<Review>>(`${this.baseUrl}/reviews`, { params });
+    if (includeEmpty) {
+      params = params.set('includeEmpty', 'true');
+    }
+    if (onlyWithReviews) {
+      params = params.set('onlyWithReviews', 'true');
+    }
+    return this.http.get<PaginatedResponse<Game>>(`${this.baseUrl}/games`, { params });
   }
+
+  getGame(slug: string, reviewerId?: number, reviewId?: number): Observable<GameDetailResponse> {
+    let params = new HttpParams();
+    if (reviewerId) {
+      params = params.set('reviewerId', reviewerId.toString());
+    }
+    if (reviewId) {
+      params = params.set('reviewId', reviewId.toString());
+    }
+    return this.http.get<GameDetailResponse>(`${this.baseUrl}/games/${slug}`, { params });
+  }
+
+  createGame(game: Partial<Game> & { genreIds?: number[], seriesId?: number | null, studioId?: number | null }): Observable<Game> {
+    return this.http.post<Game>(`${this.baseUrl}/games`, game);
+  }
+
+  updateGame(id: number, game: Partial<Game> & { genreIds?: number[], seriesId?: number | null, studioId?: number | null }): Observable<Game> {
+    return this.http.put<Game>(`${this.baseUrl}/games/${id}`, game);
+  }
+
+  deleteGame(id: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.baseUrl}/games/${id}`);
+  }
+
+  searchGames(query: string, page = 1, limit = 10): Observable<PaginatedResponse<Game>> {
+    const params = new HttpParams()
+      .set('q', query)
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+    return this.http.get<PaginatedResponse<Game>>(`${this.baseUrl}/games/search`, { params });
+  }
+
+  // ========================
+  // Reviews
+  // ========================
 
   getReview(id: number): Observable<Review> {
     return this.http.get<Review>(`${this.baseUrl}/reviews/${id}`);
   }
 
-  searchReviews(query: string, page = 1, limit = 10): Observable<PaginatedResponse<Review>> {
-    const params = new HttpParams()
-      .set('q', query)
-      .set('page', page.toString())
-      .set('limit', limit.toString());
-    return this.http.get<PaginatedResponse<Review>>(`${this.baseUrl}/reviews/search`, { params });
+  getMyReviews(): Observable<Review[]> {
+    return this.http.get<Review[]>(`${this.baseUrl}/reviews/my`);
   }
 
-  createReview(review: Partial<Review> & { genreIds?: number[], customRatings?: CustomRating[] }): Observable<Review> {
+  createReview(review: Partial<Review> & { customRatings?: CustomRating[] }): Observable<Review> {
     return this.http.post<Review>(`${this.baseUrl}/reviews`, review);
   }
 
-  updateReview(id: number, review: Partial<Review> & { genreIds?: number[], customRatings?: CustomRating[] }): Observable<Review> {
+  updateReview(id: number, review: Partial<Review> & { customRatings?: CustomRating[] }): Observable<Review> {
     return this.http.put<Review>(`${this.baseUrl}/reviews/${id}`, review);
   }
 
@@ -114,7 +227,58 @@ export class ApiService {
     return this.http.delete<{ message: string }>(`${this.baseUrl}/reviews/${id}`);
   }
 
-  // Genres
+  // ========================
+  // Account (Reader & Reviewer & Admin)
+  // ========================
+
+  updateProfile(data: { displayName?: string; avatarUrl?: string }): Observable<UserProfile> {
+    return this.http.put<UserProfile>(`${this.baseUrl}/account/profile`, data);
+  }
+
+  changePassword(data: { currentPassword: string; newPassword: string }): Observable<{ message: string }> {
+    return this.http.put<{ message: string }>(`${this.baseUrl}/account/password`, data);
+  }
+
+  getFavorites(): Observable<Game[]> {
+    return this.http.get<Game[]>(`${this.baseUrl}/account/favorites`);
+  }
+
+  toggleFavorite(gameId: number): Observable<{ favorited: boolean; message: string }> {
+    return this.http.post<{ favorited: boolean; message: string }>(`${this.baseUrl}/account/favorites/${gameId}`, {});
+  }
+
+  getReadMarks(): Observable<Review[]> {
+    return this.http.get<Review[]>(`${this.baseUrl}/account/read`);
+  }
+
+  toggleReadMark(reviewId: number): Observable<{ isRead: boolean; message: string }> {
+    return this.http.post<{ isRead: boolean; message: string }>(`${this.baseUrl}/account/read/${reviewId}`, {});
+  }
+
+  // ========================
+  // Admin Management
+  // ========================
+
+  getUsers(): Observable<UserProfile[]> {
+    return this.http.get<UserProfile[]>(`${this.baseUrl}/admin/users`);
+  }
+
+  createUser(data: { username: string; password: string; role: UserRole; displayName?: string }): Observable<UserProfile> {
+    return this.http.post<UserProfile>(`${this.baseUrl}/admin/users`, data);
+  }
+
+  updateUserRole(userId: number, role: UserRole): Observable<UserProfile> {
+    return this.http.put<UserProfile>(`${this.baseUrl}/admin/users/${userId}/role`, { role });
+  }
+
+  deleteUser(userId: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.baseUrl}/admin/users/${userId}`);
+  }
+
+  // ========================
+  // Categories (Genres, Series, Studios)
+  // ========================
+
   getGenres(): Observable<Category[]> {
     return this.http.get<Category[]>(`${this.baseUrl}/genres`);
   }
@@ -134,7 +298,6 @@ export class ApiService {
     return this.http.delete<{ message: string }>(`${this.baseUrl}/genres/${id}`);
   }
 
-  // Series
   getSeries(): Observable<Category[]> {
     return this.http.get<Category[]>(`${this.baseUrl}/series`);
   }
@@ -154,7 +317,6 @@ export class ApiService {
     return this.http.delete<{ message: string }>(`${this.baseUrl}/series/${id}`);
   }
 
-  // Studios
   getStudios(): Observable<Category[]> {
     return this.http.get<Category[]>(`${this.baseUrl}/studios`);
   }
@@ -174,7 +336,10 @@ export class ApiService {
     return this.http.delete<{ message: string }>(`${this.baseUrl}/studios/${id}`);
   }
 
-  // Upload
+  // ========================
+  // Uploads & Maintenance
+  // ========================
+
   uploadImage(file: File): Observable<{ url: string }> {
     const formData = new FormData();
     formData.append('image', file);

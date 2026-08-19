@@ -1,12 +1,5 @@
-const { Genre, Review, CustomRating, Series, Studio } = require('../models');
-
-const slugify = (text) => {
-  return text.toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .trim();
-};
+const { Genre, Game, Review, Studio, Series, User } = require('../models');
+const { slugify } = require('../utils/slugify');
 
 // Get all genres
 const getAllGenres = async (req, res) => {
@@ -21,7 +14,7 @@ const getAllGenres = async (req, res) => {
   }
 };
 
-// Get genre by slug with its reviews
+// Get genre by slug
 const getGenreBySlug = async (req, res) => {
   try {
     const genre = await Genre.findOne({
@@ -39,7 +32,7 @@ const getGenreBySlug = async (req, res) => {
   }
 };
 
-// Get reviews by genre slug
+// Get games/reviews by genre slug
 const getReviewsByGenre = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -54,36 +47,56 @@ const getReviewsByGenre = async (req, res) => {
       return res.status(404).json({ error: 'Gatunek nie znaleziony' });
     }
 
-    const queryOptions = {
-      include: [
-        { model: Genre, as: 'genres', attributes: ['id', 'name', 'slug'] },
-        { model: Series, as: 'series', attributes: ['id', 'name', 'slug'] },
-        { model: Studio, as: 'studio', attributes: ['id', 'name', 'slug'] },
-        { model: CustomRating, as: 'customRatings' }
-      ],
-      order: [['createdAt', 'DESC']],
-      limit,
-      offset
-    };
-
-    const countOptions = {};
-
-    if (!req.user) {
-      queryOptions.where = { isDraft: false };
-      countOptions.where = { isDraft: false };
+    const isPrivileged = req.user && (req.user.role === 'admin' || req.user.role === 'reviewer');
+    const reviewWhere = {};
+    if (!isPrivileged) {
+      reviewWhere.isDraft = false;
     }
 
-    const reviews = await genre.getReviews(queryOptions);
-    const count = await genre.countReviews(countOptions);
+    const games = await genre.getGames({
+      include: [
+        { model: Genre, as: 'genres' },
+        { model: Series, as: 'series' },
+        { model: Studio, as: 'studio' },
+        {
+          model: Review,
+          as: 'reviews',
+          where: reviewWhere,
+          required: !isPrivileged, // only games with reviews for guests
+          include: [
+            { model: User, as: 'author', attributes: ['id', 'username', 'displayName', 'avatarUrl'] }
+          ]
+        }
+      ],
+      order: [['updatedAt', 'DESC']]
+    });
+
+    const gameList = games.map(g => {
+      const plain = g.toJSON();
+      const published = (plain.reviews || []).filter(r => !r.isDraft);
+      const avg = published.length > 0
+        ? parseFloat((published.reduce((s, r) => s + (r.averageRating || 0), 0) / published.length).toFixed(1))
+        : 0;
+
+      return {
+        ...plain,
+        averageRating: avg,
+        reviewCount: published.length
+      };
+    });
+
+    const total = gameList.length;
+    const paged = gameList.slice(offset, offset + limit);
 
     res.json({
       genre,
-      reviews,
+      games: paged,
+      reviews: paged, // For backward compatibility with category-view components
       pagination: {
-        total: count,
+        total,
         page,
         limit,
-        totalPages: Math.ceil(count / limit)
+        totalPages: Math.ceil(total / limit)
       }
     });
   } catch (error) {
@@ -92,7 +105,7 @@ const getReviewsByGenre = async (req, res) => {
   }
 };
 
-// Create genre (admin only)
+// Create genre (reviewer/admin)
 const createGenre = async (req, res) => {
   try {
     const { name } = req.body;
@@ -116,7 +129,7 @@ const createGenre = async (req, res) => {
   }
 };
 
-// Update genre (admin only)
+// Update genre (reviewer/admin)
 const updateGenre = async (req, res) => {
   try {
     const genre = await Genre.findByPk(req.params.id);
@@ -145,12 +158,12 @@ const deleteGenre = async (req, res) => {
       return res.status(404).json({ error: 'Gatunek nie znaleziony' });
     }
 
-    // Check if any reviews use this genre
-    const reviews = await genre.getReviews({ attributes: ['id', 'title', 'gameTitle'] });
-    if (reviews.length > 0) {
-      const reviewNames = reviews.map(r => r.gameTitle || r.title).join(', ');
+    // Check if any games use this genre
+    const games = await genre.getGames({ attributes: ['id', 'gameTitle'] });
+    if (games.length > 0) {
+      const names = games.map(g => g.gameTitle).join(', ');
       return res.status(409).json({
-        error: `Nie można usunąć gatunku — jest używany przez recenzje: ${reviewNames}`
+        error: `Nie można usunąć gatunku — jest używany przez gry: ${names}`
       });
     }
 

@@ -10,15 +10,14 @@ const {
 } = require('../controllers/genreController');
 const authMiddleware = require('../middleware/auth');
 const authOptionalMiddleware = require('../middleware/authOptional');
+const authorize = require('../middleware/authorize');
 
-// Public routes
 router.get('/', getAllGenres);
 router.get('/:slug', getGenreBySlug);
 router.get('/:slug/reviews', authOptionalMiddleware, getReviewsByGenre);
 
-// Protected routes (admin only)
-router.post('/', authMiddleware, createGenre);
-router.put('/:id', authMiddleware, updateGenre);
-router.delete('/:id', authMiddleware, deleteGenre);
+router.post('/', authMiddleware, authorize('reviewer'), createGenre);
+router.put('/:id', authMiddleware, authorize('reviewer'), updateGenre);
+router.delete('/:id', authMiddleware, authorize('admin'), deleteGenre);
 
 module.exports = router;

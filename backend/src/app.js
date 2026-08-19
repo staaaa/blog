@@ -4,14 +4,18 @@ const cors = require('cors');
 const path = require('path');
 
 const { sequelize, User } = require('./models');
+const migrateReviewsToGames = require('./migrations/migrate-to-games');
 
 // Routes
 const authRoutes = require('./routes/auth');
+const gameRoutes = require('./routes/games');
 const reviewRoutes = require('./routes/reviews');
 const genreRoutes = require('./routes/genres');
 const seriesRoutes = require('./routes/series');
 const studioRoutes = require('./routes/studios');
 const uploadRoutes = require('./routes/upload');
+const accountRoutes = require('./routes/account');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -27,11 +31,14 @@ app.use('/uploads', express.static(uploadsPath));
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/games', gameRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/genres', genreRoutes);
 app.use('/api/series', seriesRoutes);
 app.use('/api/studios', studioRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/account', accountRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -50,17 +57,22 @@ const createDefaultAdmin = async () => {
     const adminUsername = process.env.ADMIN_USERNAME || 'admin';
     const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
 
-    const existingAdmin = await User.findOne({ where: { username: adminUsername } });
+    let existingAdmin = await User.findOne({ where: { username: adminUsername } });
     
     if (!existingAdmin) {
-      await User.create({
+      existingAdmin = await User.create({
         username: adminUsername,
-        passwordHash: adminPassword
+        passwordHash: adminPassword,
+        role: 'admin',
+        displayName: 'Administrator'
       });
       console.log(`✅ Default admin user created: ${adminUsername}`);
+    } else if (existingAdmin.role !== 'admin') {
+      await existingAdmin.update({ role: 'admin' });
+      console.log(`✅ Updated existing user "${adminUsername}" to admin role`);
     }
   } catch (error) {
-    console.error('Error creating default admin:', error);
+    console.error('Error creating/updating default admin:', error);
   }
 };
 
@@ -82,12 +94,15 @@ const startServer = async () => {
       // Ignored if not permitted
     }
 
-    // Sync database (create tables if not exist)
+    // Sync database schema
     await sequelize.sync({ alter: true });
     console.log('✅ Database synchronized');
 
     // Create default admin
     await createDefaultAdmin();
+
+    // Run review-to-game migration for existing data
+    await migrateReviewsToGames();
 
     // Start server
     app.listen(PORT, () => {

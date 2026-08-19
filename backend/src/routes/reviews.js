@@ -1,24 +1,22 @@
 const express = require('express');
 const router = express.Router();
 const {
-  getAllReviews,
   getReviewById,
+  getMyReviews,
   createReview,
   updateReview,
-  deleteReview,
-  searchReviews
+  deleteReview
 } = require('../controllers/reviewController');
 const authMiddleware = require('../middleware/auth');
 const authOptionalMiddleware = require('../middleware/authOptional');
+const authorize = require('../middleware/authorize');
 
-// Public routes (with optional auth to detect logged in admin)
-router.get('/', authOptionalMiddleware, getAllReviews);
-router.get('/search', authOptionalMiddleware, searchReviews);
+router.get('/my', authMiddleware, getMyReviews);
 router.get('/:id', authOptionalMiddleware, getReviewById);
 
-// Protected routes (admin only)
-router.post('/', authMiddleware, createReview);
-router.put('/:id', authMiddleware, updateReview);
-router.delete('/:id', authMiddleware, deleteReview);
+// Reviewer or Admin can write, edit, delete reviews
+router.post('/', authMiddleware, authorize('reviewer'), createReview);
+router.put('/:id', authMiddleware, authorize('reviewer'), updateReview);
+router.delete('/:id', authMiddleware, authorize('reviewer'), deleteReview);
 
 module.exports = router;

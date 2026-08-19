@@ -10,15 +10,14 @@ const {
 } = require('../controllers/seriesController');
 const authMiddleware = require('../middleware/auth');
 const authOptionalMiddleware = require('../middleware/authOptional');
+const authorize = require('../middleware/authorize');
 
-// Public routes
 router.get('/', getAllSeries);
 router.get('/:slug', getSeriesBySlug);
 router.get('/:slug/reviews', authOptionalMiddleware, getReviewsBySeries);
 
-// Protected routes (admin only)
-router.post('/', authMiddleware, createSeries);
-router.put('/:id', authMiddleware, updateSeries);
-router.delete('/:id', authMiddleware, deleteSeries);
+router.post('/', authMiddleware, authorize('reviewer'), createSeries);
+router.put('/:id', authMiddleware, authorize('reviewer'), updateSeries);
+router.delete('/:id', authMiddleware, authorize('admin'), deleteSeries);
 
 module.exports = router;

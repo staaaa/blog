@@ -1,50 +1,65 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { Review } from '../../../core/services/api.service';
+import { Game, Review } from '../../../core/services/api.service';
 
 @Component({
   selector: 'app-review-card',
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <a [routerLink]="['/review', review.id]" class="review-card">
+    <a [routerLink]="getGameLink()" class="game-card">
       <div class="card-image">
-        <img *ngIf="review.coverImage" [src]="getImageUrl(review.coverImage)" [alt]="review.gameTitle">
-        <div *ngIf="!review.coverImage" class="placeholder-image">
-          <span class="placeholder-text">Recenzja</span>
+        <img *ngIf="getCoverImage()" [src]="getImageUrl(getCoverImage())" [alt]="getTitle()">
+        <div *ngIf="!getCoverImage()" class="placeholder-image">
+          <span class="placeholder-text">Gra</span>
         </div>
         
-        <!-- Status Badge (Top-Left) -->
-        <div class="card-status-badge" [ngClass]="'status-' + (review.gameStatus || 'main_story')">
-          <span>{{ getStatusIcon(review.gameStatus) }}</span>
-          <span>{{ getStatusLabel(review.gameStatus) }}</span>
+        <!-- Review Count Badge (Top-Left) -->
+        <div class="card-count-badge" *ngIf="getReviewCount() > 0">
+          <span>👥</span>
+          <span>{{ getReviewCount() }} {{ getReviewCount() === 1 ? 'recenzja' : 'recenzje' }}</span>
         </div>
 
         <!-- Rating Badge (Top-Right) -->
-        <div class="rating-badge">{{ review.averageRating.toFixed(1) }}</div>
+        <div class="rating-badge" *ngIf="getAverageRating() > 0">
+          <span class="star-icon">★</span>
+          <span>{{ getAverageRating().toFixed(1) }}</span>
+        </div>
       </div>
+
       <div class="card-content">
-        <h3 class="game-title">{{ review.gameTitle }}</h3>
-        <p class="review-title">{{ review.title }}</p>
+        <h3 class="game-title">{{ getTitle() }}</h3>
+        
+        <div class="reviewers-avatars-row" *ngIf="getReviewers().length > 0">
+          <span class="reviewers-label">Recenzje od:</span>
+          <div class="avatar-stack">
+            <span
+              *ngFor="let rev of getReviewers().slice(0, 4)"
+              class="reviewer-mini-avatar"
+              [title]="rev.displayName + ' (★ ' + rev.averageRating.toFixed(1) + ')'"
+            >
+              <img *ngIf="rev.avatarUrl" [src]="getImageUrl(rev.avatarUrl)" [alt]="rev.displayName" />
+              <span *ngIf="!rev.avatarUrl">{{ (rev.displayName || 'R')[0].toUpperCase() }}</span>
+            </span>
+          </div>
+        </div>
         
         <div class="categories">
-          <span *ngFor="let genre of review.genres" class="category-tag">{{ genre.name }}</span>
-          <span *ngIf="review.studio" class="category-tag">{{ review.studio.name }}</span>
-          <span *ngFor="let p of (review.platforms || []).slice(0, 2)" class="category-tag platform-tag">{{ p.name }}</span>
+          <span *ngFor="let genre of getGenres()" class="category-tag">{{ genre.name }}</span>
+          <span *ngIf="getStudio()" class="category-tag">{{ getStudio()?.name }}</span>
+          <span *ngFor="let p of getPlatforms().slice(0, 2)" class="category-tag platform-tag">{{ p.name }}</span>
         </div>
         
         <div class="card-footer">
-          <span class="date">{{ review.updatedAt | date:'dd.MM.yyyy' }}</span>
-          <span class="playtime" *ngIf="review.playtimeHours > 0">
-            ⏱️ {{ review.playtimeHours }}h
-          </span>
+          <span class="date">{{ getReleaseDate() ? ('Premiera: ' + (getReleaseDate() | date:'dd.MM.yyyy')) : (getUpdatedAt() | date:'dd.MM.yyyy') }}</span>
+          <span class="view-link">Zobacz recenzje →</span>
         </div>
       </div>
     </a>
   `,
   styles: [`
-    .review-card {
+    .game-card {
       display: block;
       background-color: var(--card-bg);
       border-radius: 12px;
@@ -55,7 +70,7 @@ import { Review } from '../../../core/services/api.service';
       transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
     }
 
-    .review-card:hover {
+    .game-card:hover {
       transform: translateY(-4px);
       border-color: var(--accent-color);
       box-shadow: 0 12px 24px var(--shadow);
@@ -77,7 +92,7 @@ import { Review } from '../../../core/services/api.service';
       transition: transform 0.3s ease;
     }
 
-    .review-card:hover .card-image img {
+    .game-card:hover .card-image img {
       transform: scale(1.03);
     }
 
@@ -104,14 +119,21 @@ import { Review } from '../../../core/services/api.service';
       right: 12px;
       background-color: var(--accent-color);
       color: #ffffff;
-      font-weight: 700;
-      font-size: 0.9rem;
-      padding: 0.25rem 0.5rem;
+      font-weight: 800;
+      font-size: 0.88rem;
+      padding: 0.25rem 0.55rem;
       border-radius: 6px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
     }
 
-    .card-status-badge {
+    .star-icon {
+      font-size: 0.8rem;
+    }
+
+    .card-count-badge {
       position: absolute;
       top: 12px;
       left: 12px;
@@ -124,35 +146,13 @@ import { Review } from '../../../core/services/api.service';
       font-weight: 700;
       font-family: var(--font-sans);
       letter-spacing: 0.3px;
-      text-transform: uppercase;
+      background: rgba(20, 20, 24, 0.85);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.18);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
       z-index: 2;
-    }
-
-    .card-status-badge.status-platyna {
-      background: rgba(20, 20, 20, 0.85);
-      color: #facc15;
-      border: 1px solid rgba(250, 204, 21, 0.5);
-    }
-
-    .card-status-badge.status-main_story {
-      background: rgba(20, 20, 20, 0.85);
-      color: #34d399;
-      border: 1px solid rgba(52, 211, 153, 0.5);
-    }
-
-    .card-status-badge.status-in_progress {
-      background: rgba(20, 20, 20, 0.85);
-      color: #60a5fa;
-      border: 1px solid rgba(96, 165, 250, 0.5);
-    }
-
-    .card-status-badge.status-abandoned {
-      background: rgba(20, 20, 20, 0.85);
-      color: #f87171;
-      border: 1px solid rgba(248, 113, 113, 0.5);
     }
 
     .card-content {
@@ -160,18 +160,54 @@ import { Review } from '../../../core/services/api.service';
     }
 
     .game-title {
-      font-size: 1.15rem;
-      font-weight: 700;
-      margin: 0 0 0.4rem;
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin: 0 0 0.6rem;
       color: var(--text-color);
       line-height: 1.3;
     }
 
-    .review-title {
-      font-size: 0.9rem;
+    .reviewers-avatars-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .reviewers-label {
+      font-size: 0.75rem;
       color: var(--text-muted);
-      margin: 0 0 1rem;
-      line-height: 1.4;
+    }
+
+    .avatar-stack {
+      display: flex;
+      align-items: center;
+    }
+
+    .reviewer-mini-avatar {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: var(--accent-color);
+      color: #ffffff;
+      font-size: 0.65rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1.5px solid var(--card-bg);
+      margin-left: -5px;
+    }
+
+    .reviewer-mini-avatar:first-child {
+      margin-left: 0;
+    }
+
+    .reviewer-mini-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .categories {
@@ -206,40 +242,81 @@ import { Review } from '../../../core/services/api.service';
       color: var(--text-muted);
     }
 
-    .playtime {
+    .view-link {
+      color: var(--accent-color);
       font-weight: 600;
-      color: var(--text-color);
       font-size: 0.78rem;
     }
   `]
 })
 export class ReviewCardComponent {
-  @Input() review!: Review;
+  @Input() game?: Game;
+  @Input() review?: Review;
 
-  getImageUrl(url: string | null): string {
+  get item(): any {
+    return this.game || this.review;
+  }
+
+  getGameLink(): string[] {
+    if (this.game && this.game.slug) {
+      return ['/game', this.game.slug];
+    }
+    if (this.review) {
+      if (this.review.game && this.review.game.slug) {
+        return ['/game', this.review.game.slug];
+      }
+      return ['/review', this.review.id.toString()];
+    }
+    return ['/'];
+  }
+
+  getTitle(): string {
+    return this.game?.gameTitle || this.review?.gameTitle || this.review?.title || '';
+  }
+
+  getCoverImage(): string | null {
+    return this.game?.coverImage || this.review?.coverImage || null;
+  }
+
+  getAverageRating(): number {
+    return this.game?.averageRating || this.review?.averageRating || 0;
+  }
+
+  getReviewCount(): number {
+    if (this.game && this.game.reviewCount !== undefined) {
+      return this.game.reviewCount;
+    }
+    return 1;
+  }
+
+  getReviewers(): any[] {
+    return this.game?.reviewers || [];
+  }
+
+  getGenres(): any[] {
+    return this.game?.genres || this.review?.genres || [];
+  }
+
+  getStudio(): any {
+    return this.game?.studio || this.review?.studio || null;
+  }
+
+  getPlatforms(): any[] {
+    return this.game?.platforms || this.review?.platforms || [];
+  }
+
+  getReleaseDate(): string | null {
+    return this.game?.releaseDate || this.review?.releaseDate || null;
+  }
+
+  getUpdatedAt(): string {
+    return this.game?.updatedAt || this.review?.updatedAt || '';
+  }
+
+  getImageUrl(url: string | null | undefined): string {
     if (!url) return '';
     if (url.startsWith('http')) return url;
     if (url.startsWith('/uploads/')) return url;
     return '/uploads/' + url;
-  }
-
-  getStatusLabel(status?: string): string {
-    switch (status) {
-      case 'platyna': return 'Platyna';
-      case 'main_story': return 'Główny wątek';
-      case 'in_progress': return 'W trakcie';
-      case 'abandoned': return 'Porzucona';
-      default: return 'Główny wątek';
-    }
-  }
-
-  getStatusIcon(status?: string): string {
-    switch (status) {
-      case 'platyna': return '🏆';
-      case 'main_story': return '🎯';
-      case 'in_progress': return '⏳';
-      case 'abandoned': return '🛑';
-      default: return '🎮';
-    }
   }
 }

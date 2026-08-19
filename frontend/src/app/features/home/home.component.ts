@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, Review, PaginatedResponse } from '../../core/services/api.service';
+import { ApiService, Game } from '../../core/services/api.service';
 import { ReviewCardComponent } from '../../shared/components/review-card/review-card.component';
 
 @Component({
@@ -11,24 +11,25 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
   template: `
     <div class="home-container">
       <header class="hero">
-        <h1 class="hero-title">Najnowsze recenzje</h1>
+        <h1 class="hero-title">Recenzje Gier</h1>
+        <p class="hero-subtitle">Niezależne, rzetelne i szczegółowe recenzje od wielu graczy i pasjonatów.</p>
       </header>
 
       <div class="sort-bar">
         <label for="sortSelect">Sortuj według:</label>
         <select id="sortSelect" [(ngModel)]="currentSort" (ngModelChange)="onSortChange()">
-          <option value="newest">Ostatnio zaktualizowane</option>
+          <option value="newest">Ostatnio recenzowane</option>
           <option value="releaseDate">Data premiery</option>
           <option value="ratingHigh">Najwyższa ocena</option>
           <option value="ratingLow">Najniższa ocena</option>
         </select>
       </div>
 
-      <section class="reviews-grid" *ngIf="reviews.length > 0">
-        <app-review-card *ngFor="let review of reviews" [review]="review"></app-review-card>
+      <section class="games-grid" *ngIf="games.length > 0">
+        <app-review-card *ngFor="let game of games" [game]="game"></app-review-card>
       </section>
 
-      <div class="empty-state" *ngIf="reviews.length === 0 && !loading">
+      <div class="empty-state" *ngIf="games.length === 0 && !loading">
         <p>Brak recenzji do wyświetlenia.</p>
       </div>
 
@@ -41,7 +42,7 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
         <button
           class="page-btn"
           [disabled]="pagination.page <= 1"
-          (click)="loadReviews(pagination.page - 1)"
+          (click)="loadGames(pagination.page - 1)"
         >
           Poprzednia
         </button>
@@ -49,7 +50,7 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
         <button
           class="page-btn"
           [disabled]="pagination.page >= pagination.totalPages"
-          (click)="loadReviews(pagination.page + 1)"
+          (click)="loadGames(pagination.page + 1)"
         >
           Następna
         </button>
@@ -59,78 +60,67 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
   styles: [
     `
       .home-container {
-        max-width: 1100px;
+        max-width: 1160px;
         margin: 0 auto;
         padding: 2.5rem 1.5rem;
       }
 
       .hero {
         text-align: center;
-        padding: 3rem 0;
+        padding: 3rem 0 1.5rem;
         margin-bottom: 2rem;
       }
 
       .hero-title {
-        font-size: 2.5rem;
-        font-weight: 300;
-        letter-spacing: -0.75px;
+        font-size: 2.6rem;
+        font-weight: 800;
+        letter-spacing: -0.5px;
         color: var(--text-color);
         margin: 0 0 0.75rem;
-        font-family: var(--font-serif);
-      }
-
-      .hero-title .highlight {
-        color: var(--accent-color);
       }
 
       .hero-subtitle {
-        font-size: 1.1rem;
+        font-size: 1.05rem;
         color: var(--text-muted);
         max-width: 600px;
         margin: 0 auto;
+        line-height: 1.5;
       }
 
       .sort-bar {
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        margin-bottom: 2.5rem;
+        margin-bottom: 2rem;
         justify-content: flex-end;
       }
 
       .sort-bar label {
         color: var(--text-muted);
-        font-weight: 500;
+        font-weight: 600;
         font-size: 0.85rem;
       }
 
       .sort-bar select {
-        padding: 0.5rem 0.75rem;
+        padding: 0.5rem 0.85rem;
         background: var(--card-bg);
         border: 1px solid var(--border-color);
-        border-radius: 6px;
+        border-radius: 8px;
         color: var(--text-color);
         font-size: 0.85rem;
         cursor: pointer;
         outline: none;
-        transition:
-          border-color 0.2s ease,
-          background-color 0.2s ease;
+        transition: border-color 0.2s ease;
       }
 
       .sort-bar select:focus {
         border-color: var(--accent-color);
       }
 
-      .sort-bar select option {
-        background: var(--card-bg);
-        color: var(--text-color);
-      }
-
-      .reviews-grid {
+      .games-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 2.5rem;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 2rem;
       }
 
       .empty-state {
@@ -148,6 +138,17 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
         color: var(--text-muted);
       }
 
+      .spinner {
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-top: 3px solid var(--accent-color);
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
       .pagination {
         display: flex;
         justify-content: center;
@@ -160,10 +161,10 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
         padding: 0.6rem 1.2rem;
         background: var(--card-bg);
         border: 1px solid var(--border-color);
-        border-radius: 6px;
+        border-radius: 8px;
         color: var(--text-color);
         font-size: 0.85rem;
-        font-weight: 500;
+        font-weight: 600;
         cursor: pointer;
         transition: all 0.2s ease;
       }
@@ -181,7 +182,7 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
       .page-info {
         color: var(--text-muted);
         font-size: 0.9rem;
-        font-weight: 500;
+        font-weight: 600;
       }
 
       @media (max-width: 768px) {
@@ -191,12 +192,9 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
         .hero-title {
           font-size: 2rem;
         }
-        .hero-subtitle {
-          font-size: 1rem;
-        }
-        .reviews-grid {
+        .games-grid {
           grid-template-columns: 1fr;
-          gap: 1.75rem;
+          gap: 1.5rem;
         }
       }
     `,
@@ -205,29 +203,29 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
 export class HomeComponent implements OnInit {
   private api = inject(ApiService);
 
-  reviews: Review[] = [];
+  games: Game[] = [];
   loading = true;
   currentSort = 'newest';
   pagination = { page: 1, totalPages: 1, total: 0, limit: 9 };
 
   ngOnInit(): void {
-    this.loadReviews(1);
+    this.loadGames(1);
   }
 
   onSortChange(): void {
-    this.loadReviews(1);
+    this.loadGames(1);
   }
 
-  loadReviews(page: number): void {
+  loadGames(page: number): void {
     this.loading = true;
-    this.api.getReviews(page, 9, this.currentSort).subscribe({
+    this.api.getGames(page, 9, this.currentSort).subscribe({
       next: (response) => {
-        this.reviews = response.reviews;
+        this.games = response.games || [];
         this.pagination = response.pagination;
         this.loading = false;
       },
       error: (err) => {
-        console.error('Error loading reviews:', err);
+        console.error('Error loading games:', err);
         this.loading = false;
       },
     });

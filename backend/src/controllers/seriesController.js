@@ -1,12 +1,5 @@
-const { Series, Review, Genre, Studio, CustomRating } = require('../models');
-
-const slugify = (text) => {
-  return text.toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .trim();
-};
+const { Series, Game, Review, Studio, Genre, User } = require('../models');
+const { slugify } = require('../utils/slugify');
 
 // Get all series
 const getAllSeries = async (req, res) => {
@@ -39,7 +32,7 @@ const getSeriesBySlug = async (req, res) => {
   }
 };
 
-// Get reviews by series slug
+// Get reviews/games by series slug
 const getReviewsBySeries = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -54,32 +47,56 @@ const getReviewsBySeries = async (req, res) => {
       return res.status(404).json({ error: 'Seria nie znaleziona' });
     }
 
-    const whereOptions = { seriesId: series.id };
-    if (!req.user) {
-      whereOptions.isDraft = false;
+    const isPrivileged = req.user && (req.user.role === 'admin' || req.user.role === 'reviewer');
+    const reviewWhere = {};
+    if (!isPrivileged) {
+      reviewWhere.isDraft = false;
     }
 
-    const { count, rows } = await Review.findAndCountAll({
-      where: whereOptions,
+    const games = await series.getGames({
       include: [
-        { model: Genre, as: 'genres', attributes: ['id', 'name', 'slug'] },
-        { model: Series, as: 'series', attributes: ['id', 'name', 'slug'] },
-        { model: Studio, as: 'studio', attributes: ['id', 'name', 'slug'] },
-        { model: CustomRating, as: 'customRatings' }
+        { model: Genre, as: 'genres' },
+        { model: Series, as: 'series' },
+        { model: Studio, as: 'studio' },
+        {
+          model: Review,
+          as: 'reviews',
+          where: reviewWhere,
+          required: !isPrivileged,
+          include: [
+            { model: User, as: 'author', attributes: ['id', 'username', 'displayName', 'avatarUrl'] }
+          ]
+        }
       ],
-      order: [['createdAt', 'DESC']],
-      limit,
-      offset
+      order: [['releaseDate', 'DESC NULLS LAST']]
     });
+
+    const gameList = games.map(g => {
+      const plain = g.toJSON();
+      const published = (plain.reviews || []).filter(r => !r.isDraft);
+      const avg = published.length > 0
+        ? parseFloat((published.reduce((s, r) => s + (r.averageRating || 0), 0) / published.length).toFixed(1))
+        : 0;
+
+      return {
+        ...plain,
+        averageRating: avg,
+        reviewCount: published.length
+      };
+    });
+
+    const total = gameList.length;
+    const paged = gameList.slice(offset, offset + limit);
 
     res.json({
       series,
-      reviews: rows,
+      games: paged,
+      reviews: paged,
       pagination: {
-        total: count,
+        total,
         page,
         limit,
-        totalPages: Math.ceil(count / limit)
+        totalPages: Math.ceil(total / limit)
       }
     });
   } catch (error) {
@@ -88,7 +105,7 @@ const getReviewsBySeries = async (req, res) => {
   }
 };
 
-// Create series (admin only)
+// Create series (reviewer/admin)
 const createSeries = async (req, res) => {
   try {
     const { name } = req.body;
@@ -99,8 +116,8 @@ const createSeries = async (req, res) => {
 
     const slug = slugify(name);
 
-    const existingSeries = await Series.findOne({ where: { slug } });
-    if (existingSeries) {
+    const existing = await Series.findOne({ where: { slug } });
+    if (existing) {
       return res.status(400).json({ error: 'Seria o tej nazwie już istnieje' });
     }
 
@@ -112,7 +129,7 @@ const createSeries = async (req, res) => {
   }
 };
 
-// Update series (admin only)
+// Update series (reviewer/admin)
 const updateSeries = async (req, res) => {
   try {
     const series = await Series.findByPk(req.params.id);
@@ -141,15 +158,11 @@ const deleteSeries = async (req, res) => {
       return res.status(404).json({ error: 'Seria nie znaleziona' });
     }
 
-    // Check if any reviews use this series
-    const reviews = await Review.findAll({
-      where: { seriesId: series.id },
-      attributes: ['id', 'title', 'gameTitle']
-    });
-    if (reviews.length > 0) {
-      const reviewNames = reviews.map(r => r.gameTitle || r.title).join(', ');
+    const games = await series.getGames({ attributes: ['id', 'gameTitle'] });
+    if (games.length > 0) {
+      const names = games.map(g => g.gameTitle).join(', ');
       return res.status(409).json({
-        error: `Nie można usunąć serii — jest używana przez recenzje: ${reviewNames}`
+        error: `Nie można usunąć serii — jest używana przez gry: ${names}`
       });
     }
 

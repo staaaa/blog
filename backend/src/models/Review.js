@@ -7,14 +7,21 @@ const Review = sequelize.define('Review', {
     primaryKey: true,
     autoIncrement: true
   },
+  // FK to Game (nullable during migration, then required)
+  gameId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    field: 'game_id'
+  },
+  // FK to User (author) (nullable during migration, then required)
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    field: 'user_id'
+  },
   title: {
     type: DataTypes.STRING(255),
     allowNull: false
-  },
-  gameTitle: {
-    type: DataTypes.STRING(255),
-    allowNull: false,
-    field: 'game_title'
   },
   content: {
     type: DataTypes.TEXT,
@@ -60,16 +67,6 @@ const Review = sequelize.define('Review', {
     allowNull: false,
     field: 'average_rating'
   },
-  coverImage: {
-    type: DataTypes.STRING(500),
-    allowNull: true,
-    field: 'cover_image'
-  },
-  releaseDate: {
-    type: DataTypes.DATEONLY,
-    allowNull: true,
-    field: 'release_date'
-  },
   isDraft: {
     type: DataTypes.BOOLEAN,
     allowNull: false,
@@ -98,9 +95,27 @@ const Review = sequelize.define('Review', {
     defaultValue: 0,
     field: 'playtime_hours'
   },
+  // ========== Legacy columns kept for migration ==========
+  // These will remain in the DB but are no longer used by new code.
+  // Game-level data is now on the Game model.
+  gameTitle: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    field: 'game_title'
+  },
+  coverImage: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+    field: 'cover_image'
+  },
+  releaseDate: {
+    type: DataTypes.DATEONLY,
+    allowNull: true,
+    field: 'release_date'
+  },
   platforms: {
     type: DataTypes.JSON,
-    allowNull: false,
+    allowNull: true,
     defaultValue: []
   },
   soundtrackUrl: {

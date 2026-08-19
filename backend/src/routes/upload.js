@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const upload = require('../middleware/upload');
 const authMiddleware = require('../middleware/auth');
+const authorize = require('../middleware/authorize');
 const { cleanupOrphanedUploads } = require('../utils/cleanupUploads');
 
-// Upload single image
+// Upload single image (any authenticated user)
 router.post('/image', authMiddleware, upload.single('image'), (req, res) => {
   try {
     if (!req.file) {
@@ -19,8 +20,8 @@ router.post('/image', authMiddleware, upload.single('image'), (req, res) => {
   }
 });
 
-// Cleanup unused images endpoint
-router.post('/cleanup', authMiddleware, async (req, res) => {
+// Cleanup unused images endpoint (admin only)
+router.post('/cleanup', authMiddleware, authorize('admin'), async (req, res) => {
   try {
     const result = await cleanupOrphanedUploads(15 * 60 * 1000); // 15 mins grace period
     res.json(result);

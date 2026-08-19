@@ -17,6 +17,24 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING(255),
     allowNull: false,
     field: 'password_hash'
+  },
+  role: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+    defaultValue: 'reader',
+    validate: {
+      isIn: [['admin', 'reviewer', 'reader']]
+    }
+  },
+  displayName: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    field: 'display_name'
+  },
+  avatarUrl: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+    field: 'avatar_url'
   }
 }, {
   tableName: 'users',

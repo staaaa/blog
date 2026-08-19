@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   {
@@ -7,8 +8,12 @@ export const routes: Routes = [
     loadComponent: () => import('./features/home/home.component').then(m => m.HomeComponent)
   },
   {
+    path: 'game/:slug',
+    loadComponent: () => import('./features/game-detail/game-detail.component').then(m => m.GameDetailComponent)
+  },
+  {
     path: 'review/:id',
-    loadComponent: () => import('./features/review-detail/review-detail.component').then(m => m.ReviewDetailComponent)
+    loadComponent: () => import('./features/review-redirect/review-redirect.component').then(m => m.ReviewRedirectComponent)
   },
   {
     path: 'genres',
@@ -43,19 +48,58 @@ export const routes: Routes = [
     loadComponent: () => import('./features/admin/login/login.component').then(m => m.LoginComponent)
   },
   {
-    path: 'admin',
+    path: 'register',
+    loadComponent: () => import('./features/auth/register/register.component').then(m => m.RegisterComponent)
+  },
+  {
+    path: 'account',
     canActivate: [authGuard],
+    loadComponent: () => import('./features/account/account-settings/account-settings.component').then(m => m.AccountSettingsComponent)
+  },
+  {
+    path: 'account/favorites',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/account/favorites/favorites.component').then(m => m.FavoritesComponent)
+  },
+  {
+    path: 'admin',
+    canActivate: [roleGuard('reviewer')],
     loadComponent: () => import('./features/admin/dashboard/dashboard.component').then(m => m.DashboardComponent)
   },
   {
+    path: 'admin/game/new',
+    canActivate: [roleGuard('reviewer')],
+    loadComponent: () => import('./features/admin/game-editor/game-editor.component').then(m => m.GameEditorComponent)
+  },
+  {
+    path: 'admin/game/:id/edit',
+    canActivate: [roleGuard('reviewer')],
+    loadComponent: () => import('./features/admin/game-editor/game-editor.component').then(m => m.GameEditorComponent)
+  },
+  {
     path: 'admin/review/new',
-    canActivate: [authGuard],
+    canActivate: [roleGuard('reviewer')],
+    loadComponent: () => import('./features/admin/review-editor/review-editor.component').then(m => m.ReviewEditorComponent)
+  },
+  {
+    path: 'admin/review/new/:gameId',
+    canActivate: [roleGuard('reviewer')],
     loadComponent: () => import('./features/admin/review-editor/review-editor.component').then(m => m.ReviewEditorComponent)
   },
   {
     path: 'admin/review/:id',
-    canActivate: [authGuard],
+    canActivate: [roleGuard('reviewer')],
     loadComponent: () => import('./features/admin/review-editor/review-editor.component').then(m => m.ReviewEditorComponent)
+  },
+  {
+    path: 'admin/review/:id/edit',
+    canActivate: [roleGuard('reviewer')],
+    loadComponent: () => import('./features/admin/review-editor/review-editor.component').then(m => m.ReviewEditorComponent)
+  },
+  {
+    path: 'admin/users',
+    canActivate: [roleGuard('admin')],
+    loadComponent: () => import('./features/admin/user-management/user-management.component').then(m => m.UserManagementComponent)
   },
   {
     path: '**',
