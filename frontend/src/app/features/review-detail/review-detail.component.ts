@@ -40,7 +40,6 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
             <div class="header-content">
               <div class="header-top-row">
                 <div class="status-badge" [ngClass]="'status-' + (review.gameStatus || 'main_story')">
-                  <span class="status-icon">{{ getStatusIcon(review.gameStatus) }}</span>
                   <span class="status-text">{{ getStatusLabel(review.gameStatus) }}</span>
                 </div>
                 

@@ -183,6 +183,10 @@ export class ApiService {
     return this.http.get<GameDetailResponse>(`${this.baseUrl}/games/${slug}`, { params });
   }
 
+  getGameById(id: number): Observable<GameDetailResponse> {
+    return this.http.get<GameDetailResponse>(`${this.baseUrl}/games/${id}`);
+  }
+
   createGame(game: Partial<Game> & { genreIds?: number[], seriesId?: number | null, studioId?: number | null }): Observable<Game> {
     return this.http.post<Game>(`${this.baseUrl}/games`, game);
   }

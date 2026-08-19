@@ -2,7 +2,6 @@ import { Component, OnInit, inject, AfterViewInit, OnDestroy, HostListener } fro
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeHtml, SafeResourceUrl } from '@angular/platform-browser';
-import { Subscription } from 'rxjs';
 import { ApiService, Game, Review, ReviewerSummary, GameAverages } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { TocService, TocItem } from '../../core/services/toc.service';
@@ -43,7 +42,6 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
               <div class="header-top-row">
                 <!-- Overall Game Score Badge -->
                 <div class="overall-score-badge" *ngIf="averages && averages.reviewCount > 0" title="Średnia ocen recenzentów">
-                  <span class="score-star">★</span>
                   <span class="score-val">{{ averages.averageRating | number:'1.1-1' }}</span>
                   <span class="score-max">/10</span>
                   <span class="score-count">({{ averages.reviewCount }} {{ averages.reviewCount === 1 ? 'recenzja' : 'recenzje' }})</span>
@@ -59,10 +57,7 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
                     (click)="toggleFavorite()"
                     [title]="isFavorite ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'"
                   >
-                    <svg viewBox="0 0 24 24" width="16" height="16" [attr.fill]="isFavorite ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                    </svg>
-                    <span>{{ isFavorite ? 'W ulubionych' : 'Ulubione' }}</span>
+                    <span>{{ isFavorite ? 'W ulubionych' : 'Dodaj do ulubionych' }}</span>
                   </button>
 
                   <!-- Zen Mode Button -->
@@ -79,20 +74,6 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
                     </svg>
                     <span>{{ isZenMode ? 'Wyłącz Zen' : 'Tryb Zen' }}</span>
                   </button>
-
-                  <!-- Edit Game Data (Reviewer or Admin) -->
-                  <a
-                    *ngIf="authService.isReviewer()"
-                    [routerLink]="['/admin/game', game.id, 'edit']"
-                    class="admin-edit-link"
-                    title="Edytuj dane gry"
-                  >
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                    </svg>
-                    <span>Edytuj grę</span>
-                  </a>
                 </div>
               </div>
 
@@ -157,12 +138,6 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
           <section class="reviewers-section" *ngIf="reviewers && reviewers.length > 0">
             <div class="reviewers-header">
               <span class="reviewers-section-title">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
                 Recenzenci tej gry ({{ reviewers.length }}):
               </span>
 
@@ -172,10 +147,7 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
                 [routerLink]="['/admin/review/new', game.id]"
                 class="write-review-btn"
               >
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 5v14M5 12h14"></path>
-                </svg>
-                <span>Napisz swoją recenzję</span>
+                + Napisz swoją recenzję
               </a>
             </div>
 
@@ -193,7 +165,7 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
                 </div>
                 <div class="reviewer-tab-info">
                   <span class="reviewer-tab-name">{{ rev.displayName }}</span>
-                  <span class="reviewer-tab-score">★ {{ rev.averageRating | number:'1.1-1' }}</span>
+                  <span class="reviewer-tab-score">Ocena: {{ rev.averageRating | number:'1.1-1' }}</span>
                 </div>
                 <span class="draft-chip" *ngIf="rev.isDraft">Szkic</span>
               </button>
@@ -206,7 +178,6 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
             <div class="review-title-box">
               <div class="review-badges-row">
                 <div class="status-badge" [ngClass]="'status-' + (selectedReview.gameStatus || 'main_story')">
-                  <span class="status-icon">{{ getStatusIcon(selectedReview.gameStatus) }}</span>
                   <span class="status-text">{{ getStatusLabel(selectedReview.gameStatus) }}</span>
                 </div>
 
@@ -227,24 +198,8 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
                   (click)="toggleReadMark()"
                   [title]="isRead ? 'Oznacz jako nieprzeczytaną' : 'Oznacz jako przeczytaną'"
                 >
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
                   <span>{{ isRead ? 'Przeczytana' : 'Oznacz jako przeczytaną' }}</span>
                 </button>
-
-                <!-- Edit Review (if Author or Admin) -->
-                <a
-                  *ngIf="canEditSelectedReview()"
-                  [routerLink]="['/admin/review', selectedReview.id, 'edit']"
-                  class="edit-review-link"
-                >
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                  </svg>
-                  <span>Edytuj recenzję</span>
-                </a>
               </div>
 
               <h2 class="review-title">{{ selectedReview.title }}</h2>
@@ -278,9 +233,9 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
               <div class="specs-content" [innerHTML]="sanitize(selectedReview.hardwareSpecs)"></div>
             </section>
 
-            <!-- Quill Review Content (with Comparisons, Spoilers, Images) -->
+            <!-- Quill Review Content (with Spoilers and Comparison Slider) -->
             <section class="review-content">
-              <div class="content-body" [innerHTML]="processedContent"></div>
+              <div class="content-body" (click)="handleContentClick($event)" [innerHTML]="processedContent"></div>
             </section>
 
             <!-- Author Signature Box at bottom -->
@@ -309,7 +264,7 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
           <div class="no-reviews-box" *ngIf="!selectedReview && (!reviewers || reviewers.length === 0)">
             <p>Ta gra nie posiada jeszcze żadnych opublikowanych recenzji.</p>
             <a *ngIf="authService.isReviewer()" [routerLink]="['/admin/review/new', game.id]" class="write-first-review-btn">
-              Bądź pierwszym, który napisze recenzję!
+              Bądź pierwszym, który napisze recenzję
             </a>
           </div>
         </div>
@@ -361,13 +316,6 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
         <div class="soundtrack-card" *ngIf="soundtrackEmbedUrl">
           <div class="soundtrack-header">
             <div class="soundtrack-title-row">
-              <div class="soundtrack-pulse-icon">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M9 18V5l12-2v13"></path>
-                  <circle cx="6" cy="18" r="3"></circle>
-                  <circle cx="18" cy="16" r="3"></circle>
-                </svg>
-              </div>
               <span class="soundtrack-title">Ścieżka dźwiękowa</span>
             </div>
             <span class="soundtrack-subtitle">Włącz w tle do czytania</span>
@@ -514,7 +462,6 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       box-shadow: 0 4px 20px var(--shadow);
     }
 
-    /* Zen Mode State */
     .game-page-layout.zen-active {
       max-width: 860px;
       padding-top: 5rem;
@@ -534,7 +481,6 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
     .game-page-layout.zen-active .content-body {
       font-size: 1.25rem;
       line-height: 1.85;
-      font-family: Georgia, Cambria, "Times New Roman", Times, serif;
     }
 
     /* Game Header */
@@ -578,11 +524,6 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       font-weight: 800;
     }
 
-    .score-star {
-      color: #ffb703;
-      font-size: 1.1rem;
-    }
-
     .score-val {
       color: var(--text-primary);
       font-size: 1.25rem;
@@ -607,7 +548,7 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       flex-wrap: wrap;
     }
 
-    .action-icon-btn, .zen-btn, .admin-edit-link {
+    .action-icon-btn, .zen-btn {
       display: inline-flex;
       align-items: center;
       gap: 0.45rem;
@@ -623,7 +564,7 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       color: var(--text-secondary);
     }
 
-    .action-icon-btn:hover, .zen-btn:hover, .admin-edit-link:hover {
+    .action-icon-btn:hover, .zen-btn:hover {
       border-color: var(--accent-color);
       color: var(--accent-color);
       transform: translateY(-1px);
@@ -753,9 +694,6 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
     }
 
     .reviewers-section-title {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
       font-size: 0.92rem;
       font-weight: 700;
       color: var(--text-primary);
@@ -764,7 +702,6 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
     .write-review-btn {
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
       padding: 0.4rem 0.85rem;
       background: var(--accent-color);
       color: #ffffff;
@@ -845,7 +782,7 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
     .reviewer-tab-score {
       font-size: 0.75rem;
       font-weight: 600;
-      color: #ffb703;
+      color: var(--accent-color);
     }
 
     .draft-chip {
@@ -876,7 +813,6 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
     .status-badge {
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
       padding: 0.35rem 0.75rem;
       border-radius: 6px;
       font-size: 0.8rem;
@@ -885,7 +821,7 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       letter-spacing: 0.5px;
     }
 
-    .status-platyna { background: linear-gradient(135deg, #e5e4e2, #b4b4b4); color: #1a1a1a; }
+    .status-platyna { background: rgba(250, 204, 21, 0.15); color: #facc15; border: 1px solid rgba(250, 204, 21, 0.3); }
     .status-main_story { background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
     .status-in_progress { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
     .status-abandoned { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
@@ -927,27 +863,6 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       background: rgba(16, 185, 129, 0.12);
       border-color: #10b981;
       color: #10b981;
-    }
-
-    .edit-review-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      padding: 0.35rem 0.75rem;
-      background: var(--bg-color);
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text-secondary);
-      text-decoration: none;
-      transition: all 0.2s ease;
-      margin-left: auto;
-    }
-
-    .edit-review-link:hover {
-      border-color: var(--accent-color);
-      color: var(--accent-color);
     }
 
     .review-title {
@@ -1255,12 +1170,6 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       margin-bottom: 0.15rem;
     }
 
-    .soundtrack-pulse-icon {
-      color: var(--accent-color);
-      display: flex;
-      align-items: center;
-    }
-
     .soundtrack-title {
       font-size: 0.85rem;
       font-weight: 700;
@@ -1292,42 +1201,44 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       border: none;
     }
 
-    /* Spoilers & Comparisons & Lightbox in deep styles */
-    :host ::ng-deep .content-body .spoiler-box {
+    /* Original Spoiler styles */
+    :host ::ng-deep .spoiler-box {
+      position: relative;
       margin: 1.5rem 0;
-      border-radius: 8px;
-      border: 1px dashed var(--border-color);
-      background-color: var(--bg-color);
-      overflow: hidden;
-      transition: border-color 0.2s ease;
+      padding: 1.25rem;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-left: 3px solid var(--accent-color);
+      border-radius: 6px;
+      cursor: pointer;
     }
 
-    :host ::ng-deep .content-body .spoiler-header {
+    :host ::ng-deep .spoiler-box .spoiler-label {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 0.75rem 1rem;
-      cursor: pointer;
-      user-select: none;
-      font-size: 0.85rem;
+      gap: 0.5rem;
+      color: var(--accent-color);
       font-weight: 600;
-      color: var(--text-muted);
-      background-color: rgba(255, 255, 255, 0.02);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem;
     }
 
-    :host ::ng-deep .content-body .spoiler-box:hover .spoiler-header {
-      color: var(--text-primary);
+    :host ::ng-deep .spoiler-box .spoiler-text {
+      filter: blur(15px);
+      user-select: none;
+      transition: filter 0.3s;
+      color: var(--text-color);
     }
 
-    :host ::ng-deep .content-body .spoiler-content {
+    :host ::ng-deep .spoiler-box.revealed .spoiler-text {
+      filter: none;
+      user-select: auto;
+    }
+
+    :host ::ng-deep .spoiler-box.revealed .spoiler-label span:last-child {
       display: none;
-      padding: 1rem;
-      border-top: 1px dashed var(--border-color);
-      background-color: var(--card-bg);
-    }
-
-    :host ::ng-deep .content-body .spoiler-box.revealed .spoiler-content {
-      display: block;
     }
 
     :host ::ng-deep .content-body img {
@@ -1664,12 +1575,6 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     return this.reviewers.some(r => r.userId === user.id);
   }
 
-  canEditSelectedReview(): boolean {
-    const user = this.authService.user();
-    if (!user || !this.selectedReview) return false;
-    return user.role === 'admin' || user.id === this.selectedReview.userId;
-  }
-
   toggleFavorite(): void {
     if (!this.game) return;
     this.api.toggleFavorite(this.game.id).subscribe({
@@ -1735,16 +1640,6 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  getStatusIcon(status: string | undefined): string {
-    switch (status) {
-      case 'platyna': return '🏆';
-      case 'main_story': return '🎯';
-      case 'in_progress': return '⏳';
-      case 'abandoned': return '🛑';
-      default: return '🎮';
-    }
-  }
-
   sanitize(content: string): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(content);
   }
@@ -1762,15 +1657,10 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     // 1. Spoilers [SPOILER]...[/SPOILER]
     processed = processed.replace(
       /\[SPOILER\]([\s\S]*?)\[\/SPOILER\]/gi,
-      (_match, spoilerContent) => `
-        <div class="spoiler-box">
-          <div class="spoiler-header">
-            <span>⚠️ Kliknij, aby odkryć spoiler</span>
-            <span>👁️</span>
-          </div>
-          <div class="spoiler-content">${spoilerContent}</div>
-        </div>
-      `
+      `<div class="spoiler-box" data-spoiler="true">
+        <div class="spoiler-label">[SPOILER] <span>Kliknij, aby odsłonić treść</span></div>
+        <div class="spoiler-text">$1</div>
+      </div>`
     );
 
     // 2. Comparison Slider [COMPARE before="..." after="..." ...]
@@ -1862,12 +1752,38 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     if (typeof window === 'undefined') return;
     const element = document.getElementById(id);
     if (element) {
+      const spoiler = element.closest('.spoiler-box');
+      if (spoiler && !spoiler.classList.contains('revealed')) {
+        spoiler.classList.add('revealed');
+      }
+
       const navHeight = 80;
       const elementPosition = element.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - navHeight;
       window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
       this.activeTocId = id;
       this.tocService.setActiveId(id);
+    }
+  }
+
+  handleContentClick(event: Event): void {
+    const target = event.target as HTMLElement;
+
+    // Handle spoiler click
+    const spoilerBox = target.closest('.spoiler-box');
+    if (spoilerBox) {
+      spoilerBox.classList.toggle('revealed');
+      return;
+    }
+
+    // Ignore image clicks inside image comparisons
+    if (target.closest('.image-comparison-block')) {
+      return;
+    }
+
+    // Handle image click for lightbox
+    if (target.tagName === 'IMG' && target.closest('.content-body')) {
+      this.lightboxImage = (target as HTMLImageElement).src;
     }
   }
 

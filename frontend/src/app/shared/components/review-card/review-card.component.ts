@@ -17,13 +17,11 @@ import { Game, Review } from '../../../core/services/api.service';
         
         <!-- Review Count Badge (Top-Left) -->
         <div class="card-count-badge" *ngIf="getReviewCount() > 0">
-          <span>👥</span>
           <span>{{ getReviewCount() }} {{ getReviewCount() === 1 ? 'recenzja' : 'recenzje' }}</span>
         </div>
 
         <!-- Rating Badge (Top-Right) -->
         <div class="rating-badge" *ngIf="getAverageRating() > 0">
-          <span class="star-icon">★</span>
           <span>{{ getAverageRating().toFixed(1) }}</span>
         </div>
       </div>
@@ -32,12 +30,12 @@ import { Game, Review } from '../../../core/services/api.service';
         <h3 class="game-title">{{ getTitle() }}</h3>
         
         <div class="reviewers-avatars-row" *ngIf="getReviewers().length > 0">
-          <span class="reviewers-label">Recenzje od:</span>
+          <span class="reviewers-label">Recenzje:</span>
           <div class="avatar-stack">
             <span
               *ngFor="let rev of getReviewers().slice(0, 4)"
               class="reviewer-mini-avatar"
-              [title]="rev.displayName + ' (★ ' + rev.averageRating.toFixed(1) + ')'"
+              [title]="rev.displayName + ' (ocena: ' + rev.averageRating.toFixed(1) + ')'"
             >
               <img *ngIf="rev.avatarUrl" [src]="getImageUrl(rev.avatarUrl)" [alt]="rev.displayName" />
               <span *ngIf="!rev.avatarUrl">{{ (rev.displayName || 'R')[0].toUpperCase() }}</span>
@@ -119,18 +117,11 @@ import { Game, Review } from '../../../core/services/api.service';
       right: 12px;
       background-color: var(--accent-color);
       color: #ffffff;
-      font-weight: 800;
-      font-size: 0.88rem;
-      padding: 0.25rem 0.55rem;
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 0.25rem 0.5rem;
       border-radius: 6px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-      display: flex;
-      align-items: center;
-      gap: 0.2rem;
-    }
-
-    .star-icon {
-      font-size: 0.8rem;
     }
 
     .card-count-badge {
@@ -139,7 +130,6 @@ import { Game, Review } from '../../../core/services/api.service';
       left: 12px;
       display: inline-flex;
       align-items: center;
-      gap: 0.35rem;
       padding: 0.25rem 0.55rem;
       border-radius: 6px;
       font-size: 0.72rem;
@@ -160,9 +150,9 @@ import { Game, Review } from '../../../core/services/api.service';
     }
 
     .game-title {
-      font-size: 1.2rem;
-      font-weight: 800;
-      margin: 0 0 0.6rem;
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin: 0 0 0.4rem;
       color: var(--text-color);
       line-height: 1.3;
     }
@@ -252,10 +242,6 @@ import { Game, Review } from '../../../core/services/api.service';
 export class ReviewCardComponent {
   @Input() game?: Game;
   @Input() review?: Review;
-
-  get item(): any {
-    return this.game || this.review;
-  }
 
   getGameLink(): string[] {
     if (this.game && this.game.slug) {

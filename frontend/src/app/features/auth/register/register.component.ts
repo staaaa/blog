@@ -12,8 +12,7 @@ import { AuthService } from '../../../core/services/auth.service';
     <div class="auth-container">
       <div class="auth-card">
         <div class="auth-header">
-          <div class="auth-icon">🎮</div>
-          <h1>Dołącz do czytelników</h1>
+          <h1>Rejestracja czytelnika</h1>
           <p class="auth-subtitle">Zarejestruj konto, aby zapisywać ulubione gry i oznaczać przeczytane recenzje.</p>
         </div>
 

@@ -11,7 +11,7 @@ import { ReviewCardComponent } from '../../../shared/components/review-card/revi
   template: `
     <div class="favorites-container">
       <header class="page-header">
-        <h1>❤️ Twoje ulubione gry</h1>
+        <h1>Twoje ulubione gry</h1>
         <p class="subtitle">Zapisane gry, do których chcesz wrócić lub śledzić nowe recenzje.</p>
       </header>
 
@@ -21,9 +21,8 @@ import { ReviewCardComponent } from '../../../shared/components/review-card/revi
       </div>
 
       <div *ngIf="!loading && games.length === 0" class="empty-state">
-        <div class="empty-icon">🎮</div>
         <h2>Brak ulubionych gier</h2>
-        <p>Nie dodałeś jeszcze żadnej gry do ulubionych. Przeglądaj recenzje i kliknij serduszko przy tytule gry!</p>
+        <p>Nie dodałeś jeszcze żadnej gry do ulubionych. Przeglądaj recenzje i dodaj grę do ulubionych!</p>
         <a routerLink="/" class="btn-home">Przeglądaj recenzje</a>
       </div>
 

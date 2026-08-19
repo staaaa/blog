@@ -164,8 +164,11 @@ const getGameBySlug = async (req, res) => {
     const { slug } = req.params;
     const isPrivileged = req.user && (req.user.role === 'admin' || req.user.role === 'reviewer');
 
+    const isNumericId = !isNaN(slug) && !isNaN(parseInt(slug, 10));
+    const gameWhere = isNumericId ? { [Op.or]: [{ id: parseInt(slug, 10) }, { slug }] } : { slug };
+
     const game = await Game.findOne({
-      where: { slug },
+      where: gameWhere,
       include: [
         { model: Genre, as: 'genres', attributes: ['id', 'name', 'slug'] },
         { model: Series, as: 'series', attributes: ['id', 'name', 'slug'] },

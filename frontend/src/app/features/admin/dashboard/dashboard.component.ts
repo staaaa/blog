@@ -34,12 +34,12 @@ import { AuthService } from '../../../core/services/auth.service';
 
           <!-- User Management (Admin Only) -->
           <a *ngIf="authService.isAdmin()" routerLink="/admin/users" class="btn btn-admin">
-            👥 Użytkownicy
+            Użytkownicy
           </a>
 
           <!-- Cleanup Images (Admin Only) -->
           <button *ngIf="authService.isAdmin()" (click)="cleanupImages()" [disabled]="cleaning" class="btn btn-outline">
-            {{ cleaning ? 'Czyszczenie...' : '🧹 Usuń nieużywane zdjęcia' }}
+            {{ cleaning ? 'Czyszczenie...' : 'Usuń nieużywane zdjęcia' }}
           </button>
         </div>
       </header>
@@ -106,7 +106,7 @@ import { AuthService } from '../../../core/services/auth.service';
                   {{ rev.author?.displayName || rev.author?.username || 'Anonim' }}
                 </td>
                 <td>
-                  <span class="rating-pill">★ {{ rev.averageRating.toFixed(1) }}</span>
+                  <span class="rating-pill">{{ rev.averageRating.toFixed(1) }}</span>
                 </td>
                 <td>
                   <span class="status-pill">{{ getStatusLabel(rev.gameStatus) }}</span>
@@ -161,7 +161,7 @@ import { AuthService } from '../../../core/services/auth.service';
                   <span *ngFor="let gn of (g.genres || []).slice(0, 2)" class="mini-tag">{{ gn.name }}</span>
                 </td>
                 <td>
-                  <span class="rating-pill" *ngIf="g.averageRating > 0">★ {{ g.averageRating.toFixed(1) }}</span>
+                  <span class="rating-pill" *ngIf="g.averageRating > 0">{{ g.averageRating.toFixed(1) }}</span>
                   <span *ngIf="!g.averageRating || g.averageRating === 0" class="text-muted">-</span>
                 </td>
                 <td>

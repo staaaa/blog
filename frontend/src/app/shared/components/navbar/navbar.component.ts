@@ -14,7 +14,7 @@ import { TocService } from '../../../core/services/toc.service';
     <nav class="navbar">
       <div class="navbar-brand">
         <a routerLink="/" class="logo">
-          <span class="logo-text">BLOG O GRACH</span>
+          <span class="logo-text">Strona główna</span>
         </a>
       </div>
 
@@ -28,9 +28,6 @@ import { TocService } from '../../../core/services/toc.service';
       <!-- Menu content -->
       <div class="navbar-content" [class.open]="menuOpen">
         <div class="navbar-menu">
-          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-link" (click)="closeMenu()">
-            Recenzje
-          </a>
           <a routerLink="/genres" routerLinkActive="active" class="nav-link" (click)="closeMenu()">
             Gatunki
           </a>
@@ -41,11 +38,11 @@ import { TocService } from '../../../core/services/toc.service';
             Studia
           </a>
           <a *ngIf="authService.isAuthenticated()" routerLink="/account/favorites" routerLinkActive="active" class="nav-link" (click)="closeMenu()">
-            ❤️ Ulubione
+            Ulubione
           </a>
         </div>
 
-        <!-- Mobile Table of Contents (only when viewing a review with TOC items) -->
+        <!-- Mobile Table of Contents -->
         <div class="navbar-toc" *ngIf="tocService.tocItems().length > 0">
           <div class="toc-mobile-header">
             <svg class="toc-mobile-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -78,7 +75,7 @@ import { TocService } from '../../../core/services/toc.service';
               type="text" 
               [(ngModel)]="searchQuery" 
               (keyup.enter)="search()"
-              placeholder="Szukaj gry..."
+              placeholder="Szukaj..."
               class="search-input"
             >
             <button (click)="search()" class="search-btn">Szukaj</button>
@@ -87,10 +84,9 @@ import { TocService } from '../../../core/services/toc.service';
 
         <div class="navbar-auth">
           <button (click)="themeService.toggleTheme()" class="theme-toggle-btn">
-            {{ themeService.theme() === 'dark' ? '☀️ Jasny' : '🌙 Ciemny' }}
+            {{ themeService.theme() === 'dark' ? 'Tryb jasny' : 'Tryb ciemny' }}
           </button>
           
-          <!-- Unauthenticated -->
           <ng-container *ngIf="!authService.isAuthenticated()">
             <a routerLink="/admin/login" class="nav-auth-link" (click)="closeMenu()">
               Zaloguj
@@ -100,14 +96,11 @@ import { TocService } from '../../../core/services/toc.service';
             </a>
           </ng-container>
 
-          <!-- Authenticated -->
           <ng-container *ngIf="authService.isAuthenticated()">
-            <!-- Reviewer / Admin Dashboard link -->
             <a *ngIf="authService.isReviewer()" routerLink="/admin" class="nav-auth-link dashboard-link" (click)="closeMenu()">
-              {{ authService.isAdmin() ? 'Panel Admina' : 'Panel Recenzenta' }}
+              {{ authService.isAdmin() ? 'Panel Admin' : 'Panel Recenzenta' }}
             </a>
 
-            <!-- Account Settings link with avatar -->
             <a routerLink="/account" class="user-profile-link" (click)="closeMenu()" [title]="'Konto: ' + authService.displayName()">
               <div class="navbar-avatar">
                 <img *ngIf="authService.avatarUrl()" [src]="getImageUrl(authService.avatarUrl())" [alt]="authService.displayName()">
@@ -130,7 +123,7 @@ import { TocService } from '../../../core/services/toc.service';
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 1rem 2rem;
+      padding: 1.25rem 2rem;
       background-color: var(--header-bg);
       border-bottom: 1px solid var(--border-color);
       position: sticky;
@@ -146,8 +139,8 @@ import { TocService } from '../../../core/services/toc.service';
     }
 
     .logo-text {
-      font-size: 1.3rem;
-      font-weight: 900;
+      font-size: 1.35rem;
+      font-weight: 800;
       letter-spacing: -0.5px;
       color: var(--accent-color);
     }
@@ -186,16 +179,15 @@ import { TocService } from '../../../core/services/toc.service';
 
     .navbar-menu {
       display: flex;
-      align-items: center;
       gap: 1.5rem;
-      margin-left: 2.5rem;
+      margin-left: 3rem;
     }
 
     .nav-link {
-      font-size: 0.92rem;
+      font-size: 0.95rem;
       text-decoration: none;
       color: var(--text-muted);
-      font-weight: 600;
+      font-weight: 500;
       transition: color 0.2s ease;
     }
 
@@ -209,8 +201,8 @@ import { TocService } from '../../../core/services/toc.service';
 
     .navbar-search {
       flex: 1;
-      max-width: 280px;
-      margin: 0 1.5rem;
+      max-width: 320px;
+      margin: 0 2rem;
     }
 
     .search-container {
@@ -228,11 +220,11 @@ import { TocService } from '../../../core/services/toc.service';
 
     .search-input {
       flex: 1;
-      padding: 0.45rem 0.75rem;
+      padding: 0.5rem 0.75rem;
       background: transparent;
       border: none;
       color: var(--text-color);
-      font-size: 0.88rem;
+      font-size: 0.9rem;
       outline: none;
       min-width: 0;
     }
@@ -240,13 +232,13 @@ import { TocService } from '../../../core/services/toc.service';
     .search-input::placeholder { color: var(--text-muted); }
 
     .search-btn {
-      padding: 0.45rem 0.75rem;
+      padding: 0.5rem 0.75rem;
       background: transparent;
       border: none;
       color: var(--text-muted);
       cursor: pointer;
-      font-size: 0.82rem;
-      font-weight: 600;
+      font-size: 0.85rem;
+      font-weight: 500;
       border-left: 1px solid var(--border-color);
       transition: color 0.2s ease;
     }
@@ -262,13 +254,13 @@ import { TocService } from '../../../core/services/toc.service';
     .theme-toggle-btn {
       background: transparent;
       border: 1px solid var(--border-color);
-      padding: 0.35rem 0.75rem;
+      padding: 0.4rem 0.8rem;
       border-radius: 6px;
       color: var(--text-color);
-      font-size: 0.82rem;
-      font-weight: 600;
+      font-size: 0.85rem;
+      font-weight: 500;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: border-color 0.2s ease, color 0.2s ease;
     }
 
     .theme-toggle-btn:hover {
@@ -279,8 +271,8 @@ import { TocService } from '../../../core/services/toc.service';
     .nav-auth-link {
       text-decoration: none;
       color: var(--text-muted);
-      font-weight: 600;
-      font-size: 0.88rem;
+      font-weight: 500;
+      font-size: 0.95rem;
       transition: color 0.2s ease;
     }
 
@@ -298,7 +290,7 @@ import { TocService } from '../../../core/services/toc.service';
       color: #ffffff;
       text-decoration: none;
       font-size: 0.85rem;
-      font-weight: 700;
+      font-weight: 600;
       border-radius: 6px;
       transition: opacity 0.2s ease;
     }
@@ -313,8 +305,8 @@ import { TocService } from '../../../core/services/toc.service';
       gap: 0.5rem;
       text-decoration: none;
       color: var(--text-primary);
-      font-weight: 600;
-      font-size: 0.88rem;
+      font-weight: 500;
+      font-size: 0.9rem;
     }
 
     .navbar-avatar {
@@ -345,13 +337,13 @@ import { TocService } from '../../../core/services/toc.service';
     }
 
     .logout-btn {
-      padding: 0.35rem 0.75rem;
+      padding: 0.4rem 0.8rem;
       border-radius: 6px;
       background: transparent;
       border: 1px solid rgba(220, 53, 69, 0.4);
       color: #ff6b7a;
-      font-size: 0.82rem;
-      font-weight: 600;
+      font-size: 0.85rem;
+      font-weight: 500;
       cursor: pointer;
       transition: background-color 0.2s ease;
     }
@@ -360,8 +352,8 @@ import { TocService } from '../../../core/services/toc.service';
 
     .menu-overlay { display: none; }
 
-    @media (max-width: 960px) {
-      .navbar { padding: 0.85rem 1.25rem; }
+    @media (max-width: 900px) {
+      .navbar { padding: 1rem; }
       .burger-btn { display: flex; }
 
       .navbar-content {
@@ -388,9 +380,108 @@ import { TocService } from '../../../core/services/toc.service';
 
       .navbar-menu {
         flex-direction: column;
-        align-items: flex-start;
         margin-left: 0;
         gap: 1.25rem;
+      }
+
+      .nav-link {
+        font-size: 1.05rem;
+      }
+
+      .navbar-toc {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0.75rem 0;
+        border-top: 1px solid var(--border-color);
+        border-bottom: 1px solid var(--border-color);
+        max-height: 40vh;
+        overflow-y: auto;
+      }
+
+      .toc-mobile-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--accent-color);
+        padding: 0 0.25rem;
+      }
+
+      .toc-mobile-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+      }
+
+      .toc-mobile-link {
+        width: 100%;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.35rem 0.5rem;
+        background: transparent;
+        border: none;
+        border-radius: 6px;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        line-height: 1.35;
+        font-family: inherit;
+      }
+
+      .toc-mobile-item.level-1 .toc-mobile-link {
+        font-weight: 600;
+        color: var(--text-color);
+      }
+
+      .toc-mobile-item.level-2 .toc-mobile-link {
+        padding-left: 1.25rem;
+        font-size: 0.8rem;
+      }
+
+      .toc-mobile-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--border-color);
+        margin-top: 6px;
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+      }
+
+      .toc-mobile-item.level-2 .toc-mobile-dot {
+        width: 4px;
+        height: 4px;
+        margin-top: 7px;
+      }
+
+      .toc-mobile-text {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .toc-mobile-item.active .toc-mobile-link {
+        color: var(--accent-color);
+        background: rgba(255, 122, 0, 0.08);
+        font-weight: 600;
+      }
+
+      .toc-mobile-item.active .toc-mobile-dot {
+        background: var(--accent-color);
+        box-shadow: 0 0 6px var(--accent-color);
+        transform: scale(1.2);
       }
 
       .navbar-search {
@@ -401,13 +492,12 @@ import { TocService } from '../../../core/services/toc.service';
       .navbar-auth {
         flex-direction: column;
         align-items: stretch;
-        gap: 1rem;
+        gap: 1.25rem;
       }
 
-      .nav-auth-link, .register-btn, .logout-btn, .theme-toggle-btn, .user-profile-link {
+      .nav-auth-link, .register-btn, .logout-btn, .theme-toggle-btn {
         text-align: center;
-        justify-content: center;
-        padding: 0.65rem;
+        padding: 0.75rem;
       }
 
       .menu-overlay {
