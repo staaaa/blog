@@ -7,23 +7,26 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <div class="comparison-container" #container (mousedown)="startDrag($event)" (touchstart)="startDrag($event)">
+      <!-- Base Image (After Image underneath - right side) -->
       <div class="image-wrapper base-image">
-        <img [src]="getImageUrl(beforeImage)" [alt]="labelBefore" draggable="false" />
-        <span class="badge badge-before">{{ labelBefore }}</span>
-      </div>
-
-      <div class="image-wrapper overlay-image" [style.clip-path]="'inset(0 ' + (100 - position) + '% 0 0)'">
         <img [src]="getImageUrl(afterImage)" [alt]="labelAfter" draggable="false" />
-        <span class="badge badge-after">{{ labelAfter }}</span>
       </div>
 
+      <!-- Overlay Image (Before Image on top - left side) -->
+      <div class="image-wrapper overlay-image" [style.clip-path]="'inset(0 ' + (100 - position) + '% 0 0)'">
+        <img [src]="getImageUrl(beforeImage)" [alt]="labelBefore" draggable="false" />
+      </div>
+
+      <!-- Floating Badges -->
+      <span class="badge badge-before" [class.badge-hidden]="position <= 8">{{ labelBefore }}</span>
+      <span class="badge badge-after" [class.badge-hidden]="position >= 92">{{ labelAfter }}</span>
+
+      <!-- Slider Handle -->
       <div class="slider-handle" [style.left.%]="position">
         <div class="handle-line"></div>
         <div class="handle-grip">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="9 18 15 12 9 6"></polyline>
           </svg>
         </div>
@@ -66,6 +69,7 @@ import { CommonModule } from '@angular/common';
       left: 0;
       height: 100%;
       width: 100%;
+      pointer-events: none;
     }
 
     .overlay-image img {
@@ -78,18 +82,22 @@ import { CommonModule } from '@angular/common';
       position: absolute;
       bottom: 16px;
       padding: 0.35rem 0.75rem;
-      background: rgba(20, 20, 24, 0.8);
+      background: rgba(18, 18, 22, 0.85);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       color: #ffffff;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 700;
       font-family: var(--font-sans);
       letter-spacing: 0.5px;
       text-transform: uppercase;
       border-radius: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.18);
       pointer-events: none;
+      z-index: 6;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      opacity: 1;
+      transform: translateY(0);
     }
 
     .badge-before {
@@ -98,6 +106,11 @@ import { CommonModule } from '@angular/common';
 
     .badge-after {
       right: 16px;
+    }
+
+    .badge.badge-hidden {
+      opacity: 0;
+      transform: translateY(4px);
     }
 
     .slider-handle {

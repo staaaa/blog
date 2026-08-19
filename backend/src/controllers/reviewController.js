@@ -369,7 +369,159 @@ const getTokens = (str) => {
     .filter(t => t.length > 0);
 };
 
-// Search reviews with fuzzy & normalized matching
+// Levenshtein distance between two strings
+const levenshtein = (a, b) => {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+
+  const matrix = [];
+  for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+  for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
+      }
+    }
+  }
+  return matrix[b.length][a.length];
+};
+
+// Check if query word fuzzy matches target word
+const wordFuzzyMatch = (qWord, tWord) => {
+  if (qWord === tWord) return { match: true, score: 1.0 };
+  if (tWord.includes(qWord)) return { match: true, score: qWord.length / tWord.length };
+  if (qWord.includes(tWord) && tWord.length >= 2) return { match: true, score: tWord.length / qWord.length };
+
+  // Allow typos based on word length:
+  // 3-4 chars: 1 typo (e.g. "hil" -> "hill")
+  // 5-7 chars: 1 typo (e.g. "silentt" -> "silent", "slient" -> "silent", "lilla" -> "lila")
+  // 8+ chars: 2 typos (e.g. "ragnarock" -> "ragnarok")
+  const maxDistance = qWord.length >= 8 ? 2 : (qWord.length >= 3 ? 1 : 0);
+  if (maxDistance > 0) {
+    const dist = levenshtein(qWord, tWord);
+    if (dist <= maxDistance) {
+      const similarity = 1 - (dist / Math.max(qWord.length, tWord.length));
+      return { match: true, score: similarity * 0.85 };
+    }
+  }
+
+  return { match: false, score: 0 };
+};
+
+// Calculate match score for a review
+const calculateFuzzyScore = (review, rawQuery, normalizedQuery, queryTokens) => {
+  let score = 0;
+
+  const gameTitle = review.gameTitle || '';
+  const title = review.title || '';
+  const content = review.content || '';
+
+  const gameTitleNorm = normalizeForSearch(gameTitle);
+  const titleNorm = normalizeForSearch(title);
+  const gameTokens = getTokens(gameTitle);
+  const titleTokens = getTokens(title);
+  const contentLower = foldDiacritics(content).toLowerCase();
+
+  // 1. Exact or normalized full match
+  if (gameTitleNorm === normalizedQuery) {
+    return 1000;
+  }
+  if (gameTitleNorm.includes(normalizedQuery) && normalizedQuery.length >= 2) {
+    score += 600;
+  } else if (normalizedQuery.includes(gameTitleNorm) && gameTitleNorm.length >= 2) {
+    score += 450;
+  }
+
+  if (titleNorm === normalizedQuery) {
+    score += 500;
+  } else if (titleNorm.includes(normalizedQuery) && normalizedQuery.length >= 2) {
+    score += 300;
+  }
+
+  // 2. Full title Levenshtein distance (for typos across the entire string)
+  if (normalizedQuery.length >= 3 && gameTitleNorm.length >= 3) {
+    const fullTitleDist = levenshtein(normalizedQuery, gameTitleNorm);
+    const maxFullAllowed = normalizedQuery.length >= 7 ? 2 : 1;
+    if (fullTitleDist <= maxFullAllowed) {
+      score += (400 - fullTitleDist * 50);
+    }
+  }
+
+  // 3. Token-by-token fuzzy matching (handles any word order e.g. "f hill silent", "silentt hill")
+  if (queryTokens.length > 0) {
+    let matchedGameTokensCount = 0;
+    let totalGameTokenScore = 0;
+
+    for (const qWord of queryTokens) {
+      let bestWordScore = 0;
+      for (const gWord of gameTokens) {
+        const { match, score: s } = wordFuzzyMatch(qWord, gWord);
+        if (match && s > bestWordScore) {
+          bestWordScore = s;
+        }
+      }
+      if (bestWordScore > 0) {
+        matchedGameTokensCount++;
+        totalGameTokenScore += bestWordScore;
+      }
+    }
+
+    if (matchedGameTokensCount > 0) {
+      const matchRatio = matchedGameTokensCount / queryTokens.length;
+      if (matchRatio === 1) {
+        score += 500 * (totalGameTokenScore / queryTokens.length);
+      } else if (matchRatio >= 0.5) {
+        score += 250 * matchRatio;
+      } else {
+        score += 100 * matchRatio;
+      }
+    }
+
+    // Check review subtitle tokens
+    let matchedTitleTokensCount = 0;
+    for (const qWord of queryTokens) {
+      let bestTitleScore = 0;
+      for (const tWord of titleTokens) {
+        const { match, score: s } = wordFuzzyMatch(qWord, tWord);
+        if (match && s > bestTitleScore) {
+          bestTitleScore = s;
+        }
+      }
+      if (bestTitleScore > 0) {
+        matchedTitleTokensCount++;
+      }
+    }
+    if (matchedTitleTokensCount > 0) {
+      score += 100 * (matchedTitleTokensCount / queryTokens.length);
+    }
+  }
+
+  // 4. Content match
+  if (queryTokens.length > 0) {
+    let contentHits = 0;
+    for (const qWord of queryTokens) {
+      if (qWord.length >= 3 && contentLower.includes(qWord)) {
+        contentHits++;
+      }
+    }
+    if (contentHits > 0) {
+      score += 30 * (contentHits / queryTokens.length);
+    }
+  }
+
+  return score;
+};
+
+// Search reviews with ultra-flexible fuzzy matching
 const searchReviews = async (req, res) => {
   try {
     const rawQuery = (req.query.q || '').trim();
@@ -385,149 +537,53 @@ const searchReviews = async (req, res) => {
     const offset = (page - 1) * limit;
 
     const normalizedQuery = normalizeForSearch(rawQuery);
-    const tokens = getTokens(rawQuery);
-    const safeRawQuery = rawQuery.replace(/'/g, "''");
-    const safeNormQuery = normalizedQuery.replace(/'/g, "''");
+    const queryTokens = getTokens(rawQuery);
 
-    // SQL expression for normalized field (removes punctuation + converts Polish letters to ASCII)
-    const normalizedExpr = (colName) => 
-      sequelize.fn(
-        'translate',
-        sequelize.fn('regexp_replace', sequelize.fn('lower', sequelize.col(colName)), '[^a-ząćęłńóśźż0-9]', '', 'g'),
-        'ąćęłńóśźż',
-        'acelnoszz'
-      );
-
-    const orConditions = [
-      // 1. Standard ILIKE matching
-      { title: { [Op.iLike]: `%${rawQuery}%` } },
-      { gameTitle: { [Op.iLike]: `%${rawQuery}%` } },
-      { content: { [Op.iLike]: `%${rawQuery}%` } }
-    ];
-
-    // 2. Normalized matching (e.g. "whos lila" matches "Who's Lila?", "spiderman" matches "Spider-Man")
-    if (normalizedQuery.length >= 2) {
-      orConditions.push(
-        sequelize.where(normalizedExpr('Review.game_title'), { [Op.like]: `%${safeNormQuery}%` })
-      );
-      orConditions.push(
-        sequelize.where(normalizedExpr('Review.title'), { [Op.like]: `%${safeNormQuery}%` })
-      );
-    }
-
-    // 3. Multi-word token matching (all words must appear in normalized title)
-    if (tokens.length > 1) {
-      const allTokensInGameTitle = {
-        [Op.and]: tokens.map(t => 
-          sequelize.where(normalizedExpr('Review.game_title'), { [Op.like]: `%${t}%` })
-        )
-      };
-      const allTokensInTitle = {
-        [Op.and]: tokens.map(t => 
-          sequelize.where(normalizedExpr('Review.title'), { [Op.like]: `%${t}%` })
-        )
-      };
-      orConditions.push(allTokensInGameTitle);
-      orConditions.push(allTokensInTitle);
-    }
-
-    // 4. Trigram similarity matching for typos (e.g. "Who's Lilla" or "Slient Hill")
-    if (rawQuery.length >= 3) {
-      try {
-        orConditions.push(
-          sequelize.where(
-            sequelize.fn('similarity', sequelize.col('Review.game_title'), rawQuery),
-            { [Op.gt]: 0.25 }
-          )
-        );
-        orConditions.push(
-          sequelize.where(
-            sequelize.fn('similarity', sequelize.col('Review.title'), rawQuery),
-            { [Op.gt]: 0.25 }
-          )
-        );
-      } catch (e) {
-        // Similarity function may not be available on some DB configs
-      }
-    }
-
-    const whereClause = {
-      [Op.or]: orConditions
-    };
-
+    const whereClause = {};
     if (!req.user) {
       whereClause.isDraft = false;
     }
 
-    // Relevance ordering: exact/normalized gameTitle matches top, then title, then others
-    const relevanceOrder = [
-      [
-        sequelize.literal(`
-          CASE 
-            WHEN lower("Review"."game_title") = lower('${safeRawQuery}') THEN 1
-            WHEN translate(regexp_replace(lower("Review"."game_title"), '[^a-ząćęłńóśźż0-9]', '', 'g'), 'ąćęłńóśźż', 'acelnoszz') = '${safeNormQuery}' THEN 2
-            WHEN translate(regexp_replace(lower("Review"."game_title"), '[^a-ząćęłńóśźż0-9]', '', 'g'), 'ąćęłńóśźż', 'acelnoszz') LIKE '%${safeNormQuery}%' THEN 3
-            WHEN "Review"."game_title" ILIKE '%${safeRawQuery}%' THEN 4
-            WHEN "Review"."title" ILIKE '%${safeRawQuery}%' THEN 5
-            ELSE 6
-          END
-        `),
-        'ASC'
+    // Fetch all reviews and score with in-memory Levenshtein & token fuzzy matching
+    const allReviews = await Review.findAll({
+      where: whereClause,
+      include: [
+        { model: Genre, as: 'genres', attributes: ['id', 'name', 'slug'] },
+        { model: Series, as: 'series', attributes: ['id', 'name', 'slug'] },
+        { model: Studio, as: 'studio', attributes: ['id', 'name', 'slug'] },
+        { model: CustomRating, as: 'customRatings' }
       ],
-      ['updatedAt', 'DESC']
-    ];
+      order: [['updatedAt', 'DESC']]
+    });
 
-    let result;
-    try {
-      result = await Review.findAndCountAll({
-        where: whereClause,
-        include: [
-          { model: Genre, as: 'genres', attributes: ['id', 'name', 'slug'] },
-          { model: Series, as: 'series', attributes: ['id', 'name', 'slug'] },
-          { model: Studio, as: 'studio', attributes: ['id', 'name', 'slug'] },
-          { model: CustomRating, as: 'customRatings' }
-        ],
-        distinct: true,
-        order: relevanceOrder,
-        limit,
-        offset
-      });
-    } catch (dbError) {
-      // Fallback query if similarity or complex literal fails on older DB setups
-      console.warn('Fuzzy query fallback invoked:', dbError.message);
-      const fallbackWhere = {
-        [Op.or]: [
-          { title: { [Op.iLike]: `%${rawQuery}%` } },
-          { gameTitle: { [Op.iLike]: `%${rawQuery}%` } },
-          { content: { [Op.iLike]: `%${rawQuery}%` } },
-          sequelize.where(normalizedExpr('Review.game_title'), { [Op.like]: `%${safeNormQuery}%` })
-        ]
-      };
-      if (!req.user) {
-        fallbackWhere.isDraft = false;
+    const scoredReviews = [];
+    for (const review of allReviews) {
+      const score = calculateFuzzyScore(review, rawQuery, normalizedQuery, queryTokens);
+      if (score >= 40) {
+        scoredReviews.push({ review, score });
       }
-      result = await Review.findAndCountAll({
-        where: fallbackWhere,
-        include: [
-          { model: Genre, as: 'genres', attributes: ['id', 'name', 'slug'] },
-          { model: Series, as: 'series', attributes: ['id', 'name', 'slug'] },
-          { model: Studio, as: 'studio', attributes: ['id', 'name', 'slug'] },
-          { model: CustomRating, as: 'customRatings' }
-        ],
-        distinct: true,
-        order: [['updatedAt', 'DESC']],
-        limit,
-        offset
-      });
     }
 
+    // Sort by match score descending, then by updatedAt descending
+    scoredReviews.sort((a, b) => {
+      if (b.score !== a.score) {
+        return b.score - a.score;
+      }
+      return new Date(b.review.updatedAt).getTime() - new Date(a.review.updatedAt).getTime();
+    });
+
+    const total = scoredReviews.length;
+    const pagedResults = scoredReviews
+      .slice(offset, offset + limit)
+      .map(item => item.review);
+
     res.json({
-      reviews: result.rows,
+      reviews: pagedResults,
       pagination: {
-        total: result.count,
+        total,
         page,
         limit,
-        totalPages: Math.ceil(result.count / limit)
+        totalPages: Math.ceil(total / limit)
       }
     });
   } catch (error) {

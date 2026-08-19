@@ -679,13 +679,20 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
         border-radius: 6px;
         border: 1px solid rgba(255, 255, 255, 0.18);
         pointer-events: none;
-        z-index: 5;
+        z-index: 6;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        opacity: 1;
+        transform: translateY(0);
       }
       :host ::ng-deep .image-comparison-block .badge-before {
         left: 16px;
       }
       :host ::ng-deep .image-comparison-block .badge-after {
         right: 16px;
+      }
+      :host ::ng-deep .image-comparison-block .comparison-badge.badge-hidden {
+        opacity: 0;
+        transform: translateY(4px);
       }
       :host ::ng-deep .image-comparison-block .comparison-handle {
         position: absolute;
@@ -1252,14 +1259,18 @@ export class ReviewDetailComponent implements OnInit, AfterViewInit, OnDestroy {
         const urlA = this.getImageUrl(after);
         return `
           <div class="image-comparison-block" data-comparison="true">
+            <!-- Base Image (After image underneath - right side) -->
             <div class="comparison-base">
-              <img src="${urlB}" alt="${lblB}" draggable="false" />
-              <span class="comparison-badge badge-before">${lblB}</span>
-            </div>
-            <div class="comparison-overlay" style="clip-path: inset(0 50% 0 0);">
               <img src="${urlA}" alt="${lblA}" draggable="false" />
-              <span class="comparison-badge badge-after">${lblA}</span>
             </div>
+            <!-- Overlay Image (Before image on top - left side) -->
+            <div class="comparison-overlay" style="clip-path: inset(0 50% 0 0);">
+              <img src="${urlB}" alt="${lblB}" draggable="false" />
+            </div>
+            <!-- Floating Badges -->
+            <span class="comparison-badge badge-before">${lblB}</span>
+            <span class="comparison-badge badge-after">${lblA}</span>
+            <!-- Handle -->
             <div class="comparison-handle" style="left: 50%;">
               <div class="handle-line"></div>
               <div class="handle-grip">
@@ -1436,12 +1447,28 @@ export class ReviewDetailComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const overlay = block.querySelector('.comparison-overlay') as HTMLElement;
     const handle = block.querySelector('.comparison-handle') as HTMLElement;
+    const badgeBefore = block.querySelector('.badge-before') as HTMLElement;
+    const badgeAfter = block.querySelector('.badge-after') as HTMLElement;
 
     if (overlay) {
       overlay.style.clipPath = `inset(0 ${(100 - percentage).toFixed(2)}% 0 0)`;
     }
     if (handle) {
       handle.style.left = `${percentage.toFixed(2)}%`;
+    }
+    if (badgeBefore) {
+      if (percentage <= 8) {
+        badgeBefore.classList.add('badge-hidden');
+      } else {
+        badgeBefore.classList.remove('badge-hidden');
+      }
+    }
+    if (badgeAfter) {
+      if (percentage >= 92) {
+        badgeAfter.classList.add('badge-hidden');
+      } else {
+        badgeAfter.classList.remove('badge-hidden');
+      }
     }
   }
 
