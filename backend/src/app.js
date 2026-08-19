@@ -67,6 +67,21 @@ const createDefaultAdmin = async () => {
 // Initialize database and start server
 const startServer = async () => {
   try {
+    // Try enabling pg_trgm and unaccent extensions for fuzzy search
+    try {
+      await sequelize.query('CREATE EXTENSION IF NOT EXISTS pg_trgm;');
+      console.log('✅ PostgreSQL pg_trgm extension enabled');
+    } catch (err) {
+      console.log('ℹ️ pg_trgm extension not available (fallback search will be used)');
+    }
+
+    try {
+      await sequelize.query('CREATE EXTENSION IF NOT EXISTS unaccent;');
+      console.log('✅ PostgreSQL unaccent extension enabled');
+    } catch (err) {
+      // Ignored if not permitted
+    }
+
     // Sync database (create tables if not exist)
     await sequelize.sync({ alter: true });
     console.log('✅ Database synchronized');

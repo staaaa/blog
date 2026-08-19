@@ -339,52 +339,200 @@ const deleteReview = async (req, res) => {
   }
 };
 
-// Search reviews
+// Helper for folding Polish diacritics
+const foldDiacritics = (str) => {
+  if (!str) return '';
+  return str
+    .replace(/[ąĄ]/g, 'a')
+    .replace(/[ćĆ]/g, 'c')
+    .replace(/[ęĘ]/g, 'e')
+    .replace(/[łŁ]/g, 'l')
+    .replace(/[ńŃ]/g, 'n')
+    .replace(/[óÓ]/g, 'o')
+    .replace(/[śŚ]/g, 's')
+    .replace(/[źŹżŻ]/g, 'z');
+};
+
+// Normalize string: lowercase, remove punctuation & diacritics
+const normalizeForSearch = (str) => {
+  if (!str) return '';
+  return foldDiacritics(str.toLowerCase())
+    .replace(/[^a-z0-9]/g, '');
+};
+
+// Extract search tokens (words)
+const getTokens = (str) => {
+  if (!str) return [];
+  return foldDiacritics(str.toLowerCase())
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(t => t.length > 0);
+};
+
+// Search reviews with fuzzy & normalized matching
 const searchReviews = async (req, res) => {
   try {
-    const query = req.query.q || '';
+    const rawQuery = (req.query.q || '').trim();
+    if (!rawQuery) {
+      return res.json({
+        reviews: [],
+        pagination: { total: 0, page: 1, limit: 10, totalPages: 0 }
+      });
+    }
+
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
 
+    const normalizedQuery = normalizeForSearch(rawQuery);
+    const tokens = getTokens(rawQuery);
+    const safeRawQuery = rawQuery.replace(/'/g, "''");
+    const safeNormQuery = normalizedQuery.replace(/'/g, "''");
+
+    // SQL expression for normalized field (removes punctuation + converts Polish letters to ASCII)
+    const normalizedExpr = (colName) => 
+      sequelize.fn(
+        'translate',
+        sequelize.fn('regexp_replace', sequelize.fn('lower', sequelize.col(colName)), '[^a-ząćęłńóśźż0-9]', '', 'g'),
+        'ąćęłńóśźż',
+        'acelnoszz'
+      );
+
+    const orConditions = [
+      // 1. Standard ILIKE matching
+      { title: { [Op.iLike]: `%${rawQuery}%` } },
+      { gameTitle: { [Op.iLike]: `%${rawQuery}%` } },
+      { content: { [Op.iLike]: `%${rawQuery}%` } }
+    ];
+
+    // 2. Normalized matching (e.g. "whos lila" matches "Who's Lila?", "spiderman" matches "Spider-Man")
+    if (normalizedQuery.length >= 2) {
+      orConditions.push(
+        sequelize.where(normalizedExpr('Review.game_title'), { [Op.like]: `%${safeNormQuery}%` })
+      );
+      orConditions.push(
+        sequelize.where(normalizedExpr('Review.title'), { [Op.like]: `%${safeNormQuery}%` })
+      );
+    }
+
+    // 3. Multi-word token matching (all words must appear in normalized title)
+    if (tokens.length > 1) {
+      const allTokensInGameTitle = {
+        [Op.and]: tokens.map(t => 
+          sequelize.where(normalizedExpr('Review.game_title'), { [Op.like]: `%${t}%` })
+        )
+      };
+      const allTokensInTitle = {
+        [Op.and]: tokens.map(t => 
+          sequelize.where(normalizedExpr('Review.title'), { [Op.like]: `%${t}%` })
+        )
+      };
+      orConditions.push(allTokensInGameTitle);
+      orConditions.push(allTokensInTitle);
+    }
+
+    // 4. Trigram similarity matching for typos (e.g. "Who's Lilla" or "Slient Hill")
+    if (rawQuery.length >= 3) {
+      try {
+        orConditions.push(
+          sequelize.where(
+            sequelize.fn('similarity', sequelize.col('Review.game_title'), rawQuery),
+            { [Op.gt]: 0.25 }
+          )
+        );
+        orConditions.push(
+          sequelize.where(
+            sequelize.fn('similarity', sequelize.col('Review.title'), rawQuery),
+            { [Op.gt]: 0.25 }
+          )
+        );
+      } catch (e) {
+        // Similarity function may not be available on some DB configs
+      }
+    }
+
     const whereClause = {
-      [Op.or]: [
-        { title: { [Op.iLike]: `%${query}%` } },
-        { gameTitle: { [Op.iLike]: `%${query}%` } },
-        { content: { [Op.iLike]: `%${query}%` } }
-      ]
+      [Op.or]: orConditions
     };
 
     if (!req.user) {
       whereClause.isDraft = false;
     }
 
-    const { count, rows } = await Review.findAndCountAll({
-      where: whereClause,
-      include: [
-        { model: Genre, as: 'genres', attributes: ['id', 'name', 'slug'] },
-        { model: Series, as: 'series', attributes: ['id', 'name', 'slug'] },
-        { model: Studio, as: 'studio', attributes: ['id', 'name', 'slug'] },
-        { model: CustomRating, as: 'customRatings' }
+    // Relevance ordering: exact/normalized gameTitle matches top, then title, then others
+    const relevanceOrder = [
+      [
+        sequelize.literal(`
+          CASE 
+            WHEN lower("Review"."game_title") = lower('${safeRawQuery}') THEN 1
+            WHEN translate(regexp_replace(lower("Review"."game_title"), '[^a-ząćęłńóśźż0-9]', '', 'g'), 'ąćęłńóśźż', 'acelnoszz') = '${safeNormQuery}' THEN 2
+            WHEN translate(regexp_replace(lower("Review"."game_title"), '[^a-ząćęłńóśźż0-9]', '', 'g'), 'ąćęłńóśźż', 'acelnoszz') LIKE '%${safeNormQuery}%' THEN 3
+            WHEN "Review"."game_title" ILIKE '%${safeRawQuery}%' THEN 4
+            WHEN "Review"."title" ILIKE '%${safeRawQuery}%' THEN 5
+            ELSE 6
+          END
+        `),
+        'ASC'
       ],
-      distinct: true,
-      order: [['updatedAt', 'DESC']],
-      limit,
-      offset
-    });
+      ['updatedAt', 'DESC']
+    ];
+
+    let result;
+    try {
+      result = await Review.findAndCountAll({
+        where: whereClause,
+        include: [
+          { model: Genre, as: 'genres', attributes: ['id', 'name', 'slug'] },
+          { model: Series, as: 'series', attributes: ['id', 'name', 'slug'] },
+          { model: Studio, as: 'studio', attributes: ['id', 'name', 'slug'] },
+          { model: CustomRating, as: 'customRatings' }
+        ],
+        distinct: true,
+        order: relevanceOrder,
+        limit,
+        offset
+      });
+    } catch (dbError) {
+      // Fallback query if similarity or complex literal fails on older DB setups
+      console.warn('Fuzzy query fallback invoked:', dbError.message);
+      const fallbackWhere = {
+        [Op.or]: [
+          { title: { [Op.iLike]: `%${rawQuery}%` } },
+          { gameTitle: { [Op.iLike]: `%${rawQuery}%` } },
+          { content: { [Op.iLike]: `%${rawQuery}%` } },
+          sequelize.where(normalizedExpr('Review.game_title'), { [Op.like]: `%${safeNormQuery}%` })
+        ]
+      };
+      if (!req.user) {
+        fallbackWhere.isDraft = false;
+      }
+      result = await Review.findAndCountAll({
+        where: fallbackWhere,
+        include: [
+          { model: Genre, as: 'genres', attributes: ['id', 'name', 'slug'] },
+          { model: Series, as: 'series', attributes: ['id', 'name', 'slug'] },
+          { model: Studio, as: 'studio', attributes: ['id', 'name', 'slug'] },
+          { model: CustomRating, as: 'customRatings' }
+        ],
+        distinct: true,
+        order: [['updatedAt', 'DESC']],
+        limit,
+        offset
+      });
+    }
 
     res.json({
-      reviews: rows,
+      reviews: result.rows,
       pagination: {
-        total: count,
+        total: result.count,
         page,
         limit,
-        totalPages: Math.ceil(count / limit)
+        totalPages: Math.ceil(result.count / limit)
       }
     });
   } catch (error) {
     console.error('Search reviews error:', error);
-    res.status(500).json({ error: 'Błąd serwera' });
+    res.status(500).json({ error: 'Błąd serwera podczas wyszukiwania' });
   }
 };
 
