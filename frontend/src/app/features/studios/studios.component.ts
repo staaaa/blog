@@ -1,4 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { Meta, Title } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { ApiService, Category, Game } from '../../core/services/api.service';
@@ -62,6 +63,8 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
 export class StudiosComponent implements OnInit {
   private api = inject(ApiService);
   private route = inject(ActivatedRoute);
+  private titleService = inject(Title);
+  private meta = inject(Meta);
 
   studios: Category[] = [];
   selectedStudio: Category | null = null;
@@ -85,6 +88,8 @@ export class StudiosComponent implements OnInit {
       next: (studios) => {
         this.studios = studios;
         this.loading = false;
+        this.titleService.setTitle('Studia i deweloperzy | Giercujemy');
+        this.meta.updateTag({ name: 'description', content: 'Przeglądaj recenzje gier według studia deweloperskiego na Giercujemy.' });
       },
       error: () => this.loading = false
     });
@@ -97,6 +102,10 @@ export class StudiosComponent implements OnInit {
         this.selectedStudio = data.studio || null;
         this.games = (data.games || data.reviews || []) as Game[];
         this.loading = false;
+        if (this.selectedStudio) {
+          this.titleService.setTitle(`${this.selectedStudio.name} – Studio deweloperskie | Giercujemy`);
+          this.meta.updateTag({ name: 'description', content: `Recenzje gier studia ${this.selectedStudio.name} na Giercujemy.` });
+        }
       },
       error: () => this.loading = false
     });

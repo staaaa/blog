@@ -1,4 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { Meta, Title } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { ApiService, Category, Game } from '../../core/services/api.service';
@@ -62,6 +63,8 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
 export class GenresComponent implements OnInit {
   private api = inject(ApiService);
   private route = inject(ActivatedRoute);
+  private titleService = inject(Title);
+  private meta = inject(Meta);
 
   genres: Category[] = [];
   selectedGenre: Category | null = null;
@@ -85,6 +88,8 @@ export class GenresComponent implements OnInit {
       next: (genres) => {
         this.genres = genres;
         this.loading = false;
+        this.titleService.setTitle('Gatunki gier | Giercujemy');
+        this.meta.updateTag({ name: 'description', content: 'Przeglądaj recenzje gier według gatunków na Giercujemy.' });
       },
       error: () => this.loading = false
     });
@@ -97,6 +102,10 @@ export class GenresComponent implements OnInit {
         this.selectedGenre = data.genre || null;
         this.games = (data.games || data.reviews || []) as Game[];
         this.loading = false;
+        if (this.selectedGenre) {
+          this.titleService.setTitle(`${this.selectedGenre.name} – Recenzje gier | Giercujemy`);
+          this.meta.updateTag({ name: 'description', content: `Recenzje gier z gatunku ${this.selectedGenre.name} na Giercujemy.` });
+        }
       },
       error: () => this.loading = false
     });

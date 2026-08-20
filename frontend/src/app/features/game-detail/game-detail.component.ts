@@ -1,8 +1,8 @@
-import { Component, OnInit, inject, AfterViewInit, OnDestroy, HostListener } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, AfterViewInit, OnDestroy, HostListener, PLATFORM_ID } from '@angular/core';
+import { CommonModule, DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { DomSanitizer, SafeHtml, SafeResourceUrl } from '@angular/platform-browser';
+import { DomSanitizer, SafeHtml, SafeResourceUrl, Meta, Title } from '@angular/platform-browser';
 import { ApiService, Game, Review, ReviewerSummary, GameAverages, Comment as ReviewComment } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { TocService, TocItem } from '../../core/services/toc.service';
@@ -2291,6 +2291,10 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   public authService = inject(AuthService);
   private sanitizer = inject(DomSanitizer);
   private tocService = inject(TocService);
+  private meta = inject(Meta);
+  private titleService = inject(Title);
+  private document = inject(DOCUMENT);
+  private platformId = inject(PLATFORM_ID);
 
   game: Game | null = null;
   averages: GameAverages | null = null;
@@ -2366,6 +2370,12 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       window.removeEventListener('touchend', this.onPointerUpBound);
     }
     this.tocService.clear();
+
+    // Clean up SEO elements
+    const jsonLdScript = this.document?.querySelector?.('#game-review-jsonld');
+    if (jsonLdScript) jsonLdScript.remove();
+    const canonicalLink = this.document?.querySelector?.('link[rel="canonical"]');
+    if (canonicalLink) canonicalLink.remove();
   }
 
   loadGame(slug: string, reviewerId?: number, reviewId?: number): void {
@@ -2399,6 +2409,7 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
         }
 
         this.loading = false;
+        this.updateSeoMeta();
       },
       error: (err) => {
         console.error('Error loading game:', err);
@@ -2523,6 +2534,169 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
     const match = url.match(regExp);
     return (match && match[2].length === 11) ? match[2] : null;
+  }
+
+  private updateSeoMeta(): void {
+    if (!this.game) return;
+
+    const baseUrl = 'https://giercujemy-staa.duckdns.org';
+    const gameUrl = `${baseUrl}/game/${this.game.slug}`;
+    const gameTitle = this.game.gameTitle;
+
+    // Build page title
+    const pageTitle = `Recenzja ${gameTitle} | Giercujemy`;
+    this.titleService.setTitle(pageTitle);
+
+    // Build description
+    let description = `Recenzja gry ${gameTitle} na Giercujemy.`;
+    if (this.averages && this.averages.reviewCount > 0) {
+      description += ` Ocena: ${this.averages.averageRating.toFixed(1)}/10.`;
+    }
+    if (this.selectedReview?.title) {
+      description += ` ${this.selectedReview.title}`;
+    }
+    // Truncate to 160 chars
+    if (description.length > 160) {
+      description = description.substring(0, 157) + '...';
+    }
+
+    // Build image URL
+    let imageUrl = `${baseUrl}/favicon.png`;
+    if (this.game.coverImage) {
+      const cover = this.game.coverImage;
+      if (cover.startsWith('http')) {
+        imageUrl = cover;
+      } else if (cover.startsWith('/uploads/')) {
+        imageUrl = `${baseUrl}${cover}`;
+      } else {
+        imageUrl = `${baseUrl}/uploads/${cover}`;
+      }
+    }
+
+    // Update meta tags
+    this.meta.updateTag({ name: 'description', content: description });
+    this.meta.updateTag({ property: 'og:title', content: pageTitle });
+    this.meta.updateTag({ property: 'og:description', content: description });
+    this.meta.updateTag({ property: 'og:url', content: gameUrl });
+    this.meta.updateTag({ property: 'og:image', content: imageUrl });
+    this.meta.updateTag({ property: 'og:type', content: 'article' });
+    this.meta.updateTag({ name: 'twitter:card', content: 'summary_large_image' });
+    this.meta.updateTag({ name: 'twitter:title', content: pageTitle });
+    this.meta.updateTag({ name: 'twitter:description', content: description });
+    this.meta.updateTag({ name: 'twitter:image', content: imageUrl });
+
+    // Canonical URL
+    this.updateCanonicalUrl(gameUrl);
+
+    // JSON-LD Structured Data
+    this.updateJsonLd();
+  }
+
+  private updateCanonicalUrl(url: string): void {
+    // Remove existing canonical link
+    const existingLink = this.document.querySelector('link[rel="canonical"]');
+    if (existingLink) {
+      existingLink.remove();
+    }
+    // Add new canonical link
+    const link = this.document.createElement('link');
+    link.setAttribute('rel', 'canonical');
+    link.setAttribute('href', url);
+    this.document.head.appendChild(link);
+  }
+
+  private updateJsonLd(): void {
+    if (!this.game) return;
+
+    const baseUrl = 'https://giercujemy-staa.duckdns.org';
+
+    // Remove existing JSON-LD
+    const existingScript = this.document.querySelector('script[type="application/ld+json"]#game-review-jsonld');
+    if (existingScript) {
+      existingScript.remove();
+    }
+
+    // Build image URL
+    let imageUrl = '';
+    if (this.game.coverImage) {
+      const cover = this.game.coverImage;
+      if (cover.startsWith('http')) {
+        imageUrl = cover;
+      } else if (cover.startsWith('/uploads/')) {
+        imageUrl = `${baseUrl}${cover}`;
+      } else {
+        imageUrl = `${baseUrl}/uploads/${cover}`;
+      }
+    }
+
+    const jsonLd: any = {
+      '@context': 'https://schema.org',
+      '@type': 'Review',
+      'itemReviewed': {
+        '@type': 'VideoGame',
+        'name': this.game.gameTitle,
+        'url': `${baseUrl}/game/${this.game.slug}`,
+      },
+      'publisher': {
+        '@type': 'Organization',
+        'name': 'Giercujemy'
+      }
+    };
+
+    if (imageUrl) {
+      jsonLd.itemReviewed.image = imageUrl;
+    }
+
+    if (this.game.genres && this.game.genres.length > 0) {
+      jsonLd.itemReviewed.genre = this.game.genres.map(g => g.name);
+    }
+
+    if (this.game.releaseDate) {
+      jsonLd.itemReviewed.datePublished = this.game.releaseDate;
+    }
+
+    if (this.game.studio) {
+      jsonLd.itemReviewed.author = {
+        '@type': 'Organization',
+        'name': this.game.studio.name
+      };
+    }
+
+    if (this.selectedReview) {
+      jsonLd.reviewRating = {
+        '@type': 'Rating',
+        'ratingValue': this.selectedReview.averageRating,
+        'bestRating': 10,
+        'worstRating': 0
+      };
+      jsonLd.name = this.selectedReview.title;
+      jsonLd.datePublished = this.selectedReview.createdAt;
+      jsonLd.dateModified = this.selectedReview.updatedAt;
+
+      if (this.selectedReview.author) {
+        jsonLd.author = {
+          '@type': 'Person',
+          'name': this.selectedReview.author.displayName || this.selectedReview.author.username
+        };
+      }
+    }
+
+    // Aggregate rating from all reviewers
+    if (this.averages && this.averages.reviewCount > 0) {
+      jsonLd.itemReviewed.aggregateRating = {
+        '@type': 'AggregateRating',
+        'ratingValue': this.averages.averageRating,
+        'bestRating': 10,
+        'worstRating': 0,
+        'reviewCount': this.averages.reviewCount
+      };
+    }
+
+    const script = this.document.createElement('script');
+    script.setAttribute('type', 'application/ld+json');
+    script.setAttribute('id', 'game-review-jsonld');
+    script.textContent = JSON.stringify(jsonLd);
+    this.document.head.appendChild(script);
   }
 
   getImageUrl(url: string | null | undefined): string {

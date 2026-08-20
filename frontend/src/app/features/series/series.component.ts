@@ -1,4 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { Meta, Title } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { ApiService, Category, Game } from '../../core/services/api.service';
@@ -62,6 +63,8 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
 export class SeriesComponent implements OnInit {
   private api = inject(ApiService);
   private route = inject(ActivatedRoute);
+  private titleService = inject(Title);
+  private meta = inject(Meta);
 
   series: Category[] = [];
   selectedSeries: Category | null = null;
@@ -85,6 +88,8 @@ export class SeriesComponent implements OnInit {
       next: (series) => {
         this.series = series;
         this.loading = false;
+        this.titleService.setTitle('Serie gier | Giercujemy');
+        this.meta.updateTag({ name: 'description', content: 'Przeglądaj recenzje gier według serii na Giercujemy.' });
       },
       error: () => this.loading = false
     });
@@ -97,6 +102,10 @@ export class SeriesComponent implements OnInit {
         this.selectedSeries = data.series || null;
         this.games = (data.games || data.reviews || []) as Game[];
         this.loading = false;
+        if (this.selectedSeries) {
+          this.titleService.setTitle(`${this.selectedSeries.name} – Seria gier | Giercujemy`);
+          this.meta.updateTag({ name: 'description', content: `Recenzje gier z serii ${this.selectedSeries.name} na Giercujemy.` });
+        }
       },
       error: () => this.loading = false
     });

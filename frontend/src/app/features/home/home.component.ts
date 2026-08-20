@@ -1,4 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { Meta, Title } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, Game } from '../../core/services/api.service';
@@ -209,6 +210,8 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
 })
 export class HomeComponent implements OnInit {
   private api = inject(ApiService);
+  private titleService = inject(Title);
+  private meta = inject(Meta);
 
   games: Game[] = [];
   loading = true;
@@ -216,6 +219,12 @@ export class HomeComponent implements OnInit {
   pagination = { page: 1, totalPages: 1, total: 0, limit: 9 };
 
   ngOnInit(): void {
+    this.titleService.setTitle('Giercujemy – Recenzje Gier');
+    this.meta.updateTag({ name: 'description', content: 'Recenzje gier na Giercujemy. Sprawdź nasze oceny i opinie.' });
+    this.meta.updateTag({ property: 'og:title', content: 'Giercujemy – Recenzje Gier' });
+    this.meta.updateTag({ property: 'og:description', content: 'Recenzje gier na Giercujemy. Sprawdź nasze oceny i opinie.' });
+    this.meta.updateTag({ property: 'og:url', content: 'https://giercujemy-staa.duckdns.org/' });
+    this.meta.updateTag({ property: 'og:type', content: 'website' });
     this.loadGames(1);
   }
 

@@ -1,4 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { Meta, Title } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -138,6 +139,8 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
 export class SearchComponent implements OnInit {
   private api = inject(ApiService);
   private route = inject(ActivatedRoute);
+  private titleService = inject(Title);
+  private meta = inject(Meta);
 
   query = '';
   games: Game[] = [];
@@ -146,6 +149,7 @@ export class SearchComponent implements OnInit {
   pagination = { page: 1, totalPages: 1, total: 0, limit: 12 };
 
   ngOnInit(): void {
+    this.titleService.setTitle('Wyszukiwanie | Giercujemy');
     this.route.queryParams.subscribe(params => {
       if (params['q']) {
         this.query = params['q'];
@@ -163,6 +167,8 @@ export class SearchComponent implements OnInit {
         this.games = response.games || [];
         this.pagination = response.pagination;
         this.loading = false;
+        this.titleService.setTitle(`Wyniki wyszukiwania: ${this.query} | Giercujemy`);
+        this.meta.updateTag({ name: 'description', content: `Wyniki wyszukiwania "${this.query}" na Giercujemy. Znaleziono ${this.pagination.total} gier.` });
       },
       error: () => this.loading = false
     });

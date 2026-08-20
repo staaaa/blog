@@ -45,6 +45,93 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Dynamic sitemap.xml
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    const { Game, Review, Genre, Series, Studio } = require('./models');
+    const { Op } = require('sequelize');
+
+    const baseUrl = 'https://giercujemy-staa.duckdns.org';
+
+    // Get all games with published reviews
+    const games = await Game.findAll({
+      attributes: ['slug', 'updatedAt'],
+      include: [{
+        model: Review,
+        as: 'reviews',
+        where: { isDraft: false },
+        attributes: ['id'],
+        required: true
+      }],
+      order: [['updatedAt', 'DESC']]
+    });
+
+    // Get all genres
+    const genres = await Genre.findAll({ attributes: ['slug'] });
+
+    // Get all series
+    const seriesList = await Series.findAll({ attributes: ['slug'] });
+
+    // Get all studios
+    const studios = await Studio.findAll({ attributes: ['slug'] });
+
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+
+    // Home page
+    xml += '  <url>\n';
+    xml += `    <loc>${baseUrl}/</loc>\n`;
+    xml += '    <changefreq>daily</changefreq>\n';
+    xml += '    <priority>1.0</priority>\n';
+    xml += '  </url>\n';
+
+    // Game pages
+    for (const game of games) {
+      xml += '  <url>\n';
+      xml += `    <loc>${baseUrl}/game/${game.slug}</loc>\n`;
+      xml += `    <lastmod>${new Date(game.updatedAt).toISOString().split('T')[0]}</lastmod>\n`;
+      xml += '    <changefreq>weekly</changefreq>\n';
+      xml += '    <priority>0.9</priority>\n';
+      xml += '  </url>\n';
+    }
+
+    // Genre pages
+    for (const genre of genres) {
+      xml += '  <url>\n';
+      xml += `    <loc>${baseUrl}/genres/${genre.slug}</loc>\n`;
+      xml += '    <changefreq>weekly</changefreq>\n';
+      xml += '    <priority>0.6</priority>\n';
+      xml += '  </url>\n';
+    }
+
+    // Series pages
+    for (const s of seriesList) {
+      xml += '  <url>\n';
+      xml += `    <loc>${baseUrl}/series/${s.slug}</loc>\n`;
+      xml += '    <changefreq>weekly</changefreq>\n';
+      xml += '    <priority>0.6</priority>\n';
+      xml += '  </url>\n';
+    }
+
+    // Studio pages
+    for (const studio of studios) {
+      xml += '  <url>\n';
+      xml += `    <loc>${baseUrl}/studios/${studio.slug}</loc>\n`;
+      xml += '    <changefreq>weekly</changefreq>\n';
+      xml += '    <priority>0.6</priority>\n';
+      xml += '  </url>\n';
+    }
+
+    xml += '</urlset>';
+
+    res.header('Content-Type', 'application/xml');
+    res.send(xml);
+  } catch (error) {
+    console.error('Sitemap generation error:', error);
+    res.status(500).send('Error generating sitemap');
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);

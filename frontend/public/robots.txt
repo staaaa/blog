@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /account/
+Disallow: /register
+
+Sitemap: https://giercujemy-staa.duckdns.org/sitemap.xml
