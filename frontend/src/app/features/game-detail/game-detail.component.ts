@@ -45,11 +45,18 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
 
             <div class="header-content">
               <div class="header-top-row">
-                <!-- Overall Game Score Badge -->
-                <div class="overall-score-badge" *ngIf="averages && averages.reviewCount > 0" title="Średnia ocen recenzentów">
-                  <span class="score-val">{{ averages.averageRating | number:'1.1-1' }}</span>
-                  <span class="score-max">/10</span>
-                  <span class="score-count">({{ averages.reviewCount }} {{ averages.reviewCount === 1 ? 'recenzja' : 'recenzje' }})</span>
+                <div class="header-top-left">
+                  <!-- Overall Game Score Badge -->
+                  <div class="overall-score-badge" *ngIf="averages && averages.reviewCount > 0" title="Średnia ocen recenzentów">
+                    <span class="score-val">{{ averages.averageRating | number:'1.1-1' }}</span>
+                    <span class="score-max">/10</span>
+                    <span class="score-count">({{ averages.reviewCount }} {{ averages.reviewCount === 1 ? 'recenzja' : 'recenzje' }})</span>
+                  </div>
+
+                  <!-- Reading Time -->
+                  <span class="reading-time" *ngIf="readingTimeMinutes > 0" title="Szacowany czas czytania recenzji">
+                    Czas czytania: {{ readingTimeMinutes }} min
+                  </span>
                 </div>
 
                 <div class="header-actions">
@@ -618,6 +625,11 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       font-size: 0.95rem;
     }
 
+    .game-page-layout.zen-active .reading-time {
+      font-size: 0.75rem;
+      opacity: 0.7;
+    }
+
     .game-page-layout.zen-active .categories {
       gap: 0.35rem;
       margin-bottom: 0.75rem;
@@ -793,6 +805,20 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       flex-wrap: wrap;
       gap: 0.75rem;
       margin-bottom: 1rem;
+    }
+
+    .header-top-left {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      flex-wrap: wrap;
+    }
+
+    .reading-time {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      letter-spacing: 0.2px;
     }
 
     .overall-score-badge {
@@ -1974,7 +2000,8 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       }
 
       .overall-score-badge .score-max,
-      .overall-score-badge .score-count {
+      .overall-score-badge .score-count,
+      .reading-time {
         font-size: 0.68rem;
       }
 
@@ -2177,6 +2204,7 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   selectedReview: Review | null = null;
   favoriteCount = 0;
   isFavorite = false;
+  readingTimeMinutes = 0;
 
   // Comments
   comments: ReviewComment[] = [];
@@ -2279,6 +2307,7 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
           this.processedContent = '';
           this.tocItems = [];
           this.tocService.clear();
+          this.readingTimeMinutes = 0;
         }
 
         this.loading = false;
@@ -2579,8 +2608,16 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       this.processedContent = '';
       this.tocItems = [];
       this.tocService.clear();
+      this.readingTimeMinutes = 0;
       return;
     }
+
+    // Calculate reading time (words / 175, rounded up to nearest minute)
+    const plainText = content
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\[\/?(SPOILER|COMPARE)[^\]]*\]/gi, ' ');
+    const words = plainText.trim().split(/\s+/).filter(w => w.length > 0);
+    this.readingTimeMinutes = words.length > 0 ? Math.ceil(words.length / 175) : 0;
 
     let processed = content;
 
