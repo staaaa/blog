@@ -224,28 +224,71 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
               </div>
             </div>
 
-            <!-- Ratings Breakdown & Radar Chart -->
-            <section class="review-ratings">
-              <app-rating-display
-                [averageRating]="selectedReview.averageRating"
-                [storyRating]="selectedReview.storyRating"
-                [musicRating]="selectedReview.musicRating"
-                [graphicsRating]="selectedReview.graphicsRating"
-                [optimizationRating]="selectedReview.optimizationRating"
-                [gameplayRating]="selectedReview.gameplayRating"
-                [customRatings]="selectedReview.customRatings"
-              ></app-rating-display>
-            </section>
+            <!-- TLDR Collapsible Summary Card (Rating, Pros/Cons, Specs) -->
+            <section class="tldr-summary-card" [class.expanded]="isTldrExpanded">
+              <button
+                type="button"
+                class="tldr-header-btn"
+                (click)="toggleTldr()"
+                [attr.aria-expanded]="isTldrExpanded"
+                title="Kliknij, aby rozwinąć lub zwinąć podsumowanie (TLDR)"
+              >
+                <div class="tldr-header-left">
+                  <span class="tldr-pill">TLDR:</span>
+                  <div class="tldr-score-preview" *ngIf="selectedReview.averageRating !== undefined && selectedReview.averageRating !== null">
+                    <div class="tldr-score-circle" [style.background]="getCircleGradient(selectedReview.averageRating)">
+                      <div class="tldr-score-circle-inner">
+                        <span class="tldr-score-value">{{ selectedReview.averageRating.toFixed(1) }}</span>
+                      </div>
+                    </div>
+                    <div class="tldr-score-info">
+                      <span class="tldr-score-label">Ocena recenzenta</span>
+                      <span class="tldr-hint-text" *ngIf="!isTldrExpanded">Pokaż szczegóły ocen, plusy i minusy</span>
+                    </div>
+                  </div>
+                </div>
 
-            <!-- Pros & Cons Section -->
-            <section class="pros-cons-section" *ngIf="(selectedReview.pros && selectedReview.pros.length > 0) || (selectedReview.cons && selectedReview.cons.length > 0)">
-              <app-pros-cons [pros]="selectedReview.pros" [cons]="selectedReview.cons"></app-pros-cons>
-            </section>
+                <div class="tldr-header-right">
+                  <span class="tldr-toggle-status">{{ isTldrExpanded ? 'Zwiń' : 'Rozwiń' }}</span>
+                  <svg class="tldr-chevron-icon" [class.rotated]="isTldrExpanded" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </div>
+              </button>
 
-            <!-- Hardware Specs -->
-            <section class="hardware-specs" *ngIf="selectedReview.hardwareSpecs">
-              <h3>Specyfikacja sprzętowa recenzenta</h3>
-              <div class="specs-content" [innerHTML]="sanitize(selectedReview.hardwareSpecs)"></div>
+              <!-- Collapsible Content -->
+              <div class="tldr-body" *ngIf="isTldrExpanded">
+                <!-- Ratings Breakdown & Radar Chart -->
+                <div class="tldr-ratings-block">
+                  <app-rating-display
+                    [averageRating]="selectedReview.averageRating"
+                    [storyRating]="selectedReview.storyRating"
+                    [musicRating]="selectedReview.musicRating"
+                    [graphicsRating]="selectedReview.graphicsRating"
+                    [optimizationRating]="selectedReview.optimizationRating"
+                    [gameplayRating]="selectedReview.gameplayRating"
+                    [customRatings]="selectedReview.customRatings"
+                  ></app-rating-display>
+                </div>
+
+                <!-- Pros & Cons Section -->
+                <div class="tldr-pros-cons-block" *ngIf="(selectedReview.pros && selectedReview.pros.length > 0) || (selectedReview.cons && selectedReview.cons.length > 0)">
+                  <app-pros-cons [pros]="selectedReview.pros" [cons]="selectedReview.cons"></app-pros-cons>
+                </div>
+
+                <!-- Hardware Specs -->
+                <div class="tldr-hardware-block" *ngIf="selectedReview.hardwareSpecs">
+                  <div class="hardware-specs-header">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                      <line x1="8" y1="21" x2="16" y2="21"></line>
+                      <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                    <h4>Specyfikacja sprzętowa recenzenta</h4>
+                  </div>
+                  <div class="specs-content" [innerHTML]="sanitize(selectedReview.hardwareSpecs)"></div>
+                </div>
+              </div>
             </section>
 
             <!-- Quill Review Content (with Spoilers and Comparison Slider) -->
@@ -714,31 +757,11 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       opacity: 0.75;
     }
 
-    /* Subdued Ratings & Pros/Cons */
-    .game-page-layout.zen-active .review-ratings {
-      margin-bottom: 1.25rem;
-      filter: grayscale(1);
-      opacity: 0.75;
-      width: 100%;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .game-page-layout.zen-active .pros-cons-section {
+    /* Subdued TLDR Card in Zen Mode */
+    .game-page-layout.zen-active .tldr-summary-card {
       margin-bottom: 1.5rem;
       filter: grayscale(1);
-      opacity: 0.75;
-      width: 100%;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .game-page-layout.zen-active .hardware-specs {
-      padding: 0.85rem 1rem;
-      margin-bottom: 1.5rem;
-      font-size: 0.82rem;
-      filter: grayscale(1);
-      opacity: 0.75;
+      opacity: 0.8;
     }
 
     .game-page-layout.zen-active .author-signature-card {
@@ -1180,28 +1203,180 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       color: var(--text-primary);
     }
 
-    /* Ratings & Pros/Cons */
-    .review-ratings {
-      margin-bottom: 2rem;
-    }
-
-    .pros-cons-section {
-      margin-bottom: 2.5rem;
-    }
-
-    .hardware-specs {
-      margin-bottom: 2.5rem;
-      padding: 1.5rem;
-      background-color: var(--bg-color);
+    /* TLDR Collapsible Summary Card */
+    .tldr-summary-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
       border-radius: 12px;
+      margin-bottom: 2rem;
+      overflow: hidden;
+      box-shadow: 0 4px 14px var(--shadow);
+      transition: all 0.25s ease;
+    }
+
+    .tldr-summary-card:hover {
+      border-color: var(--accent-color);
+    }
+
+    .tldr-summary-card.expanded {
+      border-color: var(--border-color);
+    }
+
+    .tldr-header-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.95rem 1.25rem;
+      background: transparent;
+      border: none;
+      text-align: left;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--text-primary);
+      transition: background 0.2s ease;
+    }
+
+    .tldr-header-btn:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .tldr-header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .tldr-pill {
+      background: linear-gradient(135deg, var(--accent-color), #ff9933);
+      color: #ffffff;
+      font-family: var(--font-sans);
+      font-weight: 800;
+      font-size: 0.85rem;
+      letter-spacing: 0.5px;
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(255, 107, 44, 0.3);
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .tldr-score-preview {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .tldr-score-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .tldr-score-circle-inner {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background-color: var(--card-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tldr-score-value {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
+    }
+
+    .tldr-score-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .tldr-score-label {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      font-family: var(--font-sans);
+    }
+
+    .tldr-hint-text {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .tldr-header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .tldr-chevron-icon {
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      color: var(--accent-color);
+    }
+
+    .tldr-chevron-icon.rotated {
+      transform: rotate(180deg);
+    }
+
+    .tldr-body {
+      padding: 1.25rem 1.25rem 1.5rem 1.25rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      animation: tldrFadeIn 0.25s ease-out;
+    }
+
+    @keyframes tldrFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .tldr-hardware-block {
+      padding: 1.25rem;
+      background-color: var(--bg-color);
+      border-radius: 10px;
       border: 1px solid var(--border-color);
     }
 
-    .hardware-specs h3 {
-      font-size: 1.05rem;
-      font-weight: 700;
-      margin: 0 0 0.75rem 0;
+    .hardware-specs-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
       color: var(--text-primary);
+    }
+
+    .hardware-specs-header h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      font-family: var(--font-sans);
     }
 
     .specs-content {
@@ -2083,16 +2258,65 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
         font-size: 1.15rem;
       }
 
-      :host ::ng-deep .content-body .ql-size-large {
-        font-size: 0.98rem;
+      .tldr-summary-card {
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
       }
 
-      .hardware-specs {
-        padding: 0.75rem;
+      .tldr-header-btn {
+        padding: 0.75rem 0.85rem;
+        gap: 0.5rem;
+      }
+
+      .tldr-header-left {
+        gap: 0.65rem;
+      }
+
+      .tldr-pill {
         font-size: 0.75rem;
+        padding: 0.2rem 0.5rem;
       }
 
-      .hardware-specs h3 {
+      .tldr-score-preview {
+        gap: 0.5rem;
+      }
+
+      .tldr-score-circle {
+        width: 36px;
+        height: 36px;
+      }
+
+      .tldr-score-circle-inner {
+        width: 28px;
+        height: 28px;
+      }
+
+      .tldr-score-value {
+        font-size: 0.8rem;
+      }
+
+      .tldr-score-label {
+        font-size: 0.78rem;
+      }
+
+      .tldr-hint-text {
+        font-size: 0.68rem;
+      }
+
+      .tldr-toggle-status {
+        display: none;
+      }
+
+      .tldr-body {
+        padding: 1rem 0.85rem;
+        gap: 1rem;
+      }
+
+      .tldr-hardware-block {
+        padding: 0.75rem;
+      }
+
+      .hardware-specs-header h4 {
         font-size: 0.85rem;
       }
 
@@ -2205,6 +2429,7 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   favoriteCount = 0;
   isFavorite = false;
   readingTimeMinutes = 0;
+  isTldrExpanded = false;
 
   // Comments
   comments: ReviewComment[] = [];
@@ -2389,6 +2614,17 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       existing.text = `Komentarze (${this.comments.length})`;
       this.tocService.setItems([...this.tocItems]);
     }
+  }
+
+  toggleTldr(): void {
+    this.isTldrExpanded = !this.isTldrExpanded;
+  }
+
+  getCircleGradient(rating: number | undefined): string {
+    const safeRating = typeof rating === 'number' && !isNaN(rating) ? rating : 0;
+    const percent = (safeRating / 10) * 100;
+    const degrees = (percent / 100) * 360;
+    return `conic-gradient(var(--accent-color) 0deg, var(--accent-color) ${degrees}deg, var(--border-color) ${degrees}deg, var(--border-color) 360deg)`;
   }
 
   toggleZenMode(): void {

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CustomRating } from '../../../core/services/api.service';
 import { RadarChartComponent } from '../radar-chart/radar-chart.component';
@@ -16,7 +16,7 @@ import { RadarChartComponent } from '../radar-chart/radar-chart.component';
               <span class="rating-value">{{ averageRating.toFixed(1) }}</span>
             </div>
           </div>
-          <span class="rating-label">Średnia ocena</span>
+          <span class="rating-label">Ocena recenzenta</span>
         </div>
 
         <div class="view-toggles">
@@ -24,7 +24,7 @@ import { RadarChartComponent } from '../radar-chart/radar-chart.component';
             type="button" 
             class="toggle-btn" 
             [class.active]="viewMode === 'bars'" 
-            (click)="viewMode = 'bars'"
+            (click)="setViewMode('bars')"
             title="Widok pasków"
           >
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
@@ -38,7 +38,7 @@ import { RadarChartComponent } from '../radar-chart/radar-chart.component';
             type="button" 
             class="toggle-btn" 
             [class.active]="viewMode === 'radar'" 
-            (click)="viewMode = 'radar'"
+            (click)="setViewMode('radar')"
             title="Wykres radarowy"
           >
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
@@ -314,7 +314,7 @@ import { RadarChartComponent } from '../radar-chart/radar-chart.component';
     }
   `]
 })
-export class RatingDisplayComponent {
+export class RatingDisplayComponent implements OnInit {
   @Input() averageRating: number = 0;
   @Input() storyRating: number = 0;
   @Input() musicRating: number = 0;
@@ -324,6 +324,30 @@ export class RatingDisplayComponent {
   @Input() customRatings: CustomRating[] = [];
 
   viewMode: 'bars' | 'radar' = 'bars';
+
+  ngOnInit(): void {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const saved = localStorage.getItem('preferredRatingView');
+        if (saved === 'radar' || saved === 'bars') {
+          this.viewMode = saved;
+        }
+      } catch {
+        // localStorage might be unavailable/restricted in some environments
+      }
+    }
+  }
+
+  setViewMode(mode: 'bars' | 'radar'): void {
+    this.viewMode = mode;
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        localStorage.setItem('preferredRatingView', mode);
+      } catch {
+        // localStorage error handle
+      }
+    }
+  }
 
   getCircleGradient(rating: number): string {
     const percent = (rating / 10) * 100;
