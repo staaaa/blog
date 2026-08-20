@@ -314,7 +314,7 @@ export class AccountSettingsComponent implements OnInit {
     switch (role) {
       case 'admin': return 'Administrator (wszystkie uprawnienia)';
       case 'reviewer': return 'Recenzent (tworzenie recenzji i gier)';
-      case 'reader': return 'Czytelnik (zapisywanie do ulubionych, oznaczanie przeczytanych)';
+      case 'reader': return 'Czytelnik (zapisywanie do ulubionych)';
       default: return 'Użytkownik';
     }
   }

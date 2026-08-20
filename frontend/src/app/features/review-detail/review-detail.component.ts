@@ -167,14 +167,6 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
               </svg>
               <span class="toc-title">Struktura</span>
             </div>
-            
-            <button type="button" class="sidebar-zen-btn" (click)="toggleZenMode()" title="Włącz tryb skupienia (Zen)">
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="9"></circle>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-              <span>Zen</span>
-            </button>
           </div>
 
           <nav class="toc-nav">
@@ -773,25 +765,6 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-      }
-      .sidebar-zen-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.3rem;
-        padding: 0.2rem 0.5rem;
-        background: var(--input-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        color: var(--text-muted);
-        font-size: 0.75rem;
-        font-family: var(--font-sans);
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-      }
-      .sidebar-zen-btn:hover {
-        color: var(--accent-color);
-        border-color: var(--accent-color);
       }
       .toc-nav {
         position: relative;

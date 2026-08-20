@@ -67,14 +67,6 @@ import { CommonModule } from '@angular/common';
       box-sizing: border-box;
     }
 
-    .pros-card {
-      border-top: 3px solid #10b981;
-    }
-
-    .cons-card {
-      border-top: 3px solid #ef4444;
-    }
-
     .card-header {
       display: flex;
       align-items: center;
@@ -92,16 +84,9 @@ import { CommonModule } from '@angular/common';
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-    }
-
-    .pros-icon {
-      background-color: rgba(16, 185, 129, 0.15);
-      color: #10b981;
-    }
-
-    .cons-icon {
-      background-color: rgba(239, 68, 68, 0.15);
-      color: #ef4444;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
     }
 
     .card-title {
@@ -135,27 +120,20 @@ import { CommonModule } from '@angular/common';
 
     .bullet {
       font-family: var(--font-sans);
-      font-weight: 800;
-      font-size: 1.1rem;
+      font-weight: 700;
+      font-size: 1rem;
       line-height: 1;
       flex-shrink: 0;
       margin-top: 2px;
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       border-radius: 4px;
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-
-    .pros-bullet {
-      color: #10b981;
-      background: rgba(16, 185, 129, 0.12);
-    }
-
-    .cons-bullet {
-      color: #ef4444;
-      background: rgba(239, 68, 68, 0.12);
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
     }
 
     .text {

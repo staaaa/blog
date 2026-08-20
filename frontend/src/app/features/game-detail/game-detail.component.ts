@@ -53,22 +53,32 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
                 </div>
 
                 <div class="header-actions">
-                  <!-- Favorite Button with Count (Reader/Reviewer/Admin) -->
+                  <!-- Favorite Heart Button (Reader/Reviewer/Admin) -->
                   <button
                     *ngIf="authService.isAuthenticated()"
                     type="button"
-                    class="action-icon-btn"
+                    class="fav-btn"
                     [class.active]="isFavorite"
                     (click)="toggleFavorite()"
                     [title]="isFavorite ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'"
+                    aria-label="Dodaj do ulubionych"
                   >
-                    <span>{{ isFavorite ? 'W ulubionych' : 'Dodaj do ulubionych' }}</span>
-                    <span class="count-bubble" *ngIf="favoriteCount > 0">({{ favoriteCount }})</span>
+                    <svg viewBox="0 0 24 24" width="18" height="18" [attr.fill]="isFavorite ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
                   </button>
 
-                  <span *ngIf="!authService.isAuthenticated() && favoriteCount > 0" class="static-favorite-badge" title="Liczba graczy z tą grą w ulubionych">
-                    Ulubione: {{ favoriteCount }}
-                  </span>
+                  <a
+                    *ngIf="!authService.isAuthenticated()"
+                    routerLink="/admin/login"
+                    class="fav-btn"
+                    title="Dodaj do ulubionych"
+                    aria-label="Dodaj do ulubionych"
+                  >
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                  </a>
 
                   <!-- Zen Mode Button -->
                   <button 
@@ -198,41 +208,6 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
                   </svg>
                   <span>{{ selectedReview.playtimeHours }}h w grze</span>
                 </div>
-
-                <!-- Review Like Button -->
-                <button
-                  *ngIf="authService.isAuthenticated()"
-                  type="button"
-                  class="like-btn"
-                  [class.liked]="selectedReview.isLiked"
-                  (click)="toggleReviewLike()"
-                  [title]="selectedReview.isLiked ? 'Cofnij polubienie' : 'Polub tę recenzję'"
-                >
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
-                  </svg>
-                  <span>{{ selectedReview.isLiked ? 'Polubiono' : 'Polub recenzję' }}</span>
-                  <span class="like-count">({{ selectedReview.likeCount || 0 }})</span>
-                </button>
-
-                <span *ngIf="!authService.isAuthenticated()" class="static-like-badge" title="Liczba polubień recenzji">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
-                  </svg>
-                  <span>Polubienia: {{ selectedReview.likeCount || 0 }}</span>
-                </span>
-
-                <!-- Read Status Mark (Reader/Reviewer/Admin) -->
-                <button
-                  *ngIf="authService.isAuthenticated()"
-                  type="button"
-                  class="read-mark-btn"
-                  [class.read]="isRead"
-                  (click)="toggleReadMark()"
-                  [title]="isRead ? 'Oznacz jako nieprzeczytaną' : 'Oznacz jako przeczytaną'"
-                >
-                  <span>{{ isRead ? 'Przeczytana' : 'Oznacz jako przeczytaną' }}</span>
-                </button>
               </div>
 
               <h2 class="review-title">{{ selectedReview.title }}</h2>
@@ -407,14 +382,6 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
               </svg>
               <span class="toc-title">Struktura recenzji</span>
             </div>
-            
-            <button type="button" class="sidebar-zen-btn" (click)="toggleZenMode()" title="Włącz tryb skupienia (Zen)">
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="9"></circle>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-              <span>Zen</span>
-            </button>
           </div>
 
           <nav class="toc-nav">
@@ -618,12 +585,6 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       padding: 0;
     }
 
-    /* Hide Likes Counter & Button in Zen Mode */
-    .game-page-layout.zen-active .like-btn,
-    .game-page-layout.zen-active .static-like-badge {
-      display: none !important;
-    }
-
     /* Subdued & Compact Header */
     .game-page-layout.zen-active .game-header {
       margin-bottom: 1.5rem;
@@ -686,10 +647,9 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       opacity: 0.7;
     }
 
-    .game-page-layout.zen-active .header-actions .action-icon-btn,
-    .game-page-layout.zen-active .static-favorite-badge {
-      padding: 0.3rem 0.65rem;
-      font-size: 0.75rem;
+    .game-page-layout.zen-active .header-actions .fav-btn {
+      width: 32px;
+      height: 32px;
       filter: grayscale(1);
       opacity: 0.75;
     }
@@ -735,8 +695,7 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
     }
 
     .game-page-layout.zen-active .status-badge,
-    .game-page-layout.zen-active .playtime-badge,
-    .game-page-layout.zen-active .read-mark-btn {
+    .game-page-layout.zen-active .playtime-badge {
       font-size: 0.72rem;
       padding: 0.2rem 0.5rem;
       filter: grayscale(1);
@@ -871,11 +830,11 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       flex-wrap: wrap;
     }
 
-    .action-icon-btn, .zen-btn {
+    .fav-btn, .zen-btn {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 0.45rem;
-      padding: 0.45rem 0.9rem;
       border-radius: 8px;
       font-size: 0.82rem;
       font-weight: 600;
@@ -887,34 +846,33 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       color: var(--text-secondary);
     }
 
-    .count-bubble {
-      font-size: 0.78rem;
-      font-weight: 700;
-      opacity: 0.9;
+    .fav-btn {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      flex-shrink: 0;
     }
 
-    .static-favorite-badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.45rem 0.8rem;
-      background: var(--bg-color);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: var(--text-muted);
+    .zen-btn {
+      padding: 0.45rem 0.9rem;
     }
 
-    .action-icon-btn:hover, .zen-btn:hover {
-      border-color: var(--accent-color);
-      color: var(--accent-color);
+    .fav-btn:hover {
+      border-color: #ef4444;
+      color: #ef4444;
       transform: translateY(-1px);
     }
 
-    .action-icon-btn.active {
+    .fav-btn.active {
       background: rgba(239, 68, 68, 0.12);
       border-color: #ef4444;
       color: #ef4444;
+    }
+
+    .zen-btn:hover {
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+      transform: translateY(-1px);
     }
 
     .zen-btn.active {
@@ -1178,77 +1136,6 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       font-size: 0.8rem;
       font-weight: 600;
       color: var(--text-secondary);
-    }
-
-    /* Like Button & Badges */
-    .like-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.45rem;
-      padding: 0.35rem 0.8rem;
-      background: var(--bg-color);
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text-secondary);
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .like-btn:hover {
-      border-color: var(--accent-color);
-      color: var(--accent-color);
-      transform: translateY(-1px);
-    }
-
-    .like-btn.liked {
-      background: rgba(255, 107, 44, 0.12);
-      border-color: var(--accent-color);
-      color: var(--accent-color);
-    }
-
-    .like-count {
-      font-weight: 700;
-    }
-
-    .static-like-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.35rem 0.75rem;
-      background: var(--bg-color);
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text-muted);
-    }
-
-    .read-mark-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.35rem 0.75rem;
-      background: var(--bg-color);
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .read-mark-btn:hover {
-      border-color: #10b981;
-      color: #10b981;
-    }
-
-    .read-mark-btn.read {
-      background: rgba(16, 185, 129, 0.12);
-      border-color: #10b981;
-      color: #10b981;
     }
 
     .review-title {
@@ -1705,26 +1592,6 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       letter-spacing: 0.5px;
     }
 
-    .sidebar-zen-btn {
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-      background: var(--bg-color);
-      border: 1px solid var(--border-color);
-      color: var(--text-secondary);
-      padding: 0.25rem 0.55rem;
-      border-radius: 6px;
-      font-size: 0.72rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .sidebar-zen-btn:hover {
-      border-color: var(--accent-color);
-      color: var(--accent-color);
-    }
-
     .toc-nav {
       position: relative;
     }
@@ -2111,8 +1978,16 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
         font-size: 0.68rem;
       }
 
-      .action-icon-btn, .zen-btn, .read-mark-btn, .like-btn, .static-favorite-badge, .static-like-badge {
+      .fav-btn, .zen-btn {
         font-size: 0.7rem;
+      }
+
+      .fav-btn {
+        width: 30px;
+        height: 30px;
+      }
+
+      .zen-btn {
         padding: 0.25rem 0.5rem;
         gap: 0.35rem;
       }
@@ -2302,7 +2177,6 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   selectedReview: Review | null = null;
   favoriteCount = 0;
   isFavorite = false;
-  isRead = false;
 
   // Comments
   comments: ReviewComment[] = [];
@@ -2390,7 +2264,6 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
         this.selectedReview = res.selectedReview;
         this.favoriteCount = res.favoriteCount || res.game.favoriteCount || 0;
         this.isFavorite = !!res.isFavorite;
-        this.isRead = !!res.isRead;
 
         if (this.game.soundtrackUrl) {
           this.processSoundtrackUrl(this.game.soundtrackUrl);
@@ -2445,19 +2318,6 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  toggleReviewLike(): void {
-    if (!this.selectedReview) return;
-    this.api.toggleReviewLike(this.selectedReview.id).subscribe({
-      next: (res) => {
-        if (this.selectedReview) {
-          this.selectedReview.isLiked = res.liked;
-          this.selectedReview.likeCount = res.likeCount;
-        }
-      },
-      error: (err) => console.error('Error toggling review like:', err)
-    });
-  }
-
   submitComment(): void {
     if (!this.selectedReview || !this.newCommentText.trim()) return;
 
@@ -2500,16 +2360,6 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       existing.text = `Komentarze (${this.comments.length})`;
       this.tocService.setItems([...this.tocItems]);
     }
-  }
-
-  toggleReadMark(): void {
-    if (!this.selectedReview) return;
-    this.api.toggleReadMark(this.selectedReview.id).subscribe({
-      next: (res) => {
-        this.isRead = res.isRead;
-      },
-      error: (err) => console.error('Error toggling read mark:', err)
-    });
   }
 
   toggleZenMode(): void {

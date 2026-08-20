@@ -43,7 +43,7 @@ import { AuthService } from '../../../core/services/auth.service';
               <label>Rola *</label>
               <select [(ngModel)]="newRole" name="newRole">
                 <option value="reviewer">Recenzent (może dodawać recenzje i gry)</option>
-                <option value="reader">Czytelnik (może zapisywać ulubione i oznaczać przeczytane)</option>
+                <option value="reader">Czytelnik (może zapisywać ulubione)</option>
                 <option value="admin">Administrator (pełne uprawnienia)</option>
               </select>
             </div>

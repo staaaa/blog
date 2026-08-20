@@ -13,7 +13,7 @@ import { AuthService } from '../../../core/services/auth.service';
       <div class="auth-card">
         <div class="auth-header">
           <h1>Rejestracja czytelnika</h1>
-          <p class="auth-subtitle">Zarejestruj konto, aby zapisywać ulubione gry i oznaczać przeczytane recenzje.</p>
+          <p class="auth-subtitle">Zarejestruj konto, aby zapisywać ulubione gry.</p>
         </div>
 
         <form (ngSubmit)="register()" class="auth-form">
