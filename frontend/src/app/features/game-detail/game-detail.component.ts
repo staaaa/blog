@@ -70,9 +70,10 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
                     [title]="isFavorite ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'"
                     aria-label="Dodaj do ulubionych"
                   >
-                    <svg viewBox="0 0 24 24" width="18" height="18" [attr.fill]="isFavorite ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" width="17" height="17" [attr.fill]="isFavorite ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
+                    <span class="fav-count" *ngIf="favoriteCount > 0">{{ favoriteCount }}</span>
                   </button>
 
                   <a
@@ -82,9 +83,10 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
                     title="Dodaj do ulubionych"
                     aria-label="Dodaj do ulubionych"
                   >
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
+                    <span class="fav-count" *ngIf="favoriteCount > 0">{{ favoriteCount }}</span>
                   </a>
 
                   <!-- Zen Mode Button -->
@@ -703,8 +705,9 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
     }
 
     .game-page-layout.zen-active .header-actions .fav-btn {
-      width: 32px;
+      min-width: 32px;
       height: 32px;
+      padding: 0 0.45rem;
       filter: grayscale(1);
       opacity: 0.75;
     }
@@ -896,10 +899,18 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
     }
 
     .fav-btn {
-      width: 36px;
+      min-width: 36px;
       height: 36px;
-      padding: 0;
+      padding: 0 0.55rem;
       flex-shrink: 0;
+      gap: 0.35rem;
+    }
+
+    .fav-count {
+      font-size: 0.8rem;
+      font-weight: 700;
+      line-height: 1;
+      font-family: var(--font-sans);
     }
 
     .zen-btn {
@@ -2185,8 +2196,14 @@ import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.c
       }
 
       .fav-btn {
-        width: 30px;
+        min-width: 30px;
         height: 30px;
+        padding: 0 0.4rem;
+        gap: 0.25rem;
+      }
+
+      .fav-count {
+        font-size: 0.7rem;
       }
 
       .zen-btn {
