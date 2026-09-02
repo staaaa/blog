@@ -13,8 +13,8 @@ import { TocService } from '../../../core/services/toc.service';
   template: `
     <nav class="navbar">
       <div class="navbar-brand">
-        <a routerLink="/" class="logo">
-          <span class="logo-text">Strona główna</span>
+        <a routerLink="/" class="logo" title="Giercujemy – Strona główna">
+          <span class="logo-text">Giercujemy</span>
         </a>
       </div>
 

@@ -12,8 +12,8 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
   template: `
     <div class="home-container">
       <header class="hero">
-        <h1 class="hero-title">Recenzje Gier</h1>
-        <p class="hero-subtitle">Rzetelne recenzje od dwójki kuzynów.</p>
+        <h1 class="hero-title">Giercujemy – Recenzje Gier</h1>
+        <p class="hero-subtitle">Rzetelne recenzje gier i opinie od dwójki kuzynów. Giercujemy z pasją i bez kompromisów!</p>
       </header>
 
       <div class="sort-bar">
@@ -56,6 +56,15 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
           Następna
         </button>
       </div>
+
+      <!-- SEO Section -->
+      <section class="about-seo-section">
+        <h2 class="about-seo-title">O blogu Giercujemy</h2>
+        <p class="about-seo-desc">
+          <strong>Giercujemy</strong> to niezależny blog i serwis z recenzjami gier wideo, tworzony przez graczy dla graczy.
+          Oceniamy nowości, perełki sceny indie oraz legendarne klasyki. Sprawdź nasze szczere recenzje gier, analizy i rankingi – giercujemy we wszystko, co warte uwagi!
+        </p>
+      </section>
     </div>
   `,
   styles: [
@@ -193,6 +202,34 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
         font-weight: 600;
       }
 
+      .about-seo-section {
+        margin-top: 4rem;
+        padding: 2.25rem 2rem;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        text-align: center;
+      }
+
+      .about-seo-title {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: var(--text-color);
+        margin: 0 0 0.75rem;
+      }
+
+      .about-seo-desc {
+        font-size: 0.95rem;
+        color: var(--text-muted);
+        max-width: 760px;
+        margin: 0 auto;
+        line-height: 1.65;
+      }
+
+      .about-seo-desc strong {
+        color: var(--accent-color);
+      }
+
       @media (max-width: 768px) {
         .home-container {
           padding: 1.5rem 1rem;
@@ -203,6 +240,10 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
         .games-grid {
           grid-template-columns: 1fr;
           gap: 1.5rem;
+        }
+        .about-seo-section {
+          padding: 1.5rem 1rem;
+          margin-top: 2.5rem;
         }
       }
     `,
@@ -219,10 +260,10 @@ export class HomeComponent implements OnInit {
   pagination = { page: 1, totalPages: 1, total: 0, limit: 9 };
 
   ngOnInit(): void {
-    this.titleService.setTitle('Giercujemy – Recenzje Gier');
-    this.meta.updateTag({ name: 'description', content: 'Recenzje gier na Giercujemy. Sprawdź nasze oceny i opinie.' });
-    this.meta.updateTag({ property: 'og:title', content: 'Giercujemy – Recenzje Gier' });
-    this.meta.updateTag({ property: 'og:description', content: 'Recenzje gier na Giercujemy. Sprawdź nasze oceny i opinie.' });
+    this.titleService.setTitle('Giercujemy – Niezależne Recenzje Gier i Blog o Grach');
+    this.meta.updateTag({ name: 'description', content: 'Giercujemy – rzetelne recenzje gier wideo, oceny, analizy i opinie graczy. Sprawdź, w co warto zagrać razem z nami!' });
+    this.meta.updateTag({ property: 'og:title', content: 'Giercujemy – Niezależne Recenzje Gier i Blog o Grach' });
+    this.meta.updateTag({ property: 'og:description', content: 'Giercujemy – rzetelne recenzje gier wideo, oceny, analizy i opinie graczy. Sprawdź, w co warto zagrać razem z nami!' });
     this.meta.updateTag({ property: 'og:url', content: 'https://giercujemy-staa.duckdns.org/' });
     this.meta.updateTag({ property: 'og:type', content: 'website' });
     this.loadGames(1);
