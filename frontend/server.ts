@@ -23,6 +23,9 @@ app.use(
       if (path.endsWith('.mjs')) {
         res.setHeader('Content-Type', 'text/javascript');
       }
+      if (path.endsWith('.geojson')) {
+        res.setHeader('Content-Type', 'application/json');
+      }
     },
   }),
 );

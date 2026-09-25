@@ -1948,7 +1948,19 @@ export class HistoryComponent implements OnInit, AfterViewInit, OnDestroy {
       this.mapLibreModule = maplibre;
 
       if (typeof (maplibre as any).setWorkerUrl === 'function') {
-        (maplibre as any).setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
+        try {
+          const res = await fetch('/maplibre/maplibre-gl-worker.bundle.js');
+          if (res.ok) {
+            const scriptText = await res.text();
+            const workerBlob = new Blob([scriptText], { type: 'text/javascript' });
+            const workerBlobUrl = URL.createObjectURL(workerBlob);
+            (maplibre as any).setWorkerUrl(workerBlobUrl);
+          } else {
+            (maplibre as any).setWorkerUrl('/maplibre/maplibre-gl-worker.bundle.js');
+          }
+        } catch {
+          (maplibre as any).setWorkerUrl('/maplibre/maplibre-gl-worker.bundle.js');
+        }
       }
 
       const styleSpec: any = {
