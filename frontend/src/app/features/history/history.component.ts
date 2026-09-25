@@ -15,6 +15,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Title, Meta } from '@angular/platform-browser';
 import type { Map as MapLibreMap, GeoJSONSource } from 'maplibre-gl';
+import { HistoricalEvent, findHistoricalEvent } from './history-events.data';
 
 export type MapMode = 'political' | 'religious' | 'diplomatic' | 'terrain';
 
@@ -60,7 +61,7 @@ export interface CountryProperties {
             Atlas Historyczny
           </div>
           <div class="era-title-group">
-            <h1 class="hud-year">{{ getFormattedYear(currentEra?.year) }}</h1>
+            <h1 class="hud-year">{{ getFormattedYear(selectedYear) }}</h1>
             <span class="hud-epoch">{{ currentEra?.epoch }}</span>
           </div>
         </div>
@@ -434,17 +435,15 @@ export interface CountryProperties {
 
       <!-- BOTTOM TIMELINE SCRUBBER -->
       <footer class="history-timeline">
-        <div class="timeline-controls">
-          <button
-            type="button"
-            class="control-btn"
-            (click)="prevEra()"
-            [disabled]="currentEraIndex === 0"
-            title="Poprzednia epoka (Strzałka w lewo)"
-          >
-            ◀
-          </button>
+        <div class="timeline-controls-bar">
+          <!-- Step back group -->
+          <div class="step-btn-group">
+            <button type="button" class="step-btn" (click)="stepYears(-100)" title="-100 lat">-100</button>
+            <button type="button" class="step-btn" (click)="stepYears(-10)" title="-10 lat">-10</button>
+            <button type="button" class="step-btn" (click)="stepYears(-1)" title="-1 rok">-1</button>
+          </div>
 
+          <!-- Play button -->
           <button
             type="button"
             class="play-btn"
@@ -455,47 +454,82 @@ export interface CountryProperties {
             {{ isPlaying ? '❚❚ Pauza' : '▶ Odtwarzaj' }}
           </button>
 
-          <button
-            type="button"
-            class="control-btn"
-            (click)="nextEra()"
-            [disabled]="currentEraIndex === eras.length - 1"
-            title="Następna epoka (Strzałka w prawo)"
-          >
-            ▶
-          </button>
+          <!-- Step forward group -->
+          <div class="step-btn-group">
+            <button type="button" class="step-btn" (click)="stepYears(1)" title="+1 rok">+1</button>
+            <button type="button" class="step-btn" (click)="stepYears(10)" title="+10 lat">+10</button>
+            <button type="button" class="step-btn" (click)="stepYears(100)" title="+100 lat">+100</button>
+          </div>
+
+          <!-- Direct Year Input Field -->
+          <div class="direct-year-box" title="Wpisz dowolny rok i zatwierdź Enterem">
+            <span class="input-label">Rok:</span>
+            <input
+              type="number"
+              class="direct-year-input"
+              [(ngModel)]="directYearInput"
+              (keydown.enter)="onDirectYearSubmit(directYearInput)"
+              (blur)="onDirectYearSubmit(directYearInput)"
+              min="-1000"
+              max="2024"
+            />
+            <button
+              type="button"
+              class="direct-year-go"
+              (click)="onDirectYearSubmit(directYearInput)"
+              title="Przejdź do wpisanego roku"
+            >
+              ➔
+            </button>
+          </div>
         </div>
 
         <!-- RANGE SLIDER -->
         <div class="slider-wrapper">
           <input
             type="range"
-            min="0"
-            [max]="eras.length - 1"
+            [min]="minYear"
+            [max]="maxYear"
             step="1"
-            [ngModel]="currentEraIndex"
-            (ngModelChange)="onSliderChange($event)"
+            [ngModel]="selectedYear"
+            (input)="onYearSliderInput($any($event.target).value)"
+            (change)="onYearSliderChange($any($event.target).value)"
             class="timeline-slider"
           />
 
-          <!-- ERA MILESTONE CHIPS -->
+          <!-- KEY LANDMARK CHIPS -->
           <div class="milestones-track">
             <button
               type="button"
-              *ngFor="let era of eras; let i = index"
+              *ngFor="let year of landmarkYears"
               class="milestone-chip"
-              [class.active]="i === currentEraIndex"
-              (click)="jumpToEra(i)"
-              [title]="era.title"
+              [class.active]="selectedYear === year || currentEra?.year === year"
+              (click)="jumpToExactYear(year)"
             >
-              <span class="milestone-year">{{ formatChipYear(era.year) }}</span>
+              <span class="milestone-year">{{ formatChipYear(year) }}</span>
             </button>
+          </div>
+        </div>
+
+        <!-- HISTORICAL EVENT CARD (When matched for current year) -->
+        <div class="timeline-event-card" *ngIf="matchedEvent">
+          <div class="event-icon-badge">{{ matchedEvent.icon }}</div>
+          <div class="event-content">
+            <div class="event-meta">
+              <span class="event-scope-badge" [class.polska]="matchedEvent.scope === 'polska'">
+                {{ matchedEvent.scope === 'polska' ? '🇵🇱 POLSKA' : '🌍 ŚWIAT' }}
+              </span>
+              <span class="event-year-pill">{{ getFormattedYear(matchedEvent.year) }}</span>
+            </div>
+            <strong class="event-title">{{ matchedEvent.title }}</strong>
+            <p class="event-desc">{{ matchedEvent.desc }}</p>
           </div>
         </div>
 
         <!-- ERA SYNOPSIS TOGGLE -->
         <div class="timeline-synopsis" *ngIf="currentEra">
           <p class="synopsis-text">
+            <span class="epoch-tag">{{ currentEra.epoch }}</span>
             <strong>{{ currentEra.title }}:</strong> {{ currentEra.desc }}
           </p>
         </div>
@@ -1402,43 +1436,98 @@ export interface CountryProperties {
       background: rgba(18, 22, 31, 0.97);
       backdrop-filter: blur(14px);
       border-top: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 0.75rem 1.5rem 1rem;
+      padding: 0.65rem 1.5rem 0.85rem;
       display: flex;
       flex-direction: column;
-      gap: 0.6rem;
+      gap: 0.5rem;
       z-index: 50;
     }
 
-    .timeline-controls {
+    .timeline-controls-bar {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 0.75rem;
+      flex-wrap: wrap;
     }
 
-    .control-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #e6edf3;
+    .step-btn-group {
+      display: inline-flex;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      padding: 2px;
+      gap: 2px;
+    }
+
+    .step-btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #8b949e;
+      background: transparent;
+      border: none;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.8rem;
+      border-radius: 4px;
       transition: all 0.15s ease;
     }
 
-    .control-btn:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.15);
+    .step-btn:hover {
       color: #ffffff;
+      background: rgba(255, 255, 255, 0.12);
     }
 
-    .control-btn:disabled {
-      opacity: 0.3;
-      cursor: not-allowed;
+    .direct-year-box {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 6px;
+      padding: 0.15rem 0.4rem;
+      gap: 0.35rem;
+    }
+
+    .input-label {
+      font-size: 0.75rem;
+      color: #8b949e;
+      font-weight: 600;
+    }
+
+    .direct-year-input {
+      width: 70px;
+      background: transparent;
+      border: none;
+      color: #ff9124;
+      font-weight: 800;
+      font-size: 0.95rem;
+      text-align: center;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .direct-year-input::-webkit-inner-spin-button,
+    .direct-year-input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .direct-year-go {
+      background: #ff7a00;
+      color: #ffffff;
+      border: none;
+      border-radius: 4px;
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: background 0.15s ease;
+    }
+
+    .direct-year-go:hover {
+      background: #e06c00;
     }
 
     .play-btn {
@@ -1470,7 +1559,7 @@ export interface CountryProperties {
     .slider-wrapper {
       display: flex;
       flex-direction: column;
-      gap: 0.4rem;
+      gap: 0.35rem;
       max-width: 1200px;
       margin: 0 auto;
       width: 100%;
@@ -1509,7 +1598,7 @@ export interface CountryProperties {
       display: flex;
       justify-content: space-between;
       overflow-x: auto;
-      padding-bottom: 0.2rem;
+      padding-bottom: 0.15rem;
       gap: 0.25rem;
     }
 
@@ -1537,22 +1626,109 @@ export interface CountryProperties {
       background: rgba(255, 122, 0, 0.15);
     }
 
+    /* HISTORICAL EVENT CARD */
+    .timeline-event-card {
+      background: linear-gradient(135deg, rgba(255, 122, 0, 0.12) 0%, rgba(20, 24, 33, 0.95) 100%);
+      border: 1px solid rgba(255, 122, 0, 0.35);
+      border-radius: 8px;
+      padding: 0.4rem 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      max-width: 900px;
+      margin: 0 auto;
+      width: 100%;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      animation: fadeIn 0.25s ease;
+    }
+
+    .event-icon-badge {
+      font-size: 1.4rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .event-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      text-align: left;
+      min-width: 0;
+    }
+
+    .event-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .event-scope-badge {
+      font-size: 0.62rem;
+      font-weight: 800;
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+      background: rgba(52, 152, 219, 0.25);
+      color: #3498db;
+    }
+
+    .event-scope-badge.polska {
+      background: rgba(220, 75, 100, 0.25);
+      color: #dc4b64;
+      border: 1px solid rgba(220, 75, 100, 0.4);
+    }
+
+    .event-year-pill {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #ff9124;
+    }
+
+    .event-title {
+      font-size: 0.85rem;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .event-desc {
+      font-size: 0.75rem;
+      color: #c9d1d9;
+      margin: 0;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .timeline-synopsis {
       text-align: center;
       max-width: 900px;
       margin: 0 auto;
-      padding-top: 0.25rem;
+      padding-top: 0.1rem;
     }
 
     .synopsis-text {
-      font-size: 0.8rem;
-      color: #c9d1d9;
-      line-height: 1.4;
+      font-size: 0.78rem;
+      color: #8b949e;
+      line-height: 1.35;
       margin: 0;
     }
 
     .synopsis-text strong {
-      color: #ffffff;
+      color: #e6edf3;
+    }
+
+    .epoch-tag {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.05rem 0.35rem;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #ff9124;
+      margin-right: 0.35rem;
     }
 
     @media (max-width: 900px) {
@@ -1587,8 +1763,20 @@ export class HistoryComponent implements OnInit, AfterViewInit, OnDestroy {
   mapLibreModule: any = null;
 
   eras: EraItem[] = [];
-  currentEraIndex = 6; // Default to 1492 (Discovery of America / EU4 era)
+  currentEraIndex = 24; // Default to 1492
   currentEra: EraItem | null = null;
+
+  // Continuous Year Navigation & Events
+  selectedYear = 1492;
+  minYear = -1000;
+  maxYear = 2024;
+  directYearInput = 1492;
+  matchedEvent: HistoricalEvent | null = null;
+  private eraDebounceTimer: any = null;
+
+  landmarkYears: number[] = [
+    -1000, -700, -500, -323, -1, 500, 800, 1000, 1279, 1410, 1492, 1525, 1569, 1600, 1683, 1791, 1815, 1918, 1939, 1989, 2010
+  ];
 
   activeMode: MapMode = 'political';
   isLoading = false;
@@ -1718,9 +1906,15 @@ export class HistoryComponent implements OnInit, AfterViewInit, OnDestroy {
       event.preventDefault();
       this.togglePlay();
     } else if (key === 'arrowleft') {
-      this.prevEra();
+      event.preventDefault();
+      this.stepYears(event.shiftKey ? -50 : -10);
     } else if (key === 'arrowright') {
-      this.nextEra();
+      event.preventDefault();
+      this.stepYears(event.shiftKey ? 50 : 10);
+    } else if (key === '[' || key === '{') {
+      this.stepYears(-1);
+    } else if (key === ']' || key === '}') {
+      this.stepYears(1);
     } else if (key === 'escape') {
       this.selectedCountry = null;
       this.hoveredCountry = null;
@@ -1734,12 +1928,10 @@ export class HistoryComponent implements OnInit, AfterViewInit, OnDestroy {
     this.http.get<EraItem[]>('/data/history/index.json').subscribe({
       next: data => {
         this.eras = data;
-        // Default to year 1492 if available
-        const idx1492 = this.eras.findIndex(e => e.year === 1492);
-        if (idx1492 !== -1) {
-          this.currentEraIndex = idx1492;
-        }
-        this.currentEra = this.eras[this.currentEraIndex];
+        const matchedEra = this.findEraForYear(this.selectedYear);
+        this.currentEra = matchedEra;
+        this.currentEraIndex = this.eras.indexOf(matchedEra);
+        this.matchedEvent = findHistoricalEvent(this.selectedYear);
         if (this.map && this.map.isStyleLoaded()) {
           this.loadEraData(this.currentEra);
         }
@@ -1754,6 +1946,10 @@ export class HistoryComponent implements OnInit, AfterViewInit, OnDestroy {
     try {
       const maplibre = await import('maplibre-gl');
       this.mapLibreModule = maplibre;
+
+      if (typeof (maplibre as any).setWorkerUrl === 'function') {
+        (maplibre as any).setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
+      }
 
       const styleSpec: any = {
         version: 8,
@@ -2071,42 +2267,88 @@ export class HistoryComponent implements OnInit, AfterViewInit, OnDestroy {
     return 'Neutralne';
   }
 
-  // Timeline Navigation
-  onSliderChange(index: number): void {
-    if (index >= 0 && index < this.eras.length) {
-      this.currentEraIndex = index;
-      this.currentEra = this.eras[this.currentEraIndex];
-      this.loadEraData(this.currentEra);
+  // Continuous Timeline Navigation
+  findEraForYear(year: number): EraItem {
+    if (!this.eras || this.eras.length === 0) return this.currentEra || ({} as EraItem);
+    let matched = this.eras[0];
+    for (const era of this.eras) {
+      if (era.year <= year) {
+        matched = era;
+      } else {
+        break;
+      }
+    }
+    return matched;
+  }
+
+  onYearSliderInput(val: string | number): void {
+    const year = Number(val);
+    this.selectedYear = year;
+    this.directYearInput = year;
+    this.matchedEvent = findHistoricalEvent(year);
+
+    const matchedEra = this.findEraForYear(year);
+    if (!this.currentEra || this.currentEra.year !== matchedEra.year) {
+      this.currentEra = matchedEra;
+      this.currentEraIndex = this.eras.indexOf(matchedEra);
+
+      if (this.eraDebounceTimer) {
+        clearTimeout(this.eraDebounceTimer);
+      }
+      this.eraDebounceTimer = setTimeout(() => {
+        this.loadEraData(matchedEra);
+      }, 90);
     }
   }
 
-  jumpToEra(index: number): void {
-    this.onSliderChange(index);
+  onYearSliderChange(val: string | number): void {
+    if (this.eraDebounceTimer) {
+      clearTimeout(this.eraDebounceTimer);
+      this.eraDebounceTimer = null;
+    }
+    const year = Number(val);
+    this.selectedYear = year;
+    this.directYearInput = year;
+    this.matchedEvent = findHistoricalEvent(year);
+    const matchedEra = this.findEraForYear(year);
+    this.currentEra = matchedEra;
+    this.currentEraIndex = this.eras.indexOf(matchedEra);
+    this.loadEraData(matchedEra);
   }
 
-  prevEra(): void {
-    if (this.currentEraIndex > 0) {
-      this.onSliderChange(this.currentEraIndex - 1);
-    }
+  onDirectYearSubmit(val: string | number): void {
+    let year = parseInt(String(val), 10);
+    if (isNaN(year)) return;
+    year = Math.max(this.minYear, Math.min(this.maxYear, year));
+    this.selectedYear = year;
+    this.directYearInput = year;
+    this.matchedEvent = findHistoricalEvent(year);
+    const matchedEra = this.findEraForYear(year);
+    this.currentEra = matchedEra;
+    this.currentEraIndex = this.eras.indexOf(matchedEra);
+    this.loadEraData(matchedEra);
   }
 
-  nextEra(): void {
-    if (this.currentEraIndex < this.eras.length - 1) {
-      this.onSliderChange(this.currentEraIndex + 1);
-    }
+  stepYears(delta: number): void {
+    this.onDirectYearSubmit(this.selectedYear + delta);
+  }
+
+  jumpToExactYear(year: number): void {
+    this.onDirectYearSubmit(year);
   }
 
   togglePlay(): void {
     this.isPlaying = !this.isPlaying;
     if (this.isPlaying) {
       this.playTimer = setInterval(() => {
-        if (this.currentEraIndex < this.eras.length - 1) {
-          this.nextEra();
+        if (this.selectedYear < this.maxYear) {
+          const delta = this.selectedYear < 1000 ? 25 : (this.selectedYear < 1800 ? 10 : 5);
+          const nextYear = Math.min(this.maxYear, this.selectedYear + delta);
+          this.onDirectYearSubmit(nextYear);
         } else {
-          this.currentEraIndex = 0;
-          this.onSliderChange(0);
+          this.onDirectYearSubmit(this.minYear);
         }
-      }, 3000);
+      }, 650);
     } else {
       if (this.playTimer) {
         clearInterval(this.playTimer);

@@ -19,6 +19,11 @@ app.use(
     maxAge: '1y',
     index: false,
     redirect: false,
+    setHeaders: (res, path) => {
+      if (path.endsWith('.mjs')) {
+        res.setHeader('Content-Type', 'text/javascript');
+      }
+    },
   }),
 );
 

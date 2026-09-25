@@ -1,10 +1,59 @@
 [
   {
+    "year": -1000,
+    "filename": "world_bc1000.geojson",
+    "title": "1000 p.n.e. – Epoka Żelaza & Królestwo Dawida",
+    "epoch": "Starożytność",
+    "desc": "Rozkwit zjednoczonego królestwa Izraela (Dawid i Salomon), fenicka ekspansja handlowa w basenie Morza Śródziemnego, Nowe Państwo w Egipcie, dynastia Zhou w Chinach."
+  },
+  {
+    "year": -700,
+    "filename": "world_bc700.geojson",
+    "title": "700 p.n.e. – Imperium Asyryjskie & Narodziny Rzymu",
+    "epoch": "Starożytność",
+    "desc": "Imperium Nowoasyryjskie dominuje na Bliskim Wschodzie (Sennacheryb). W Italii początki Rzymu (753 p.n.e.), w Grecji powstają pierwsze polis i poematy Homera."
+  },
+  {
     "year": -500,
     "filename": "world_bc500.geojson",
-    "title": "500 p.n.e. – Starożytność klasyczna",
+    "title": "500 p.n.e. – Starożytność Klasyczna & Persja",
     "epoch": "Starożytność",
     "desc": "Złoty wiek Aten, powstanie Republiki Rzymskiej, Imperium Achemenidów (Persja) panuje od Egiptu po Indus, w Chinach epoka Stu Szkół Myśli (Konfucjusz)."
+  },
+  {
+    "year": -400,
+    "filename": "world_bc400.geojson",
+    "title": "400 p.n.e. – Wojna Peloponeska & Złoty Wiek Grecji",
+    "epoch": "Starożytność",
+    "desc": "Koniec wojny peloponeskiej między Atenami i Spartą. Sokrates i Platon kładą podwaliny zachodniej filozofii. W Chinach trwa epoka Walczących Królestw."
+  },
+  {
+    "year": -323,
+    "filename": "world_bc323.geojson",
+    "title": "323 p.n.e. – Śmierć Aleksandra Wielkiego & Hellenizm",
+    "epoch": "Starożytność",
+    "desc": "Aleksander Macedoński podbija Persję i dociera do Indii. Po jego śmierci imperium dzielą diadochowie (Ptolemeusze w Egipcie, Seleucydzi w Azji)."
+  },
+  {
+    "year": -300,
+    "filename": "world_bc300.geojson",
+    "title": "300 p.n.e. – Imperium Maurjów & Wzrost Rzymu",
+    "epoch": "Starożytność",
+    "desc": "Cesarz Aśoka i imperium Maurjów w Indiach, Republika Rzymska podbija Półwysep Apeniński (wojny samnickie), wielka Biblioteka Aleksandryjska."
+  },
+  {
+    "year": -200,
+    "filename": "world_bc200.geojson",
+    "title": "200 p.n.e. – Wojny Punickie & Zjednoczenie Chin",
+    "epoch": "Starożytność",
+    "desc": "Rzym pokonuje Kartaginę Hannibala w II wojnie punickiej (Scypion Afrykański). W Chinach dynastia Han utrwala zjednoczone imperium po upadku Qin."
+  },
+  {
+    "year": -100,
+    "filename": "world_bc100.geojson",
+    "title": "100 p.n.e. – Schyłek Republiki Rzymskiej & Cezar",
+    "epoch": "Starożytność",
+    "desc": "Narodziny Juliusza Cezara, reformy wojskowe Mariusza, kryzys republiki rzymskiej. Rozkwit Jedwabnego Szlaku łączącego Chiny dynastii Han z Europą."
   },
   {
     "year": -1,
@@ -14,11 +63,67 @@
     "desc": "Oktawian August włada Cesarstwem Rzymskim otaczającym Morze Śródziemne. Na Wschodzie chińska Dynastia Han przeżywa szczyt potęgi Jedwabnego Szlaku."
   },
   {
+    "year": 100,
+    "filename": "world_100.geojson",
+    "title": "100 n.e. – Szczyt Cesarstwa Rzymskiego (Trajan)",
+    "epoch": "Starożytność",
+    "desc": "Cesarstwo Rzymskie osiąga maksymalny zasięg terytorialny pod rządami Trajana (podbój Dacji, Mezopotamii, limes germański). Apogeum pokoju rzymskiego."
+  },
+  {
+    "year": 200,
+    "filename": "world_200.geojson",
+    "title": "200 n.e. – Dynastia Sewerów & Trzy Królestwa",
+    "epoch": "Starożytność",
+    "desc": "Septymiusz Sewer rządzi Rzymem. W Chinach upadek dynastii Han po powstaniu Żółtych Turbanów i początek legendarnej epoki Trzech Królestw (Wei, Shu, Wu)."
+  },
+  {
+    "year": 300,
+    "filename": "world_300.geojson",
+    "title": "300 n.e. – Tetrarchia Dioklecjana",
+    "epoch": "Późna Starożytność",
+    "desc": "Dioklecjan stabilizuje imperium wprowadzając tetrarchię. Wkrótce Konstantyn Wielki legalizuje chrześcijaństwo (Edykt Mediolański 313)."
+  },
+  {
+    "year": 400,
+    "filename": "world_400.geojson",
+    "title": "400 n.e. – Wędrówka Ludów & Podział Cesarstwa",
+    "epoch": "Późna Starożytność",
+    "desc": "Ostateczny podział imperium na Cesarstwo Zachodnie i Wschodnie (395). Masowe migracje Gotów, Wandalów i Hunów pod wodzą Attyli wstrząsają Europą."
+  },
+  {
     "year": 500,
     "filename": "world_500.geojson",
     "title": "500 n.e. – Upadek Zachodniego Rzymu",
     "epoch": "Wczesne Średniowiecze",
-    "desc": "Po upadku Cesarstwa Zachodniorzymskiego rodzą się królestwa barbarzyńskie (Ostrogoci, Wizygoci, Frankowie). Konstantynopol (Bizancjum) trwa jako potęga."
+    "desc": "Po upadku Cesarstwa Zachodniorzymskiego rodzą się królestwa barbarzyńskie (Ostrogoci, Wizygoci, Frankowie Chlodwiga). Konstantynopol (Bizancjum) trwa jako potęga."
+  },
+  {
+    "year": 600,
+    "filename": "world_600.geojson",
+    "title": "600 n.e. – Przeddzień Islamu & Bizancjum Herakliusza",
+    "epoch": "Wczesne Średniowiecze",
+    "desc": "Wyczerpująca wojna między Bizancjum a perskim imperium Sasanidów. Słowianie zasiedlają Europę Środkową i Bałkany. W Mekce działa prorok Mahomet."
+  },
+  {
+    "year": 700,
+    "filename": "world_700.geojson",
+    "title": "700 n.e. – Kalifat Umajjadów & Podbój Hiszpanii",
+    "epoch": "Wczesne Średniowiecze",
+    "desc": "Gwałtowna ekspansja muzułmańska: Umajjadzi podbijają Afrykę Północną i Półwysep Iberyjski (Al-Andalus). W Chinach złoty wiek dynastii Tang."
+  },
+  {
+    "year": 800,
+    "filename": "world_800.geojson",
+    "title": "800 n.e. – Koronacja Karola Wielkiego",
+    "epoch": "Średniowiecze",
+    "desc": "Karol Wielki koronowany w Rzymie na cesarza odnowionego Cesarstwa Zachodniego. W Bagdadzie złoty wiek Haruna ar-Raszida, początki Rusi Kijowskiej."
+  },
+  {
+    "year": 900,
+    "filename": "world_900.geojson",
+    "title": "900 n.e. – Najazdy Wikingów & Państwo Polan",
+    "epoch": "Średniowiecze",
+    "desc": "Ekspansja wikingów w Anglii, Francji i na Rusi. Upadek Państwa Wielkomorawskiego. Plemiona Polan jednoczą ziemie nad Wartą pod wodzą pierwszych Piastów."
   },
   {
     "year": 1000,
@@ -28,18 +133,39 @@
     "desc": "Zjazd Gnieźnieński – Polska Bolesława Chrobrego rośnie w siłę. Cesarstwo Ottonów w Europie, kalifaty muzułmańskie, rozkwit Rusi Kijowskiej i Songów w Chinach."
   },
   {
+    "year": 1100,
+    "filename": "world_1100.geojson",
+    "title": "1100 n.e. – I Wyprawa Krzyżowa",
+    "epoch": "Średniowiecze",
+    "desc": "Rycerstwo europejskie zdobywa Jerozolimę (1099) i zakłada państwa krzyżowe na Bliskim Wschodzie. W Polsce panuje Władysław Herman i Bolesław Krzywousty."
+  },
+  {
+    "year": 1200,
+    "filename": "world_1200.geojson",
+    "title": "1200 n.e. – Przeddzień Inwazji Mongołów & IV Krucjata",
+    "epoch": "Średniowiecze",
+    "desc": "Czwarta krucjata zdobywa i łupi Konstantynopol. Czyngis-chan jednoczy plemiona Wielkiego Stepu. Polska w okresie rozbicia dzielnicowego."
+  },
+  {
     "year": 1279,
     "filename": "world_1279.geojson",
-    "title": "1279 n.e. – Imperium Mongolskie",
+    "title": "1279 n.e. – Imperium Mongolskie & Yuan",
     "epoch": "Pełne Średniowiecze",
-    "desc": "Koblaj-chan zakłada dynastię Yuan. Pax Mongolica łączy Azję i Europę Wschodnią. Polska w rozbiciu dzielnicowym odpiera najazdy tatarskie."
+    "desc": "Kubłaj-chan zakłada dynastię Yuan po podboju Songów. Pax Mongolica łączy Azję i Europę Wschodnią. Polska w rozbiciu dzielnicowym odbudowuje się po najazdach."
+  },
+  {
+    "year": 1300,
+    "filename": "world_1300.geojson",
+    "title": "1300 n.e. – Zjednoczenie Polski & Łokietek",
+    "epoch": "Późne Średniowiecze",
+    "desc": "Władysław Łokietek jednoczy rozdarte dzielnice Polski. Niewola awiniońska papieży, Osman I zakłada Imperium Osmańskie w Anatolii."
   },
   {
     "year": 1400,
     "filename": "world_1400.geojson",
     "title": "1400 n.e. – Unia Polsko-Litewska & Przeddzień Grunwaldu",
     "epoch": "Późne Średniowiecze",
-    "desc": "Panowanie Władysława Jagiełły i Jadwigi. Konfrontacja z Zakonem Krzyżackim, Imperium Osmańskie rośnie na Bałkanach, upadek Bizancjum wisi w powietrzu."
+    "desc": "Panowanie Władysława Jagiełły i Jadwigi. Konfrontacja z Zakonem Krzyżackim, Imperium Osmańskie rośnie na Bałkanach, podboje Tamerlana w Azji."
   },
   {
     "year": 1492,
@@ -49,11 +175,18 @@
     "desc": "Krzysztof Kolumb dociera do Nowego Świata. Koniec Rekonkwisty w Hiszpanii. Rzeczpospolita Jagiellonów staje się mocarstwem Europy Środkowo-Wschodniej."
   },
   {
+    "year": 1500,
+    "filename": "world_1500.geojson",
+    "title": "1500 n.e. – Początek Nowożytności & Wielkie Odkrycia",
+    "epoch": "Nowożytność",
+    "desc": "Wyprawy Vasco da Gamy do Indii i Cabrala do Brazylii. Wojny włoskie, rozkwit dojrzałego renesansu (Leonardo da Vinci, Michał Anioł). Jagiellonowie na 3 tronach."
+  },
+  {
     "year": 1530,
     "filename": "world_1530.geojson",
     "title": "1530 n.e. – Reformacja & Sulejman Wspaniały",
     "epoch": "Nowożytność",
-    "desc": "Rozłam w Kościele zachodnim (Luter), Karol V rządzi imperium, w którym słońce nie zachodzi. Złoty wiek Zygmunta I Starego w Polsce. Osmanowie pod Wiedniem (1529)."
+    "desc": "Rozłam w Kościele zachodnim (Luter), Karol V rządzi imperium Habsburgów, Złoty wiek Zygmunta I Starego w Polsce (hołd pruski 1525). Osmanowie pod Wiedniem (1529)."
   },
   {
     "year": 1600,
@@ -65,16 +198,23 @@
   {
     "year": 1650,
     "filename": "world_1650.geojson",
-    "title": "1650 n.e. – Pokój Westfalski & Czas Wojen",
+    "title": "1650 n.e. – Pokój Westfalski & Powstanie Chmielnickiego",
     "epoch": "Nowożytność",
-    "desc": "Koniec Wojny Trzydziestoletniej, powstanie Chmielnickiego na Ukrainie, w przededniu szwedzkiego Potopu. Rozkwit monarchii absolutnej we Francji."
+    "desc": "Koniec Wojny Trzydziestoletniej, wybuch powstania Chmielnickiego na Ukrainie, w przededniu szwedzkiego Potopu. Rozkwit monarchii absolutnej we Francji."
   },
   {
     "year": 1700,
     "filename": "world_1700.geojson",
     "title": "1700 n.e. – Wielka Wojna Północna",
     "epoch": "Oświecenie",
-    "desc": "Piotr I Wielki buduje potęgę Rosji, wojna ze Szwecją Karola XII. Wojna o sukcesję hiszpańską wstrząsa Europą Zachodnią. Słabnąca Rzeczpospolita saska."
+    "desc": "Piotr I Wielki buduje potęgę Rosji, starcie ze Szwecją Karola XII. Wojna o sukcesję hiszpańską w Europie Zachodniej. Kryzys Rzeczypospolitej czasów saskich."
+  },
+  {
+    "year": 1715,
+    "filename": "world_1715.geojson",
+    "title": "1715 n.e. – Schyłek Króla Słońce & Pokój w Utrechcie",
+    "epoch": "Oświecenie",
+    "desc": "Śmierć Ludwika XIV we Francji. Traktat w Utrechcie umacnia Wielką Brytanię. Wzrost militaryzmu Prus pod Fryderykiem Wilhelmem I. Sejm Niemy w Polsce (1717)."
   },
   {
     "year": 1783,
@@ -84,6 +224,13 @@
     "desc": "Traktat paryski uznaje niepodległość Stanów Zjednoczonych. Polska po I rozbiorze (1772) dąży do reform, które zakończą się Konstytucją 3 Maja."
   },
   {
+    "year": 1800,
+    "filename": "world_1800.geojson",
+    "title": "1800 n.e. – Epoka Napoleońska",
+    "epoch": "Wiek XIX",
+    "desc": "Napoleon Bonaparte pierwszym konsulem po zamachu stanu. Zwycięstwo pod Marengo, Legiony Polskie we Włoszech generała Dąbrowskiego, upadek I Rzeczypospolitej."
+  },
+  {
     "year": 1815,
     "filename": "world_1815.geojson",
     "title": "1815 n.e. – Kongres Wiedeński & Upadek Napoleona",
@@ -91,11 +238,25 @@
     "desc": "Bitwa pod Waterloo i upadek cesarstwa Napoleona. Święte Przymierze ustala ład w Europie, powstaje zależne od Rosji Królestwo Polskie (Kongresowe)."
   },
   {
+    "year": 1878,
+    "filename": "world_1878.geojson",
+    "title": "1878 n.e. – Kongres Berliński & Wyzwolenie Bałkanów",
+    "epoch": "Wiek XIX",
+    "desc": "Bismarck gospodarzem kongresu po wojnie rosyjsko-tureckiej. Niepodległość Serbii, Czarnogóry i Rumunii, autonomia Bułgarii. Zjednoczone Cesarstwo Niemieckie."
+  },
+  {
     "year": 1880,
     "filename": "world_1880.geojson",
     "title": "1880 n.e. – Epoka Wiktoriańska & Kolonializm",
     "epoch": "Wiek XIX",
-    "desc": "Rewolucja przemysłowa w pełni, zjednoczone Niemcy pod Bismarckiem, Imperium Brytyjskie włada morzami, rozpoczyna się wyścig o Afrykę (Scramble for Africa)."
+    "desc": "Rewolucja przemysłowa w pełni, Imperium Brytyjskie włada morzami, rozpoczyna się wyścig o Afrykę (Scramble for Africa). Autonomia Galicyjska w zaborze austriackim."
+  },
+  {
+    "year": 1900,
+    "filename": "world_1900.geojson",
+    "title": "1900 n.e. – Belle Époque & Nowy Wiek",
+    "epoch": "Wiek XX",
+    "desc": "Wystawa światowa w Paryżu, powstanie bokserów w Chinach, wojna burska. Początek ery elektryczności, kinematografu i rodzącego się nowoczesnego nacjonalizmu."
   },
   {
     "year": 1914,
@@ -107,14 +268,21 @@
   {
     "year": 1920,
     "filename": "world_1920.geojson",
-    "title": "1920 n.e. – Odrodzona Polska & Traktat Wersalski",
+    "title": "1920 n.e. – Odrodzona Polska & Bitwa Warszawska",
     "epoch": "Dwudziestolecie",
-    "desc": "Polska odzyskuje niepodległość i powstrzymuje Armię Czerwoną w Bitwie Warszawskiej (Cud nad Wisłą). Nowa mapa Europy z republikami narodowymi."
+    "desc": "Polska odzyskuje niepodległość i powstrzymuje Armię Czerwoną w Bitwie Warszawskiej (Cud nad Wisłą). Nowa mapa Europy z traktatu wersalskiego."
+  },
+  {
+    "year": 1930,
+    "filename": "world_1930.geojson",
+    "title": "1930 n.e. – Wielki Kryzys & Cień Faszyzmu",
+    "epoch": "Dwudziestolecie",
+    "desc": "Światowy kryzys gospodarczy po krachu na Wall Street. Narastanie ruchów totalitarnych w Niemczech (NSDAP) i ZSRR (stalinizm). Rządy sanacji w Polsce."
   },
   {
     "year": 1938,
     "filename": "world_1938.geojson",
-    "title": "1938 n.e. – Przededniu II Wojny Światowej",
+    "title": "1938 n.e. – Przeddzień II Wojny Światowej",
     "epoch": "Dwudziestolecie",
     "desc": "Anschluss Austrii, Układ monachijski i rozbiór Czechosłowacji. III Rzesza i militarystyczna Japonia szykują się do globalnego konfliktu."
   },
@@ -126,10 +294,31 @@
     "desc": "Kapitulacja Niemiec i Japonii, konferencja jałtańska i poczdamska, powstanie ONZ. Nowe granice Polski (przesunięcie na zachód), podział Europy żelazną kurtyną."
   },
   {
+    "year": 1960,
+    "filename": "world_1960.geojson",
+    "title": "1960 n.e. – Rok Afryki & Apogeum Zimnej Wojny",
+    "epoch": "Współczesność",
+    "desc": "17 państw afrykańskich ogłasza niepodległość. Wyścig zbrojeń i podbój kosmosu (Sputnik, Apollo), budowa Muru Berlińskiego, kryzys kubański."
+  },
+  {
+    "year": 1994,
+    "filename": "world_1994.geojson",
+    "title": "1994 n.e. – Rozpad ZSRR & Nowy Ład Światowy",
+    "epoch": "Współczesność",
+    "desc": "Koniec Zimnej Wojny i upadek Związku Radzieckiego. Odrodzona III Rzeczpospolita i państwa postkomunistyczne na drodze do integracji europejskiej i NATO."
+  },
+  {
     "year": 2000,
     "filename": "world_2000.geojson",
     "title": "2000 n.e. – Nowe Milenium & Globalizacja",
     "epoch": "Współczesność",
-    "desc": "Świat po upadku ZSRR, rozszerzenie NATO, integracja w ramach Unii Europejskiej, rewolucja internetowa i początek XXI wieku."
+    "desc": "Świat po upadku ZSRR, rozszerzenie NATO (Polska 1999), integracja w ramach Unii Europejskiej, rewolucja internetowa i początek XXI wieku."
+  },
+  {
+    "year": 2010,
+    "filename": "world_2010.geojson",
+    "title": "2010 n.e. – Świat Współczesny",
+    "epoch": "Współczesność",
+    "desc": "Cyfrowa rewolucja smartfonów, Polska w strefie Schengen i sercu Unii Europejskiej, multipolarny układ sił na arenie międzynarodowej."
   }
 ]
