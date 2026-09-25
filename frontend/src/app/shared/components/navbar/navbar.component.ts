@@ -37,6 +37,9 @@ import { TocService } from '../../../core/services/toc.service';
           <a routerLink="/studios" routerLinkActive="active" class="nav-link" (click)="closeMenu()">
             Studia
           </a>
+          <a routerLink="/history" routerLinkActive="active" class="nav-link" (click)="closeMenu()">
+            Historia
+          </a>
           <a *ngIf="authService.isAuthenticated()" routerLink="/account/favorites" routerLinkActive="active" class="nav-link" (click)="closeMenu()">
             Ulubione
           </a>

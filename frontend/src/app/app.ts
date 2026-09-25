@@ -24,6 +24,7 @@ import { NavbarComponent } from './shared/components/navbar/navbar.component';
             <a routerLink="/genres" class="footer-link">Gatunki</a>
             <a routerLink="/series" class="footer-link">Serie gier</a>
             <a routerLink="/studios" class="footer-link">Studia deweloperskie</a>
+            <a routerLink="/history" class="footer-link">Historia</a>
             <a routerLink="/search" class="footer-link">Wyszukiwarka</a>
           </div>
         </div>

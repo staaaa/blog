@@ -1,0 +1,135 @@
+[
+  {
+    "year": -500,
+    "filename": "world_bc500.geojson",
+    "title": "500 p.n.e. – Starożytność klasyczna",
+    "epoch": "Starożytność",
+    "desc": "Złoty wiek Aten, powstanie Republiki Rzymskiej, Imperium Achemenidów (Persja) panuje od Egiptu po Indus, w Chinach epoka Stu Szkół Myśli (Konfucjusz)."
+  },
+  {
+    "year": -1,
+    "filename": "world_bc1.geojson",
+    "title": "1 p.n.e. – Pax Romana & Dynastia Han",
+    "epoch": "Starożytność",
+    "desc": "Oktawian August włada Cesarstwem Rzymskim otaczającym Morze Śródziemne. Na Wschodzie chińska Dynastia Han przeżywa szczyt potęgi Jedwabnego Szlaku."
+  },
+  {
+    "year": 500,
+    "filename": "world_500.geojson",
+    "title": "500 n.e. – Upadek Zachodniego Rzymu",
+    "epoch": "Wczesne Średniowiecze",
+    "desc": "Po upadku Cesarstwa Zachodniorzymskiego rodzą się królestwa barbarzyńskie (Ostrogoci, Wizygoci, Frankowie). Konstantynopol (Bizancjum) trwa jako potęga."
+  },
+  {
+    "year": 1000,
+    "filename": "world_1000.geojson",
+    "title": "1000 n.e. – Milenium & Chrobry",
+    "epoch": "Średniowiecze",
+    "desc": "Zjazd Gnieźnieński – Polska Bolesława Chrobrego rośnie w siłę. Cesarstwo Ottonów w Europie, kalifaty muzułmańskie, rozkwit Rusi Kijowskiej i Songów w Chinach."
+  },
+  {
+    "year": 1279,
+    "filename": "world_1279.geojson",
+    "title": "1279 n.e. – Imperium Mongolskie",
+    "epoch": "Pełne Średniowiecze",
+    "desc": "Koblaj-chan zakłada dynastię Yuan. Pax Mongolica łączy Azję i Europę Wschodnią. Polska w rozbiciu dzielnicowym odpiera najazdy tatarskie."
+  },
+  {
+    "year": 1400,
+    "filename": "world_1400.geojson",
+    "title": "1400 n.e. – Unia Polsko-Litewska & Przeddzień Grunwaldu",
+    "epoch": "Późne Średniowiecze",
+    "desc": "Panowanie Władysława Jagiełły i Jadwigi. Konfrontacja z Zakonem Krzyżackim, Imperium Osmańskie rośnie na Bałkanach, upadek Bizancjum wisi w powietrzu."
+  },
+  {
+    "year": 1492,
+    "filename": "world_1492.geojson",
+    "title": "1492 n.e. – Odkrycie Ameryki & Renesans",
+    "epoch": "Wczesna Nowożytność",
+    "desc": "Krzysztof Kolumb dociera do Nowego Świata. Koniec Rekonkwisty w Hiszpanii. Rzeczpospolita Jagiellonów staje się mocarstwem Europy Środkowo-Wschodniej."
+  },
+  {
+    "year": 1530,
+    "filename": "world_1530.geojson",
+    "title": "1530 n.e. – Reformacja & Sulejman Wspaniały",
+    "epoch": "Nowożytność",
+    "desc": "Rozłam w Kościele zachodnim (Luter), Karol V rządzi imperium, w którym słońce nie zachodzi. Złoty wiek Zygmunta I Starego w Polsce. Osmanowie pod Wiedniem (1529)."
+  },
+  {
+    "year": 1600,
+    "filename": "world_1600.geojson",
+    "title": "1600 n.e. – Złoty Wiek Rzeczypospolitej",
+    "epoch": "Nowożytność",
+    "desc": "Rzeczpospolita Obojga Narodów u szczytu potęgi (husaria, dymitriady, wkrótce zdobycie Moskwy). Szogunat Tokugawa w Japonii, Elżbieta I w Anglii."
+  },
+  {
+    "year": 1650,
+    "filename": "world_1650.geojson",
+    "title": "1650 n.e. – Pokój Westfalski & Czas Wojen",
+    "epoch": "Nowożytność",
+    "desc": "Koniec Wojny Trzydziestoletniej, powstanie Chmielnickiego na Ukrainie, w przededniu szwedzkiego Potopu. Rozkwit monarchii absolutnej we Francji."
+  },
+  {
+    "year": 1700,
+    "filename": "world_1700.geojson",
+    "title": "1700 n.e. – Wielka Wojna Północna",
+    "epoch": "Oświecenie",
+    "desc": "Piotr I Wielki buduje potęgę Rosji, wojna ze Szwecją Karola XII. Wojna o sukcesję hiszpańską wstrząsa Europą Zachodnią. Słabnąca Rzeczpospolita saska."
+  },
+  {
+    "year": 1783,
+    "filename": "world_1783.geojson",
+    "title": "1783 n.e. – Niepodległość USA & Epoka Rozbiorów",
+    "epoch": "Oświecenie",
+    "desc": "Traktat paryski uznaje niepodległość Stanów Zjednoczonych. Polska po I rozbiorze (1772) dąży do reform, które zakończą się Konstytucją 3 Maja."
+  },
+  {
+    "year": 1815,
+    "filename": "world_1815.geojson",
+    "title": "1815 n.e. – Kongres Wiedeński & Upadek Napoleona",
+    "epoch": "Wiek XIX",
+    "desc": "Bitwa pod Waterloo i upadek cesarstwa Napoleona. Święte Przymierze ustala ład w Europie, powstaje zależne od Rosji Królestwo Polskie (Kongresowe)."
+  },
+  {
+    "year": 1880,
+    "filename": "world_1880.geojson",
+    "title": "1880 n.e. – Epoka Wiktoriańska & Kolonializm",
+    "epoch": "Wiek XIX",
+    "desc": "Rewolucja przemysłowa w pełni, zjednoczone Niemcy pod Bismarckiem, Imperium Brytyjskie włada morzami, rozpoczyna się wyścig o Afrykę (Scramble for Africa)."
+  },
+  {
+    "year": 1914,
+    "filename": "world_1914.geojson",
+    "title": "1914 n.e. – Wybuch I Wojny Światowej",
+    "epoch": "Wiek XX",
+    "desc": "Zamach w Sarajewie rozpala Wielką Wojnę. Państwa Ententy (Francja, UK, Rosja) walczą z Państwami Centralnymi (Niemcy, Austro-Węgry, Imperium Osmańskie)."
+  },
+  {
+    "year": 1920,
+    "filename": "world_1920.geojson",
+    "title": "1920 n.e. – Odrodzona Polska & Traktat Wersalski",
+    "epoch": "Dwudziestolecie",
+    "desc": "Polska odzyskuje niepodległość i powstrzymuje Armię Czerwoną w Bitwie Warszawskiej (Cud nad Wisłą). Nowa mapa Europy z republikami narodowymi."
+  },
+  {
+    "year": 1938,
+    "filename": "world_1938.geojson",
+    "title": "1938 n.e. – Przededniu II Wojny Światowej",
+    "epoch": "Dwudziestolecie",
+    "desc": "Anschluss Austrii, Układ monachijski i rozbiór Czechosłowacji. III Rzesza i militarystyczna Japonia szykują się do globalnego konfliktu."
+  },
+  {
+    "year": 1945,
+    "filename": "world_1945.geojson",
+    "title": "1945 n.e. – Koniec II Wojny Światowej & Początek Zimnej Wojny",
+    "epoch": "Współczesność",
+    "desc": "Kapitulacja Niemiec i Japonii, konferencja jałtańska i poczdamska, powstanie ONZ. Nowe granice Polski (przesunięcie na zachód), podział Europy żelazną kurtyną."
+  },
+  {
+    "year": 2000,
+    "filename": "world_2000.geojson",
+    "title": "2000 n.e. – Nowe Milenium & Globalizacja",
+    "epoch": "Współczesność",
+    "desc": "Świat po upadku ZSRR, rozszerzenie NATO, integracja w ramach Unii Europejskiej, rewolucja internetowa i początek XXI wieku."
+  }
+]

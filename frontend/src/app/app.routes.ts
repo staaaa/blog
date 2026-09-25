@@ -44,6 +44,14 @@ export const routes: Routes = [
     loadComponent: () => import('./features/search/search.component').then(m => m.SearchComponent)
   },
   {
+    path: 'history',
+    loadComponent: () => import('./features/history/history.component').then(m => m.HistoryComponent)
+  },
+  {
+    path: 'historia',
+    redirectTo: 'history'
+  },
+  {
     path: 'admin/login',
     loadComponent: () => import('./features/admin/login/login.component').then(m => m.LoginComponent)
   },

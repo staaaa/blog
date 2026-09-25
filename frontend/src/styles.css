@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700&display=swap');
 @import 'quill/dist/quill.snow.css';
+@import 'maplibre-gl/dist/maplibre-gl.css';
 
 :root {
   --bg-color: #1a1a1d;
