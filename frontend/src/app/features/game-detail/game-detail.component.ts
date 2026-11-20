@@ -2671,7 +2671,7 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   private updateSeoMeta(): void {
     if (!this.game) return;
 
-    const baseUrl = 'https://giercujemy-staa.duckdns.org';
+    const baseUrl = 'https://giercujemy.pl';
     const gameUrl = `${baseUrl}/game/${this.game.slug}`;
     const gameTitle = this.game.gameTitle;
 
@@ -2740,7 +2740,7 @@ export class GameDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   private updateJsonLd(): void {
     if (!this.game) return;
 
-    const baseUrl = 'https://giercujemy-staa.duckdns.org';
+    const baseUrl = 'https://giercujemy.pl';
 
     // Remove existing JSON-LD
     const existingScript = this.document.querySelector('script[type="application/ld+json"]#game-review-jsonld');

@@ -9,7 +9,15 @@ const browserDistFolder = resolve(serverDistFolder, '../browser');
 const indexHtml = join(serverDistFolder, 'index.server.html');
 
 const app = express();
-const commonEngine = new CommonEngine();
+const commonEngine = new CommonEngine({
+  allowedHosts: [
+    'giercujemy.pl',
+    'www.giercujemy.pl',
+    'giercujemy-staa.duckdns.org',
+    'localhost',
+    '127.0.0.1'
+  ]
+});
 
 /**
  * Serve static files from /browser
@@ -44,7 +52,10 @@ app.use((req, res, next) => {
       publicPath: browserDistFolder,
     })
     .then((html) => res.send(html))
-    .catch((err) => next(err));
+    .catch((err) => {
+      console.error('SSR error, serving client-side fallback:', err);
+      res.sendFile(indexHtml);
+    });
 });
 
 const port = process.env['PORT'] || 4000;
@@ -53,4 +64,3 @@ app.listen(port, () => {
 });
 
 export default app;
-
