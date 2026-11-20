@@ -335,23 +335,45 @@ import DOMPurify from 'dompurify';
                   <span *ngIf="!selectedReview.author.username" class="signature-name">
                     {{ selectedReview.author.displayName || selectedReview.author.username }}
                   </span>
-                  <span class="signature-badge" [class.badge-admin]="selectedReview.author.role === 'admin'">
+                  <a
+                    *ngIf="selectedReview.author.username"
+                    [routerLink]="['/author', selectedReview.author.username]"
+                    class="signature-badge-link"
+                    title="Zobacz profil recenzenta"
+                  >
+                    <span class="signature-badge" [class.badge-admin]="selectedReview.author.role === 'admin'">
+                      {{ selectedReview.author.role === 'admin' ? 'Administrator' : 'Recenzent' }}
+                    </span>
+                  </a>
+                  <span
+                    *ngIf="!selectedReview.author.username"
+                    class="signature-badge"
+                    [class.badge-admin]="selectedReview.author.role === 'admin'"
+                  >
                     {{ selectedReview.author.role === 'admin' ? 'Administrator' : 'Recenzent' }}
                   </span>
                 </div>
                 <p class="signature-bio" *ngIf="selectedReview.author.bio">
                   {{ selectedReview.author.bio }}
                 </p>
-                <p class="signature-desc">
-                  Recenzja ukończona po {{ selectedReview.playtimeHours || 0 }} godzinach rozgrywki (Status: {{ getStatusLabel(selectedReview.gameStatus) }}).
+                <div class="signature-desc">
                   <a
                     *ngIf="selectedReview.author.username"
                     [routerLink]="['/author', selectedReview.author.username]"
-                    class="signature-more-link"
+                    class="signature-desc-link"
+                    title="Zobacz profil recenzenta {{ selectedReview.author.displayName || selectedReview.author.username }}"
                   >
-                    Wszystkie recenzje autora →
+                    <span class="signature-desc-text">
+                      Recenzja ukończona przez
+                      <strong class="signature-author-highlight">{{ selectedReview.author.displayName || selectedReview.author.username }}</strong>
+                      po {{ selectedReview.playtimeHours || 0 }} godzinach rozgrywki (Status: {{ getStatusLabel(selectedReview.gameStatus) }}).
+                    </span>
+                    <span class="signature-more-link">Profil recenzenta →</span>
                   </a>
-                </p>
+                  <p *ngIf="!selectedReview.author.username" class="signature-desc-fallback">
+                    Recenzja ukończona po {{ selectedReview.playtimeHours || 0 }} godzinach rozgrywki (Status: {{ getStatusLabel(selectedReview.gameStatus) }}).
+                  </p>
+                </div>
               </div>
             </footer>
 
@@ -405,14 +427,56 @@ import DOMPurify from 'dompurify';
                 <div class="comment-item" *ngFor="let c of comments">
                   <div class="comment-meta-row">
                     <div class="comment-author-info">
-                      <div class="comment-avatar">
+                      <a
+                        *ngIf="c.author?.username && c.author?.role !== 'reader'"
+                        [routerLink]="['/author', c.author!.username]"
+                        class="comment-avatar-link"
+                        title="Profil recenzenta {{ c.author?.displayName || c.author?.username }}"
+                      >
+                        <div class="comment-avatar">
+                          <img *ngIf="c.author?.avatarUrl" [src]="getImageUrl(c.author?.avatarUrl)" [alt]="c.author?.displayName || c.author?.username">
+                          <span *ngIf="!c.author?.avatarUrl">{{ (c.author?.displayName || c.author?.username || 'R')[0].toUpperCase() }}</span>
+                        </div>
+                      </a>
+                      <div
+                        *ngIf="!c.author?.username || c.author?.role === 'reader'"
+                        class="comment-avatar"
+                      >
                         <img *ngIf="c.author?.avatarUrl" [src]="getImageUrl(c.author?.avatarUrl)" [alt]="c.author?.displayName || c.author?.username">
                         <span *ngIf="!c.author?.avatarUrl">{{ (c.author?.displayName || c.author?.username || 'U')[0].toUpperCase() }}</span>
                       </div>
                       <div class="comment-author-text">
                         <div class="comment-name-row">
-                          <span class="comment-name">{{ c.author?.displayName || c.author?.username || 'Użytkownik' }}</span>
-                          <span class="comment-role-pill" *ngIf="c.author?.role !== 'reader'" [class.admin-pill]="c.author?.role === 'admin'">
+                          <a
+                            *ngIf="c.author?.username && c.author?.role !== 'reader'"
+                            [routerLink]="['/author', c.author!.username]"
+                            class="comment-author-link"
+                            title="Zobacz profil recenzenta {{ c.author?.displayName || c.author?.username }}"
+                          >
+                            <span class="comment-name">{{ c.author?.displayName || c.author?.username }}</span>
+                          </a>
+                          <span
+                            *ngIf="!c.author?.username || c.author?.role === 'reader'"
+                            class="comment-name"
+                          >
+                            {{ c.author?.displayName || c.author?.username || 'Użytkownik' }}
+                          </span>
+
+                          <a
+                            *ngIf="c.author?.username && c.author?.role !== 'reader'"
+                            [routerLink]="['/author', c.author!.username]"
+                            class="comment-role-link"
+                            title="Profil recenzenta"
+                          >
+                            <span class="comment-role-pill" [class.admin-pill]="c.author?.role === 'admin'">
+                              {{ c.author?.role === 'admin' ? 'Administrator' : 'Recenzent' }}
+                            </span>
+                          </a>
+                          <span
+                            *ngIf="(!c.author?.username || c.author?.role === 'reader') && c.author?.role !== 'reader'"
+                            class="comment-role-pill"
+                            [class.admin-pill]="c.author?.role === 'admin'"
+                          >
                             {{ c.author?.role === 'admin' ? 'Administrator' : 'Recenzent' }}
                           </span>
                         </div>
@@ -1509,7 +1573,58 @@ import DOMPurify from 'dompurify';
       color: #8b5cf6;
     }
 
+    .signature-badge-link {
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    .signature-badge-link:hover {
+      transform: translateY(-1px);
+      opacity: 0.9;
+    }
+
     .signature-desc {
+      margin: 0;
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+    }
+
+    .signature-desc-link {
+      display: inline-flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.4rem;
+      text-decoration: none;
+      color: var(--text-secondary);
+      font-size: 0.88rem;
+      line-height: 1.5;
+      transition: color 0.15s ease;
+      cursor: pointer;
+    }
+
+    .signature-desc-link:hover {
+      color: var(--text-primary);
+    }
+
+    .signature-desc-link:hover .signature-author-highlight {
+      color: var(--accent-color);
+      text-decoration: underline;
+    }
+
+    .signature-desc-link:hover .signature-more-link {
+      text-decoration: underline;
+      transform: translateX(3px);
+    }
+
+    .signature-author-highlight {
+      color: var(--text-primary);
+      font-weight: 700;
+      transition: color 0.15s ease;
+    }
+
+    .signature-desc-fallback {
       margin: 0;
       font-size: 0.85rem;
       color: var(--text-secondary);
@@ -1766,10 +1881,47 @@ import DOMPurify from 'dompurify';
       flex-direction: column;
     }
 
+    .comment-avatar-link {
+      display: block;
+      text-decoration: none;
+      flex-shrink: 0;
+      transition: transform 0.2s ease;
+    }
+
+    .comment-avatar-link:hover .comment-avatar {
+      transform: scale(1.08);
+      box-shadow: 0 0 0 2px var(--accent-color);
+    }
+
     .comment-name-row {
       display: flex;
       align-items: center;
       gap: 0.5rem;
+    }
+
+    .comment-author-link {
+      text-decoration: none;
+      color: inherit;
+      display: inline-flex;
+      align-items: center;
+      transition: color 0.15s ease;
+    }
+
+    .comment-author-link:hover .comment-name {
+      color: var(--accent-color);
+      text-decoration: underline;
+    }
+
+    .comment-role-link {
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      transition: transform 0.15s ease;
+    }
+
+    .comment-role-link:hover .comment-role-pill {
+      opacity: 0.85;
+      transform: translateY(-1px);
     }
 
     .comment-name {
@@ -2447,7 +2599,8 @@ import DOMPurify from 'dompurify';
         font-size: 0.85rem;
       }
 
-      .signature-desc {
+      .signature-desc,
+      .signature-desc-link {
         font-size: 0.72rem;
       }
 
