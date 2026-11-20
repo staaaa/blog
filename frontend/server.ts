@@ -9,7 +9,20 @@ const browserDistFolder = resolve(serverDistFolder, '../browser');
 const indexHtml = join(serverDistFolder, 'index.server.html');
 
 const app = express();
-const commonEngine = new CommonEngine();
+
+const extraHosts = (process.env['NG_ALLOWED_HOSTS'] || process.env['ALLOWED_HOSTS'] || '')
+  .split(',')
+  .map(h => h.trim())
+  .filter(Boolean);
+
+const commonEngine = new CommonEngine({
+  allowedHosts: [
+    'giercujemy-staa.duckdns.org',
+    'localhost',
+    '127.0.0.1',
+    ...extraHosts
+  ]
+});
 
 /**
  * Serve static files from /browser

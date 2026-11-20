@@ -77,6 +77,7 @@ const getFavorites = async (req, res) => {
             {
               model: Review,
               as: 'reviews',
+              attributes: ['id', 'isDraft', 'averageRating', 'updatedAt'],
               where: { isDraft: false },
               required: false,
               include: [
@@ -146,6 +147,7 @@ const getReadMarks = async (req, res) => {
         {
           model: Review,
           as: 'readReviews',
+          attributes: ['id', 'title', 'averageRating', 'gameStatus', 'updatedAt', 'gameId', 'userId'],
           include: [
             { model: Game, as: 'game' },
             { model: User, as: 'author', attributes: ['id', 'username', 'displayName', 'avatarUrl'] }

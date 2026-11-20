@@ -16,6 +16,7 @@ export class AuthService {
   private baseUrl = '/api/auth';
   private tokenKey = 'auth_token';
   private userKey = 'auth_user';
+  private draftKey = 'review_draft';
 
   private _user = signal<UserProfile | null>(this.getStoredUser());
   private _token = signal<string | null>(this.getStoredToken());
@@ -82,11 +83,19 @@ export class AuthService {
     }
   }
 
-  logout(redirectUrl = '/admin/login'): void {
+  /**
+   * Clear auth state without navigating — used by the interceptor
+   * when it handles the redirect itself.
+   */
+  clearAuthState(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userKey);
     this._token.set(null);
     this._user.set(null);
+  }
+
+  logout(redirectUrl = '/admin/login'): void {
+    this.clearAuthState();
     this.router.navigate([redirectUrl]);
   }
 
@@ -102,9 +111,61 @@ export class AuthService {
         localStorage.setItem(this.userKey, JSON.stringify(user));
       }),
       catchError(() => {
-        this.logout();
+        this.clearAuthState();
         return of(null);
       })
     );
+  }
+
+  // --- Review draft persistence for session expiry ---
+
+  saveReviewDraft(draft: any): void {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(this.draftKey, JSON.stringify({
+        data: draft,
+        savedAt: new Date().toISOString()
+      }));
+    } catch {
+      // localStorage full — silently ignore
+    }
+  }
+
+  getReviewDraft(): { data: any; savedAt: string } | null {
+    if (typeof window === 'undefined') return null;
+    const raw = localStorage.getItem(this.draftKey);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Retrieves the draft and immediately removes it from localStorage
+   * so no stale draft is left behind.
+   */
+  consumeReviewDraft(): any | null {
+    if (typeof window === 'undefined') return null;
+    const raw = localStorage.getItem(this.draftKey);
+    if (!raw) return null;
+    try {
+      localStorage.removeItem(this.draftKey);
+      const parsed = JSON.parse(raw);
+      return parsed.data || null;
+    } catch {
+      localStorage.removeItem(this.draftKey);
+      return null;
+    }
+  }
+
+  clearReviewDraft(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(this.draftKey);
+  }
+
+  hasPendingDraft(): boolean {
+    return !!this.getReviewDraft();
   }
 }

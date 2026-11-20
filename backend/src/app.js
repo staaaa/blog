@@ -5,6 +5,7 @@ const path = require('path');
 
 const { sequelize, User } = require('./models');
 const migrateReviewsToGames = require('./migrations/migrate-to-games');
+const migrateBase64Images = require('./migrations/migrate-base64-images');
 
 // Routes
 const authRoutes = require('./routes/auth');
@@ -190,6 +191,9 @@ const startServer = async () => {
 
     // Run review-to-game migration for existing data
     await migrateReviewsToGames();
+
+    // Run base64-to-file migration for existing reviews
+    await migrateBase64Images();
 
     // Start server
     app.listen(PORT, () => {

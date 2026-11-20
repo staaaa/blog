@@ -1,15 +1,17 @@
 import { inject } from '@angular/core';
-import { Router, CanActivateFn } from '@angular/router';
+import { Router, CanActivateFn, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { UserRole } from '../services/api.service';
 
 export function roleGuard(...allowedRoles: UserRole[]): CanActivateFn {
-  return () => {
+  return (_route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
     const authService = inject(AuthService);
     const router = inject(Router);
 
     if (!authService.isAuthenticated()) {
-      router.navigate(['/admin/login']);
+      router.navigate(['/admin/login'], {
+        queryParams: { returnUrl: state.url }
+      });
       return false;
     }
 

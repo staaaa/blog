@@ -61,6 +61,7 @@ const getReviewsByStudio = async (req, res) => {
         {
           model: Review,
           as: 'reviews',
+          attributes: ['id', 'isDraft', 'averageRating', 'updatedAt'],
           where: reviewWhere,
           required: !isPrivileged,
           include: [
