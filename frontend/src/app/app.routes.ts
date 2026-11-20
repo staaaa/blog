@@ -12,6 +12,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/game-detail/game-detail.component').then(m => m.GameDetailComponent)
   },
   {
+    path: 'author/:username',
+    loadComponent: () => import('./features/author-profile/author-profile.component').then(m => m.AuthorProfileComponent)
+  },
+  {
     path: 'review/:id',
     loadComponent: () => import('./features/review-redirect/review-redirect.component').then(m => m.ReviewRedirectComponent)
   },

@@ -32,6 +32,11 @@ import { AuthService } from '../../../core/services/auth.service';
             + Napisz recenzję
           </a>
 
+          <!-- Profile & Bio -->
+          <a routerLink="/account" class="btn btn-secondary">
+            👤 Mój profil i bio
+          </a>
+
           <!-- User Management (Admin Only) -->
           <a *ngIf="authService.isAdmin()" routerLink="/admin/users" class="btn btn-admin">
             Użytkownicy

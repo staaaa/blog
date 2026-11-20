@@ -35,6 +35,10 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING(500),
     allowNull: true,
     field: 'avatar_url'
+  },
+  bio: {
+    type: DataTypes.TEXT,
+    allowNull: true
   }
 }, {
   tableName: 'users',

@@ -79,10 +79,20 @@ const getReviewsByStudio = async (req, res) => {
         ? parseFloat((published.reduce((s, r) => s + (r.averageRating || 0), 0) / published.length).toFixed(1))
         : 0;
 
+      const reviewers = published.map(r => ({
+        reviewId: r.id,
+        userId: r.author?.id,
+        username: r.author?.username,
+        displayName: r.author?.displayName || r.author?.username || 'Anonim',
+        avatarUrl: r.author?.avatarUrl,
+        averageRating: r.averageRating
+      }));
+
       return {
         ...plain,
         averageRating: avg,
-        reviewCount: published.length
+        reviewCount: published.length,
+        reviewers
       };
     });
 

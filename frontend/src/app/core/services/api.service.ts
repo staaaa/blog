@@ -16,8 +16,28 @@ export interface UserProfile {
   role: UserRole;
   displayName?: string | null;
   avatarUrl?: string | null;
+  bio?: string | null;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface PaginationInfo {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface AuthorStats {
+  totalReviews: number;
+  averageRating: number;
+}
+
+export interface AuthorProfileResponse {
+  author: UserProfile;
+  stats: AuthorStats;
+  games: Game[];
+  pagination: PaginationInfo;
 }
 
 export interface Category {
@@ -274,10 +294,21 @@ export class ApiService {
   }
 
   // ========================
+  // Authors & Reviewers
+  // ========================
+
+  getAuthorProfile(username: string, page: number = 1, limit: number = 12): Observable<AuthorProfileResponse> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+    return this.http.get<AuthorProfileResponse>(`${this.baseUrl}/authors/${username}`, { params });
+  }
+
+  // ========================
   // Account (Reader & Reviewer & Admin)
   // ========================
 
-  updateProfile(data: { displayName?: string; avatarUrl?: string }): Observable<UserProfile> {
+  updateProfile(data: { displayName?: string; avatarUrl?: string; bio?: string }): Observable<UserProfile> {
     return this.http.put<UserProfile>(`${this.baseUrl}/account/profile`, data);
   }
 

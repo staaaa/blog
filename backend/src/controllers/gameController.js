@@ -183,7 +183,7 @@ const getGameBySlug = async (req, res) => {
           model: Review,
           as: 'reviews',
           include: [
-            { model: User, as: 'author', attributes: ['id', 'username', 'displayName', 'avatarUrl'] },
+            { model: User, as: 'author', attributes: ['id', 'username', 'displayName', 'avatarUrl', 'role', 'bio'] },
             { model: CustomRating, as: 'customRatings' }
           ]
         }

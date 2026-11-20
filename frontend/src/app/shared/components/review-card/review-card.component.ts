@@ -1,6 +1,6 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { Game, Review } from '../../../core/services/api.service';
 
 @Component({
@@ -32,14 +32,18 @@ import { Game, Review } from '../../../core/services/api.service';
         <div class="reviewers-avatars-row" *ngIf="getReviewers().length > 0">
           <span class="reviewers-label">Recenzje:</span>
           <div class="avatar-stack">
-            <span
+            <button
+              type="button"
               *ngFor="let rev of getReviewers().slice(0, 4)"
-              class="reviewer-mini-avatar"
-              [title]="rev.displayName + ' (ocena: ' + rev.averageRating.toFixed(1) + ')'"
+              (click)="onReviewerClick($event, rev.username)"
+              class="reviewer-mini-avatar-btn"
+              [title]="rev.displayName + ' (ocena: ' + rev.averageRating.toFixed(1) + ') – Zobacz profil autora'"
             >
-              <img *ngIf="rev.avatarUrl" [src]="getImageUrl(rev.avatarUrl)" [alt]="rev.displayName" />
-              <span *ngIf="!rev.avatarUrl">{{ (rev.displayName || 'R')[0].toUpperCase() }}</span>
-            </span>
+              <span class="reviewer-mini-avatar">
+                <img *ngIf="rev.avatarUrl" [src]="getImageUrl(rev.avatarUrl)" [alt]="rev.displayName" />
+                <span *ngIf="!rev.avatarUrl">{{ (rev.displayName || 'R')[0].toUpperCase() }}</span>
+              </span>
+            </button>
           </div>
         </div>
         
@@ -174,6 +178,31 @@ import { Game, Review } from '../../../core/services/api.service';
       align-items: center;
     }
 
+    .reviewer-mini-avatar-btn {
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      display: inline-flex;
+      margin-left: -5px;
+      transition: transform 0.15s ease, z-index 0.15s ease;
+      position: relative;
+    }
+
+    .reviewer-mini-avatar-btn:first-child {
+      margin-left: 0;
+    }
+
+    .reviewer-mini-avatar-btn:hover {
+      transform: scale(1.25);
+      z-index: 10;
+    }
+
+    .reviewer-mini-avatar-btn:hover .reviewer-mini-avatar {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 1px var(--accent-color);
+    }
+
     .reviewer-mini-avatar {
       width: 22px;
       height: 22px;
@@ -240,8 +269,17 @@ import { Game, Review } from '../../../core/services/api.service';
   `]
 })
 export class ReviewCardComponent {
+  private router = inject(Router);
+
   @Input() game?: Game;
   @Input() review?: Review;
+
+  onReviewerClick(event: Event, username: string | undefined): void {
+    if (!username) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.router.navigate(['/author', username]);
+  }
 
   getGameLink(): string[] {
     if (this.game && this.game.slug) {

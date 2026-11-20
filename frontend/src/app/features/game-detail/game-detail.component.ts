@@ -222,7 +222,11 @@ import DOMPurify from 'dompurify';
 
               <h2 class="review-title">{{ selectedReview.title }}</h2>
               <div class="review-byline">
-                Autor recenzji: <strong>{{ selectedReview.author?.displayName || selectedReview.author?.username || 'Anonim' }}</strong>
+                Autor recenzji:
+                <a *ngIf="selectedReview.author?.username" [routerLink]="['/author', selectedReview.author!.username]" class="author-inline-link">
+                  <strong>{{ selectedReview.author?.displayName || selectedReview.author?.username }}</strong>
+                </a>
+                <strong *ngIf="!selectedReview.author?.username">{{ selectedReview.author?.displayName || selectedReview.author?.username || 'Anonim' }}</strong>
                 · {{ selectedReview.updatedAt | date: 'dd.MM.yyyy, HH:mm' }}
               </div>
             </div>
@@ -301,7 +305,19 @@ import DOMPurify from 'dompurify';
 
             <!-- Author Signature Box at bottom -->
             <footer class="author-signature-card" *ngIf="selectedReview.author">
-              <div class="signature-avatar">
+              <a
+                *ngIf="selectedReview.author.username"
+                [routerLink]="['/author', selectedReview.author.username]"
+                class="signature-avatar-link"
+              >
+                <div class="signature-avatar">
+                  <img *ngIf="selectedReview.author.avatarUrl" [src]="getImageUrl(selectedReview.author.avatarUrl)" [alt]="selectedReview.author.displayName" />
+                  <span *ngIf="!selectedReview.author.avatarUrl" class="signature-avatar-fallback">
+                    {{ (selectedReview.author.displayName || selectedReview.author.username || 'R')[0].toUpperCase() }}
+                  </span>
+                </div>
+              </a>
+              <div *ngIf="!selectedReview.author.username" class="signature-avatar">
                 <img *ngIf="selectedReview.author.avatarUrl" [src]="getImageUrl(selectedReview.author.avatarUrl)" [alt]="selectedReview.author.displayName" />
                 <span *ngIf="!selectedReview.author.avatarUrl" class="signature-avatar-fallback">
                   {{ (selectedReview.author.displayName || selectedReview.author.username || 'R')[0].toUpperCase() }}
@@ -309,13 +325,32 @@ import DOMPurify from 'dompurify';
               </div>
               <div class="signature-info">
                 <div class="signature-top">
-                  <span class="signature-name">{{ selectedReview.author.displayName || selectedReview.author.username }}</span>
+                  <a
+                    *ngIf="selectedReview.author.username"
+                    [routerLink]="['/author', selectedReview.author.username]"
+                    class="signature-name-link"
+                  >
+                    <span class="signature-name">{{ selectedReview.author.displayName || selectedReview.author.username }}</span>
+                  </a>
+                  <span *ngIf="!selectedReview.author.username" class="signature-name">
+                    {{ selectedReview.author.displayName || selectedReview.author.username }}
+                  </span>
                   <span class="signature-badge" [class.badge-admin]="selectedReview.author.role === 'admin'">
                     {{ selectedReview.author.role === 'admin' ? 'Administrator' : 'Recenzent' }}
                   </span>
                 </div>
+                <p class="signature-bio" *ngIf="selectedReview.author.bio">
+                  {{ selectedReview.author.bio }}
+                </p>
                 <p class="signature-desc">
                   Recenzja ukończona po {{ selectedReview.playtimeHours || 0 }} godzinach rozgrywki (Status: {{ getStatusLabel(selectedReview.gameStatus) }}).
+                  <a
+                    *ngIf="selectedReview.author.username"
+                    [routerLink]="['/author', selectedReview.author.username]"
+                    class="signature-more-link"
+                  >
+                    Wszystkie recenzje autora →
+                  </a>
                 </p>
               </div>
             </footer>
@@ -1478,6 +1513,63 @@ import DOMPurify from 'dompurify';
       margin: 0;
       font-size: 0.85rem;
       color: var(--text-secondary);
+    }
+
+    .author-inline-link {
+      color: inherit;
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .author-inline-link:hover {
+      color: var(--accent-color);
+      text-decoration: underline;
+    }
+
+    .signature-avatar-link {
+      text-decoration: none;
+      display: block;
+      transition: transform 0.2s ease;
+    }
+
+    .signature-avatar-link:hover .signature-avatar {
+      transform: scale(1.05);
+      box-shadow: 0 0 0 2px var(--accent-color);
+    }
+
+    .signature-name-link {
+      text-decoration: none;
+      color: inherit;
+      transition: color 0.2s ease;
+    }
+
+    .signature-name-link:hover .signature-name {
+      color: var(--accent-color);
+    }
+
+    .signature-bio {
+      font-size: 0.92rem;
+      color: var(--text-primary);
+      line-height: 1.5;
+      margin: 0.4rem 0 0.6rem;
+      white-space: pre-line;
+      background: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.6rem 0.85rem;
+    }
+
+    .signature-more-link {
+      display: inline-block;
+      margin-left: 0.5rem;
+      color: var(--accent-color);
+      font-weight: 600;
+      text-decoration: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .signature-more-link:hover {
+      text-decoration: underline;
     }
 
     /* Comments Section */

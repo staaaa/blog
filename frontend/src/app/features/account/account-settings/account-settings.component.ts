@@ -1,13 +1,14 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-account-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="account-container">
       <header class="account-header">
@@ -52,9 +53,34 @@ import { AuthService } from '../../../core/services/auth.service';
             </span>
           </div>
 
+          <div class="form-group" *ngIf="authService.isReviewer()">
+            <div class="label-with-counter">
+              <label for="bio">O mnie / Opis recenzenta</label>
+              <span class="char-counter" [class.counter-warn]="bio.length > 900">{{ bio.length }} / 1000</span>
+            </div>
+            <textarea
+              id="bio"
+              [(ngModel)]="bio"
+              name="bio"
+              maxlength="1000"
+              rows="5"
+              placeholder="Napisz kilka słów o sobie, swoich ulubionych gatunkach gier, platformach, podejściu do oceniania..."
+              class="account-textarea"
+            ></textarea>
+            <span class="field-hint">
+              Ten opis będzie widoczny na Twoim publicznym profilu recenzenta dla czytelników.
+            </span>
+          </div>
+
           <div class="form-group">
             <label>Rola w portalu</label>
             <input type="text" [value]="getRoleLabel()" disabled class="input-disabled">
+          </div>
+
+          <div class="public-profile-shortcut" *ngIf="authService.isReviewer() && authService.username()">
+            <a [routerLink]="['/author', authService.username()]" class="preview-profile-link">
+              ↗ Zobacz swój publiczny profil recenzenta (/author/{{ authService.username() }})
+            </a>
           </div>
 
           <div class="form-actions">
@@ -217,6 +243,65 @@ import { AuthService } from '../../../core/services/auth.service';
       font-family: inherit;
     }
 
+    .account-textarea {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--input-bg);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      resize: vertical;
+    }
+
+    .account-textarea:focus {
+      outline: none;
+      border-color: var(--accent-color);
+    }
+
+    .label-with-counter {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.45rem;
+    }
+
+    .label-with-counter label {
+      margin-bottom: 0;
+    }
+
+    .char-counter {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .char-counter.counter-warn {
+      color: #ef4444;
+      font-weight: 700;
+    }
+
+    .public-profile-shortcut {
+      margin-top: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .preview-profile-link {
+      display: inline-block;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--accent-color);
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+
+    .preview-profile-link:hover {
+      text-decoration: underline;
+      opacity: 0.85;
+    }
+
     input:focus {
       outline: none;
       border-color: var(--accent-color);
@@ -294,6 +379,7 @@ export class AccountSettingsComponent implements OnInit {
 
   displayName = '';
   avatarUrl: string | null = null;
+  bio = '';
   savingProfile = false;
 
   currentPassword = '';
@@ -306,6 +392,7 @@ export class AccountSettingsComponent implements OnInit {
     if (u) {
       this.displayName = u.displayName || u.username;
       this.avatarUrl = u.avatarUrl || null;
+      this.bio = u.bio || '';
     }
   }
 
@@ -344,7 +431,8 @@ export class AccountSettingsComponent implements OnInit {
     this.savingProfile = true;
     this.api.updateProfile({
       displayName: this.displayName.trim(),
-      avatarUrl: this.avatarUrl || ''
+      avatarUrl: this.avatarUrl || '',
+      bio: this.bio.trim()
     }).subscribe({
       next: (updated) => {
         this.savingProfile = false;

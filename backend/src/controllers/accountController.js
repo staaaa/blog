@@ -1,19 +1,25 @@
 const { User, Game, Review, Favorite, ReadMark, Genre, Studio, Series } = require('../models');
 const bcrypt = require('bcryptjs');
 
-// PUT /api/account/profile - Update displayName and avatarUrl
+// PUT /api/account/profile - Update displayName, avatarUrl, and bio
 const updateProfile = async (req, res) => {
   try {
-    const { displayName, avatarUrl } = req.body;
+    const { displayName, avatarUrl, bio } = req.body;
     const user = await User.findByPk(req.user.id);
 
     if (!user) {
       return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
     }
 
+    let trimmedBio = user.bio;
+    if (bio !== undefined) {
+      trimmedBio = typeof bio === 'string' ? bio.trim().slice(0, 1000) : null;
+    }
+
     await user.update({
       displayName: displayName !== undefined ? displayName.trim() : user.displayName,
-      avatarUrl: avatarUrl !== undefined ? avatarUrl : user.avatarUrl
+      avatarUrl: avatarUrl !== undefined ? avatarUrl : user.avatarUrl,
+      bio: trimmedBio
     });
 
     res.json({
@@ -21,7 +27,8 @@ const updateProfile = async (req, res) => {
       username: user.username,
       role: user.role,
       displayName: user.displayName,
-      avatarUrl: user.avatarUrl
+      avatarUrl: user.avatarUrl,
+      bio: user.bio
     });
   } catch (error) {
     console.error('Update profile error:', error);

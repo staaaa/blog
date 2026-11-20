@@ -28,7 +28,9 @@ export class AuthService {
   isReviewer = computed(() => this._user()?.role === 'reviewer' || this._user()?.role === 'admin');
   isReader = computed(() => !!this._user());
   displayName = computed(() => this._user()?.displayName || this._user()?.username || 'Użytkownik');
+  username = computed(() => this._user()?.username || '');
   avatarUrl = computed(() => this._user()?.avatarUrl || null);
+  bio = computed(() => this._user()?.bio || '');
 
   constructor(
     private http: HttpClient,

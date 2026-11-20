@@ -20,6 +20,7 @@ const studioRoutes = require('./routes/studios');
 const uploadRoutes = require('./routes/upload');
 const accountRoutes = require('./routes/account');
 const adminRoutes = require('./routes/admin');
+const authorRoutes = require('./routes/authors');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -60,6 +61,7 @@ app.use('/api/studios', studioRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/account', accountRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/authors', authorRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -140,6 +142,19 @@ app.get('/sitemap.xml', async (req, res) => {
       xml += `    <loc>${baseUrl}/studios/${studio.slug}</loc>\n`;
       xml += '    <changefreq>weekly</changefreq>\n';
       xml += '    <priority>0.6</priority>\n';
+      xml += '  </url>\n';
+    }
+
+    // Author pages
+    const authors = await User.findAll({
+      where: { role: ['admin', 'reviewer'] },
+      attributes: ['username']
+    });
+    for (const author of authors) {
+      xml += '  <url>\n';
+      xml += `    <loc>${baseUrl}/author/${author.username}</loc>\n`;
+      xml += '    <changefreq>weekly</changefreq>\n';
+      xml += '    <priority>0.7</priority>\n';
       xml += '  </url>\n';
     }
 

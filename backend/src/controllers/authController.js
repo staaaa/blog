@@ -86,7 +86,8 @@ const login = async (req, res) => {
         username: user.username,
         role: user.role,
         displayName: user.displayName,
-        avatarUrl: user.avatarUrl
+        avatarUrl: user.avatarUrl,
+        bio: user.bio
       }
     });
   } catch (error) {
@@ -99,7 +100,7 @@ const login = async (req, res) => {
 const me = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
-      attributes: ['id', 'username', 'role', 'displayName', 'avatarUrl']
+      attributes: ['id', 'username', 'role', 'displayName', 'avatarUrl', 'bio']
     });
     
     if (!user) {
