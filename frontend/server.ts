@@ -17,6 +17,8 @@ const extraHosts = (process.env['NG_ALLOWED_HOSTS'] || process.env['ALLOWED_HOST
 
 const commonEngine = new CommonEngine({
   allowedHosts: [
+    'giercujemy.pl',
+    'www.giercujemy.pl',
     'giercujemy-staa.duckdns.org',
     'localhost',
     '127.0.0.1',
@@ -57,7 +59,10 @@ app.use((req, res, next) => {
       publicPath: browserDistFolder,
     })
     .then((html) => res.send(html))
-    .catch((err) => next(err));
+    .catch((err) => {
+      console.error('SSR error, serving client-side fallback:', err);
+      res.sendFile(indexHtml);
+    });
 });
 
 const port = process.env['PORT'] || 4000;
@@ -66,4 +71,3 @@ app.listen(port, () => {
 });
 
 export default app;
-

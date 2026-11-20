@@ -30,6 +30,7 @@ services:
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
       UPLOADS_DIR: /app/uploads
+      BASE_URL: ${BASE_URL:-https://giercujemy.pl}
     volumes:
       - uploads_data:/app/uploads
     depends_on:
@@ -41,6 +42,8 @@ services:
     build: ./frontend
     container_name: gamereviews-frontend
     restart: unless-stopped
+    environment:
+      NG_ALLOWED_HOSTS: giercujemy.pl,www.giercujemy.pl,giercujemy-staa.duckdns.org,localhost,127.0.0.1
     ports:
       - "127.0.0.1:9000:80"
     depends_on:

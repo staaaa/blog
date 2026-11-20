@@ -7,10 +7,11 @@ export class ThemeService {
   theme = signal<'dark' | 'light'>('dark');
 
   constructor() {
-    // Default to dark mode if not set
-    const saved = localStorage.getItem('theme') as 'dark' | 'light';
-    const initial = saved || 'dark';
-    this.setTheme(initial);
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem('theme') as 'dark' | 'light';
+      const initial = saved || 'dark';
+      this.setTheme(initial);
+    }
   }
 
   toggleTheme(): void {
@@ -20,7 +21,9 @@ export class ThemeService {
 
   private setTheme(theme: 'dark' | 'light'): void {
     this.theme.set(theme);
-    localStorage.setItem('theme', theme);
-    document.documentElement.setAttribute('data-theme', theme);
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      localStorage.setItem('theme', theme);
+      document.documentElement.setAttribute('data-theme', theme);
+    }
   }
 }

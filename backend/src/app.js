@@ -69,7 +69,7 @@ app.get('/sitemap.xml', async (req, res) => {
     const { Game, Review, Genre, Series, Studio } = require('./models');
     const { Op } = require('sequelize');
 
-    const baseUrl = 'https://giercujemy-staa.duckdns.org';
+    const baseUrl = process.env.BASE_URL || 'https://giercujemy.pl';
 
     // Get all games with published reviews
     const games = await Game.findAll({

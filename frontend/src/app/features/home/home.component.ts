@@ -264,7 +264,7 @@ export class HomeComponent implements OnInit {
     this.meta.updateTag({ name: 'description', content: 'Giercujemy – rzetelne recenzje gier wideo, oceny, analizy i opinie graczy. Sprawdź, w co warto zagrać razem z nami!' });
     this.meta.updateTag({ property: 'og:title', content: 'Giercujemy – Niezależne Recenzje Gier i Blog o Grach' });
     this.meta.updateTag({ property: 'og:description', content: 'Giercujemy – rzetelne recenzje gier wideo, oceny, analizy i opinie graczy. Sprawdź, w co warto zagrać razem z nami!' });
-    this.meta.updateTag({ property: 'og:url', content: 'https://giercujemy-staa.duckdns.org/' });
+    this.meta.updateTag({ property: 'og:url', content: 'https://giercujemy.pl/' });
     this.meta.updateTag({ property: 'og:type', content: 'website' });
     this.loadGames(1);
   }
