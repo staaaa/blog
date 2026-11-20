@@ -24,6 +24,9 @@ const adminRoutes = require('./routes/admin');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust reverse proxy (Nginx) so rate limiter and IP tracking work correctly
+app.set('trust proxy', 1);
+
 // Security headers with Helmet
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
