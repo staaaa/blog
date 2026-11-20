@@ -66,6 +66,11 @@ const getAllGames = async (req, res) => {
         {
           model: Review,
           as: 'reviews',
+          attributes: [
+            'id', 'isDraft', 'storyRating', 'musicRating',
+            'graphicsRating', 'optimizationRating', 'gameplayRating',
+            'averageRating', 'updatedAt'
+          ],
           where: reviewWhere,
           required: false,
           include: [
@@ -515,6 +520,7 @@ const searchGames = async (req, res) => {
         {
           model: Review,
           as: 'reviews',
+          attributes: ['id', 'isDraft', 'averageRating', 'updatedAt'],
           where: reviewWhere,
           required: false,
           include: [

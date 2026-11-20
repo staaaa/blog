@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiService, Category, CustomRating, Game, GameStatus, PlatformLink, Review } from '../../../core/services/api.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ImageComparisonComponent } from '../../../shared/components/image-comparison/image-comparison.component';
 import Quill from 'quill';
 
@@ -22,6 +23,16 @@ interface PlatformOption {
       <header class="editor-header">
         <h1>{{ isEdit ? 'Edytuj Recenzję' : 'Nowa Recenzja' }}</h1>
       </header>
+
+      <!-- Draft restored notification -->
+      <div class="draft-restored-banner" *ngIf="draftRestored">
+        <span class="banner-icon">✅</span>
+        <div class="banner-text">
+          <strong>Szkic przywrócony</strong>
+          <span>Treść recenzji została odzyskana z automatycznego zapisu.</span>
+        </div>
+        <button type="button" class="banner-dismiss" (click)="draftRestored = false">✕</button>
+      </div>
 
       <form (ngSubmit)="save()" class="review-form">
         <!-- Game Selection & Basic Info -->
@@ -296,6 +307,26 @@ interface PlatformOption {
     .editor-container { max-width: 900px; margin: 0 auto; padding: 2.5rem 1.5rem; }
     .editor-header { margin-bottom: 2.5rem; }
     .editor-header h1 { font-size: 2.25rem; font-weight: 300; font-family: var(--font-serif); color: var(--text-color); margin: 0; }
+
+    .draft-restored-banner {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 2rem;
+    }
+    .draft-restored-banner .banner-icon { font-size: 1.3rem; flex-shrink: 0; }
+    .draft-restored-banner .banner-text { flex: 1; }
+    .draft-restored-banner strong { color: #10b981; font-size: 0.9rem; display: block; }
+    .draft-restored-banner span { color: var(--text-muted); font-size: 0.82rem; }
+    .draft-restored-banner .banner-dismiss {
+      background: none; border: none; color: var(--text-muted); font-size: 1.1rem; cursor: pointer;
+      padding: 0.25rem; line-height: 1;
+    }
+    .draft-restored-banner .banner-dismiss:hover { color: var(--text-color); }
     .review-form { display: flex; flex-direction: column; }
     .form-section { background-color: var(--card-bg); border-radius: 12px; padding: 2rem; margin-bottom: 2rem; border: 1px solid var(--border-color); }
     .form-section h2 { font-size: 1.25rem; font-weight: 300; font-family: var(--font-serif); color: var(--text-color); margin: 0 0 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); }
@@ -533,11 +564,14 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private api = inject(ApiService);
+  private authService = inject(AuthService);
 
   private quill!: Quill;
   isEdit = false;
   saving = false;
   reviewId: number | null = null;
+  draftRestored = false;
+  private onSessionExpired = () => this.saveDraftToStorage();
 
   gamesList: Game[] = [];
 
@@ -578,6 +612,10 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   comparisonLabelAfter = 'Po';
 
   ngOnInit(): void {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('session-expired', this.onSessionExpired);
+    }
+
     this.loadGames();
 
     const gameIdParam = this.route.snapshot.paramMap.get('gameId');
@@ -590,6 +628,9 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       this.isEdit = true;
       this.reviewId = parseInt(idParam);
       this.loadReview(this.reviewId);
+    } else {
+      // For new reviews, restore draft if returning from session timeout login
+      this.tryRestoreDraft();
     }
   }
 
@@ -598,7 +639,9 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Cleanup
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('session-expired', this.onSessionExpired);
+    }
   }
 
   loadGames(): void {
@@ -610,6 +653,13 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   loadReview(id: number): void {
+    // Check if we have a draft for this review from session expiry
+    const draft = this.authService.consumeReviewDraft();
+    if (draft?.isEdit && draft.reviewId === id) {
+      this.applyDraft(draft);
+      return;
+    }
+
     this.api.getReview(id).subscribe({
       next: (rev) => {
         this.review = {
@@ -669,6 +719,50 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     });
 
+    // Intercept Paste event to prevent base64 and upload images to server
+    this.quill.root.addEventListener('paste', (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (items) {
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.startsWith('image/')) {
+            const file = items[i].getAsFile();
+            if (file) {
+              e.preventDefault();
+              e.stopPropagation();
+              this.uploadAndInsertImage(file);
+              return;
+            }
+          }
+        }
+      }
+
+      // Check if pasted HTML contains base64 images
+      const html = e.clipboardData?.getData('text/html');
+      if (html && html.includes('data:image/')) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.processPastedHtmlWithBase64(html);
+      }
+    });
+
+    // Intercept Drag & Drop events
+    this.quill.root.addEventListener('dragover', (e: DragEvent) => {
+      e.preventDefault();
+    });
+
+    this.quill.root.addEventListener('drop', (e: DragEvent) => {
+      const files = e.dataTransfer?.files;
+      if (files && files.length > 0) {
+        for (let i = 0; i < files.length; i++) {
+          if (files[i].type.startsWith('image/')) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.uploadAndInsertImage(files[i]);
+          }
+        }
+      }
+    });
+
     if (this.review.content) {
       this.quill.root.innerHTML = this.review.content;
     }
@@ -683,15 +777,79 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     input.onchange = () => {
       const file = input.files?.[0];
       if (file) {
-        this.api.uploadImage(file).subscribe({
-          next: (res) => {
-            const range = this.quill.getSelection(true);
-            this.quill.insertEmbed(range.index, 'image', res.url);
-          },
-          error: (err) => alert('Błąd przesyłania zdjęcia: ' + (err.error?.error || err.message))
-        });
+        this.uploadAndInsertImage(file);
       }
     };
+  }
+
+  uploadAndInsertImage(file: File): void {
+    const range = this.quill.getSelection(true) || { index: this.quill.getLength(), length: 0 };
+    const placeholder = `[⏳ Przesyłanie zdjęcia: ${file.name || 'obrazek'}...]`;
+    const insertPos = range.index;
+
+    this.quill.insertText(insertPos, `${placeholder}\n`);
+
+    this.api.uploadImage(file).subscribe({
+      next: (res) => {
+        const text = this.quill.getText();
+        const pos = text.indexOf(placeholder);
+        if (pos !== -1) {
+          this.quill.deleteText(pos, placeholder.length + 1);
+          this.quill.insertEmbed(pos, 'image', res.url);
+          this.quill.setSelection(pos + 1, 0);
+        } else {
+          this.quill.insertEmbed(this.quill.getLength(), 'image', res.url);
+        }
+      },
+      error: (err) => {
+        const text = this.quill.getText();
+        const pos = text.indexOf(placeholder);
+        if (pos !== -1) {
+          this.quill.deleteText(pos, placeholder.length + 1);
+        }
+        if (err.status === 401) {
+          this.saveDraftToStorage();
+        } else {
+          alert('Błąd przesyłania zdjęcia: ' + (err.error?.error || err.message));
+        }
+      }
+    });
+  }
+
+  private processPastedHtmlWithBase64(html: string): void {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const images = Array.from(doc.querySelectorAll('img'));
+    const base64Images = images.filter(img => img.src && img.src.startsWith('data:image/'));
+
+    if (base64Images.length === 0) {
+      const range = this.quill.getSelection(true) || { index: this.quill.getLength(), length: 0 };
+      this.quill.clipboard.dangerouslyPasteHTML(range.index, html);
+      return;
+    }
+
+    base64Images.forEach((img, idx) => {
+      try {
+        const parts = img.src.split(';base64,');
+        const mimeType = parts[0].replace('data:', '');
+        const byteCharacters = atob(parts[1]);
+        const byteArrays = [];
+        for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+          const slice = byteCharacters.slice(offset, offset + 512);
+          const byteNumbers = new Array(slice.length);
+          for (let i = 0; i < slice.length; i++) {
+            byteNumbers[i] = slice.charCodeAt(i);
+          }
+          byteArrays.push(new Uint8Array(byteNumbers));
+        }
+        const blob = new Blob(byteArrays, { type: mimeType });
+        const ext = mimeType.split('/')[1] || 'png';
+        const file = new File([blob], `pasted-image-${Date.now()}-${idx}.${ext}`, { type: mimeType });
+        this.uploadAndInsertImage(file);
+      } catch (err) {
+        console.error('Failed to process pasted base64 image:', err);
+      }
+    });
   }
 
   insertSpoiler(): void {
@@ -808,6 +966,7 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       this.api.updateReview(this.reviewId, payload).subscribe({
         next: (rev) => {
           this.saving = false;
+          this.authService.clearReviewDraft();
           if (rev.game?.slug) {
             this.router.navigate(['/game', rev.game.slug]);
           } else {
@@ -816,13 +975,18 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         },
         error: (err) => {
           this.saving = false;
-          alert('Błąd aktualizacji recenzji: ' + (err.error?.error || err.message));
+          if (err.status === 401) {
+            this.saveDraftToStorage();
+          } else {
+            alert('Błąd aktualizacji recenzji: ' + (err.error?.error || err.message));
+          }
         }
       });
     } else {
       this.api.createReview(payload).subscribe({
         next: (rev) => {
           this.saving = false;
+          this.authService.clearReviewDraft();
           if (rev.game?.slug) {
             this.router.navigate(['/game', rev.game.slug]);
           } else {
@@ -831,13 +995,73 @@ export class ReviewEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         },
         error: (err) => {
           this.saving = false;
-          alert('Błąd publikacji recenzji: ' + (err.error?.error || err.message));
+          if (err.status === 401) {
+            this.saveDraftToStorage();
+          } else {
+            alert('Błąd publikacji recenzji: ' + (err.error?.error || err.message));
+          }
         }
       });
     }
   }
 
   cancel(): void {
+    // Clear draft when explicitly cancelling
+    this.authService.clearReviewDraft();
     this.router.navigate(['/admin']);
+  }
+
+  // --- Session Draft persistence & restore ---
+
+  private saveDraftToStorage(): void {
+    const content = this.quill ? this.quill.root.innerHTML : this.review.content;
+    // Don't save completely empty drafts
+    if (!this.review.title && (!content || content === '<p><br></p>')) return;
+
+    this.authService.saveReviewDraft({
+      review: { ...this.review, content },
+      prosList: [...this.prosList],
+      consList: [...this.consList],
+      customRatings: [...this.customRatings],
+      isEdit: this.isEdit,
+      reviewId: this.reviewId,
+      url: this.router.url
+    });
+  }
+
+  private tryRestoreDraft(): void {
+    const draft = this.authService.consumeReviewDraft();
+    if (!draft) return;
+
+    // Only restore if the draft matches the current context
+    if (draft.isEdit && draft.reviewId && this.isEdit && this.reviewId === draft.reviewId) {
+      this.applyDraft(draft);
+    } else if (!draft.isEdit && !this.isEdit) {
+      this.applyDraft(draft);
+    }
+  }
+
+  private applyDraft(draft: any): void {
+    if (draft.review) {
+      this.review = { ...this.review, ...draft.review };
+    }
+    if (Array.isArray(draft.prosList) && draft.prosList.length > 0) {
+      this.prosList = draft.prosList;
+    }
+    if (Array.isArray(draft.consList) && draft.consList.length > 0) {
+      this.consList = draft.consList;
+    }
+    if (Array.isArray(draft.customRatings)) {
+      this.customRatings = draft.customRatings;
+    }
+    this.calculateAverage();
+
+    if (this.quill && draft.review?.content) {
+      this.quill.root.innerHTML = draft.review.content;
+    }
+
+    this.draftRestored = true;
+    // Clear the draft now that it's restored
+    this.authService.clearReviewDraft();
   }
 }

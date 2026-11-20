@@ -61,6 +61,7 @@ const getReviewsByGenre = async (req, res) => {
         {
           model: Review,
           as: 'reviews',
+          attributes: ['id', 'isDraft', 'averageRating', 'updatedAt'],
           where: reviewWhere,
           required: !isPrivileged, // only games with reviews for guests
           include: [

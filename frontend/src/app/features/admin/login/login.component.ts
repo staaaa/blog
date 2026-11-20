@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -11,6 +11,24 @@ import { AuthService } from '../../../core/services/auth.service';
   template: `
     <div class="login-container">
       <div class="login-card">
+        <!-- Session expired banner -->
+        <div class="session-expired-banner" *ngIf="returnUrl">
+          <span class="banner-icon">🔒</span>
+          <div>
+            <strong>Sesja wygasła</strong>
+            <p>Zaloguj się ponownie, aby kontynuować. Twoje dane nie zostały utracone.</p>
+          </div>
+        </div>
+
+        <!-- Pending draft banner -->
+        <div class="draft-banner" *ngIf="hasPendingDraft && returnUrl?.startsWith('/admin/review')">
+          <span class="banner-icon">💾</span>
+          <div>
+            <strong>Szkic recenzji zapisany</strong>
+            <p>Treść recenzji została automatycznie zachowana. Po zalogowaniu zostanie przywrócona.</p>
+          </div>
+        </div>
+
         <div class="login-header">
           <h1>Logowanie do portalu</h1>
           <p>Zaloguj się na swoje konto recenzenta lub czytelnika</p>
@@ -75,6 +93,56 @@ import { AuthService } from '../../../core/services/auth.service';
       padding: 2.5rem;
       border: 1px solid var(--border-color);
       box-shadow: 0 8px 32px var(--shadow);
+    }
+
+    .session-expired-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      background: rgba(255, 107, 44, 0.08);
+      border: 1px solid rgba(255, 107, 44, 0.25);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .session-expired-banner strong {
+      color: var(--accent-color);
+      font-size: 0.9rem;
+    }
+
+    .session-expired-banner p {
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      margin: 0.25rem 0 0;
+    }
+
+    .draft-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .draft-banner strong {
+      color: #10b981;
+      font-size: 0.9rem;
+    }
+
+    .draft-banner p {
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      margin: 0.25rem 0 0;
+    }
+
+    .banner-icon {
+      font-size: 1.4rem;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
     }
 
     .login-header {
@@ -182,11 +250,24 @@ import { AuthService } from '../../../core/services/auth.service';
 export class LoginComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   username = '';
   password = '';
   error = '';
   loading = false;
+  returnUrl: string | null = null;
+  hasPendingDraft = false;
+
+  ngOnInit(): void {
+    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    this.hasPendingDraft = this.authService.hasPendingDraft();
+
+    // If already authenticated, redirect away
+    if (this.authService.isAuthenticated()) {
+      this.navigateAfterLogin();
+    }
+  }
 
   login(): void {
     if (!this.username || !this.password) {
@@ -198,17 +279,26 @@ export class LoginComponent {
     this.error = '';
 
     this.authService.login(this.username, this.password).subscribe({
-      next: (res) => {
-        if (res.user.role === 'admin' || res.user.role === 'reviewer') {
-          this.router.navigate(['/admin']);
-        } else {
-          this.router.navigate(['/']);
-        }
+      next: () => {
+        this.navigateAfterLogin();
       },
       error: (err) => {
         this.error = err.error?.error || 'Błąd logowania';
         this.loading = false;
       }
     });
+  }
+
+  private navigateAfterLogin(): void {
+    if (this.returnUrl) {
+      this.router.navigateByUrl(this.returnUrl);
+    } else {
+      const user = this.authService.user();
+      if (user?.role === 'admin' || user?.role === 'reviewer') {
+        this.router.navigate(['/admin']);
+      } else {
+        this.router.navigate(['/']);
+      }
+    }
   }
 }

@@ -1,5 +1,6 @@
 const { Review, Game, Genre, Series, Studio, CustomRating, User, sequelize } = require('../models');
 const { cleanupOrphanedUploads } = require('../utils/cleanupUploads');
+const { extractAndSaveBase64Images } = require('../utils/base64Helper');
 
 // Calculate average rating including custom ratings
 const calculateAverageRating = (review, customRatings = []) => {
@@ -143,11 +144,14 @@ const createReview = async (req, res) => {
       customRatings || []
     );
 
+    // Failsafe: convert any base64 images in content to files on disk
+    const { content: cleanContent } = await extractAndSaveBase64Images(content);
+
     const review = await Review.create({
       gameId,
       userId: req.user.id,
       title: title.trim(),
-      content,
+      content: cleanContent,
       hardwareSpecs: hardwareSpecs || null,
       storyRating: parseFloat(storyRating) || 0,
       musicRating: parseFloat(musicRating) || 0,
@@ -234,9 +238,16 @@ const updateReview = async (req, res) => {
 
     const averageRating = calculateAverageRating(newRatings, customRatings || []);
 
+    // Failsafe: convert any base64 images in content to files on disk
+    let cleanContent = content;
+    if (content !== undefined) {
+      const result = await extractAndSaveBase64Images(content);
+      cleanContent = result.content;
+    }
+
     await review.update({
       title: title !== undefined ? title : review.title,
-      content: content !== undefined ? content : review.content,
+      content: cleanContent !== undefined ? cleanContent : review.content,
       hardwareSpecs: hardwareSpecs !== undefined ? hardwareSpecs : review.hardwareSpecs,
       storyRating: newRatings.storyRating,
       musicRating: newRatings.musicRating,
