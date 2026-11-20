@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${DB_PASSWORD:-supersecretpassword}
     ports:
-      - "8200:5432"
+      - "127.0.0.1:8200:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -42,7 +42,7 @@ services:
     container_name: gamereviews-frontend
     restart: unless-stopped
     ports:
-      - "9000:80"
+      - "127.0.0.1:9000:80"
     depends_on:
       - backend
 

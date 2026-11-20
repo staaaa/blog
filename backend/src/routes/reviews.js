@@ -14,6 +14,7 @@ const {
 const authMiddleware = require('../middleware/auth');
 const authOptionalMiddleware = require('../middleware/authOptional');
 const authorize = require('../middleware/authorize');
+const { commentLimiter } = require('../middleware/rateLimiter');
 
 router.get('/my', authMiddleware, getMyReviews);
 router.get('/:id', authOptionalMiddleware, getReviewById);
@@ -23,7 +24,7 @@ router.post('/:id/like', authMiddleware, toggleLike);
 
 // Comments
 router.get('/:id/comments', getComments);
-router.post('/:id/comments', authMiddleware, createComment);
+router.post('/:id/comments', authMiddleware, commentLimiter, createComment);
 router.delete('/comments/:commentId', authMiddleware, deleteComment);
 
 // Reviewer or Admin can write, edit, delete reviews

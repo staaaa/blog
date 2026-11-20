@@ -4,9 +4,10 @@ const upload = require('../middleware/upload');
 const authMiddleware = require('../middleware/auth');
 const authorize = require('../middleware/authorize');
 const { cleanupOrphanedUploads } = require('../utils/cleanupUploads');
+const { uploadLimiter } = require('../middleware/rateLimiter');
 
-// Upload single image (any authenticated user)
-router.post('/image', authMiddleware, upload.single('image'), (req, res) => {
+// Upload single image (authenticated user with rate limit)
+router.post('/image', authMiddleware, uploadLimiter, upload.single('image'), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Nie przesłano pliku' });

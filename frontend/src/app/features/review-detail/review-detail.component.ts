@@ -7,6 +7,7 @@ import { ApiService, Review } from '../../core/services/api.service';
 import { TocService, TocItem } from '../../core/services/toc.service';
 import { RatingDisplayComponent } from '../../shared/components/rating-display/rating-display.component';
 import { ProsConsComponent } from '../../shared/components/pros-cons/pros-cons.component';
+import DOMPurify from 'dompurify';
 
 @Component({
   selector: 'app-review-detail',
@@ -1206,7 +1207,14 @@ export class ReviewDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   sanitize(content: string): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(content);
+    if (!content) return '';
+    const clean = typeof window !== 'undefined'
+      ? DOMPurify.sanitize(content, {
+          ADD_TAGS: ['iframe'],
+          ADD_ATTR: ['target', 'allow', 'allowfullscreen', 'frameborder', 'scrolling']
+        })
+      : content;
+    return this.sanitizer.bypassSecurityTrustHtml(clean);
   }
 
   processContent(content: string): SafeHtml {
@@ -1263,7 +1271,14 @@ export class ReviewDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       this.activeTocId = items[0].id;
     }
 
-    return this.sanitizer.bypassSecurityTrustHtml(processedHtml);
+    const cleanHtml = typeof window !== 'undefined'
+      ? DOMPurify.sanitize(processedHtml, {
+          ADD_TAGS: ['iframe'],
+          ADD_ATTR: ['target', 'allow', 'allowfullscreen', 'frameborder', 'scrolling']
+        })
+      : processedHtml;
+
+    return this.sanitizer.bypassSecurityTrustHtml(cleanHtml);
   }
 
   private extractHeadings(html: string): { processedHtml: string; items: TocItem[] } {

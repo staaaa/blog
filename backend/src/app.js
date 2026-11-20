@@ -1,11 +1,14 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const path = require('path');
 
 const { sequelize, User } = require('./models');
 const migrateReviewsToGames = require('./migrations/migrate-to-games');
 const migrateBase64Images = require('./migrations/migrate-base64-images');
+const { apiLimiter } = require('./middleware/rateLimiter');
+const { cleanupOrphanedUploads } = require('./utils/cleanupUploads');
 
 // Routes
 const authRoutes = require('./routes/auth');
@@ -21,14 +24,28 @@ const adminRoutes = require('./routes/admin');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// Security headers with Helmet
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: false
+}));
 
-// Serve uploaded files statically
+// CORS configuration
+app.use(cors());
+
+// Safe request body limits (photos are sent as binary uploads, rich text requires <2MB)
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+
+// Apply general rate limiting to API
+app.use('/api/', apiLimiter);
+
+// Serve uploaded files statically with security headers
 const uploadsPath = process.env.UPLOADS_DIR || path.join(__dirname, '../uploads');
-app.use('/uploads', express.static(uploadsPath));
+app.use('/uploads', (req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  next();
+}, express.static(uploadsPath));
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -164,6 +181,20 @@ const createDefaultAdmin = async () => {
   }
 };
 
+// Periodic cleanup cron for orphaned uploads (runs every 24 hours with a 2h grace period)
+const startCleanupCron = () => {
+  const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+  setInterval(async () => {
+    try {
+      console.log('🧹 [Cleanup Cron] Starting periodic orphaned uploads cleanup...');
+      const result = await cleanupOrphanedUploads(2 * 60 * 60 * 1000);
+      console.log(`🧹 [Cleanup Cron] Completed: deleted ${result.deletedCount} files, freed ${result.freedMb} MB`);
+    } catch (err) {
+      console.error('❌ [Cleanup Cron] Error during scheduled cleanup:', err);
+    }
+  }, TWENTY_FOUR_HOURS);
+};
+
 // Initialize database and start server
 const startServer = async () => {
   try {
@@ -194,6 +225,9 @@ const startServer = async () => {
 
     // Run base64-to-file migration for existing reviews
     await migrateBase64Images();
+
+    // Start background cleanup cron for orphaned uploads (runs every 24h)
+    startCleanupCron();
 
     // Start server
     app.listen(PORT, () => {
