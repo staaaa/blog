@@ -44,6 +44,14 @@ export const routes: Routes = [
     loadComponent: () => import('./features/studios/studios.component').then(m => m.StudiosComponent)
   },
   {
+    path: 'authors',
+    loadComponent: () => import('./features/authors/authors.component').then(m => m.AuthorsComponent)
+  },
+  {
+    path: 'recenzenci',
+    redirectTo: 'authors'
+  },
+  {
     path: 'search',
     loadComponent: () => import('./features/search/search.component').then(m => m.SearchComponent)
   },

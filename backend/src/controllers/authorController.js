@@ -122,6 +122,56 @@ const getAuthorProfile = async (req, res) => {
   }
 };
 
+// GET /api/authors - List all reviewers and admins with their stats
+const getAllAuthors = async (req, res) => {
+  try {
+    const authors = await User.findAll({
+      where: {
+        role: ['admin', 'reviewer']
+      },
+      attributes: ['id', 'username', 'displayName', 'avatarUrl', 'role', 'bio', 'createdAt'],
+      include: [
+        {
+          model: Review,
+          as: 'reviews',
+          attributes: ['id', 'averageRating', 'isDraft'],
+          where: { isDraft: false },
+          required: false
+        }
+      ],
+      order: [['displayName', 'ASC']]
+    });
+
+    const authorsList = authors.map(author => {
+      const plain = author.toJSON();
+      const published = plain.reviews || [];
+      const totalReviews = published.length;
+      const avg = totalReviews > 0
+        ? parseFloat((published.reduce((s, r) => s + (r.averageRating || 0), 0) / totalReviews).toFixed(1))
+        : 0;
+
+      delete plain.reviews;
+      return {
+        ...plain,
+        displayName: plain.displayName || plain.username,
+        stats: {
+          totalReviews,
+          averageRating: avg
+        }
+      };
+    });
+
+    // Sort by reviewCount DESC, then name
+    authorsList.sort((a, b) => b.stats.totalReviews - a.stats.totalReviews);
+
+    res.json(authorsList);
+  } catch (error) {
+    console.error('Get all authors error:', error);
+    res.status(500).json({ error: 'Błąd serwera podczas pobierania listy recenzentów' });
+  }
+};
+
 module.exports = {
-  getAuthorProfile
+  getAuthorProfile,
+  getAllAuthors
 };

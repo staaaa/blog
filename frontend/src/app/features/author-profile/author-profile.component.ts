@@ -61,7 +61,7 @@ import { ReviewCardComponent } from '../../shared/components/review-card/review-
                 <span class="author-handle">&#64;{{ profile.author.username }}</span>
                 <span class="meta-dot">·</span>
                 <span class="author-joined" *ngIf="profile.author.createdAt">
-                  W zespole od {{ profile.author.createdAt | date: 'MMMM yyyy' }}
+                  W zespole od {{ formatJoinedDate(profile.author.createdAt) }}
                 </span>
               </div>
 
@@ -560,6 +560,17 @@ export class AuthorProfileComponent implements OnInit {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  }
+
+  formatJoinedDate(dateStr?: string | null): string {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '';
+    const monthsGenitive = [
+      'stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca',
+      'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'
+    ];
+    return `${monthsGenitive[date.getMonth()]} ${date.getFullYear()}`;
   }
 
   isCurrentUser(): boolean {

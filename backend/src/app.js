@@ -145,6 +145,13 @@ app.get('/sitemap.xml', async (req, res) => {
       xml += '  </url>\n';
     }
 
+    // Authors list page
+    xml += '  <url>\n';
+    xml += `    <loc>${baseUrl}/authors</loc>\n`;
+    xml += '    <changefreq>weekly</changefreq>\n';
+    xml += '    <priority>0.8</priority>\n';
+    xml += '  </url>\n';
+
     // Author pages
     const authors = await User.findAll({
       where: { role: ['admin', 'reviewer'] },

@@ -33,6 +33,10 @@ export interface AuthorStats {
   averageRating: number;
 }
 
+export interface AuthorSummary extends UserProfile {
+  stats: AuthorStats;
+}
+
 export interface AuthorProfileResponse {
   author: UserProfile;
   stats: AuthorStats;
@@ -296,6 +300,10 @@ export class ApiService {
   // ========================
   // Authors & Reviewers
   // ========================
+
+  getAuthors(): Observable<AuthorSummary[]> {
+    return this.http.get<AuthorSummary[]>(`${this.baseUrl}/authors`);
+  }
 
   getAuthorProfile(username: string, page: number = 1, limit: number = 12): Observable<AuthorProfileResponse> {
     const params = new HttpParams()
